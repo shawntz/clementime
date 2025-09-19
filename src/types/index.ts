@@ -37,6 +37,7 @@ export interface ScheduleSlot {
   recording_url?: string;
   calendar_event_id?: string;
   calendar_link?: string;
+  meeting_start_notified?: boolean;
 }
 
 export interface WeeklyFormConfig {
