@@ -47,6 +47,7 @@
     "@eslint/markdown": "^7.2.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.0",
     "@types/node-cron": "^3.0.11",
@@ -57,6 +58,7 @@
     "globals": "^16.4.0",
     "jest": "^29.7.0",
     "jiti": "^2.5.1",
+    "ts-jest": "^29.4.4",
     "tsx": "^4.6.0",
     "typescript": "^5.3.0",
     "typescript-eslint": "^8.44.0"
