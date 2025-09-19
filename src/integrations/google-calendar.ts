@@ -70,7 +70,8 @@ export class GoogleCalendarService {
   async createMeetingForSlot(slot: ScheduleSlot, adminEmails: string[] = []): Promise<CalendarMeeting> {
     try {
       // Determine if we should create on facilitator's calendar (if in our workspace) or admin's calendar
-      const isInternalTA = slot.ta.email.endsWith('@shawnschwartz.com');
+      const organizationDomain = this.config.organization?.domain || 'shawnschwartz.com';
+      const isInternalTA = slot.ta.email.endsWith(`@${organizationDomain}`);
       let calendarService: GoogleCalendarService = this;
       let calendarId = 'primary';
 
@@ -81,7 +82,7 @@ export class GoogleCalendarService {
       } else {
         // For external facilitators, create on an admin's calendar within the workspace
         // This allows us to send invitations properly
-        const workspaceAdmin = adminEmails.find(email => email.endsWith('@shawnschwartz.com'));
+        const workspaceAdmin = adminEmails.find(email => email.endsWith(`@${organizationDomain}`));
         if (workspaceAdmin) {
           console.log(`  📧 Creating on admin calendar (${workspaceAdmin}), inviting external facilitator: ${slot.ta.email}`);
           calendarService = await this.impersonateUser(workspaceAdmin);
@@ -105,11 +106,11 @@ This is an automated scheduling session. Recording will be enabled.
         `.trim(),
         start: {
           dateTime: slot.start_time.toISOString(),
-          timeZone: 'America/Los_Angeles', // Adjust based on your timezone
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         end: {
           dateTime: slot.end_time.toISOString(),
-          timeZone: 'America/Los_Angeles',
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         attendees: [
           // Add facilitator as attendee (for external facilitators or when created on admin calendar)
@@ -119,7 +120,7 @@ This is an automated scheduling session. Recording will be enabled.
             .filter(email => {
               // Don't add the calendar owner as an attendee
               const calendarOwner = isInternalTA ? slot.ta.email :
-                adminEmails.find(e => e.endsWith('@shawnschwartz.com'));
+                adminEmails.find(e => e.endsWith(`@${organizationDomain}`));
               return email !== calendarOwner;
             })
             .map(email => ({ email })),
@@ -200,8 +201,8 @@ This is an automated scheduling session. Recording will be enabled.
       adminEmails.push(this.config.test_mode.test_email);
     }
 
-    // In the future, this could be enhanced to map Slack IDs to email addresses
-    // or store admin emails directly in config
+    // TODO: Map admin_users Slack IDs to email addresses
+    // For now, we use test_email when available
     return adminEmails;
   }
 
@@ -281,25 +282,6 @@ This is an automated scheduling session. Recording will be enabled.
     }
   }
 
-  async getEventRecordings(eventId: string): Promise<string[]> {
-    try {
-      // Note: Google Calendar doesn't directly provide recording URLs
-      // Recordings are typically saved to Google Drive automatically
-      // This method can be extended to check Drive for recordings based on event details
-
-      const event = await this.calendar.events.get({
-        calendarId: 'primary',
-        eventId: eventId,
-      });
-
-      // Return empty array for now - recordings would need to be fetched from Drive
-      // using the event details to search for matching recording files
-      return [];
-    } catch (error) {
-      console.error(`❌ Failed to get recordings for event ${eventId}:`, error);
-      return [];
-    }
-  }
 
   // Helper method to impersonate a user (needed for service accounts)
   async impersonateUser(userEmail: string): Promise<GoogleCalendarService> {
@@ -366,11 +348,11 @@ This is an automated scheduling session. Recording will be enabled.
         description: `This event tests Google Meet host management settings after admin console changes.\n\nCreated on ${targetUserEmail}'s calendar using Domain-Wide Delegation.`,
         start: {
           dateTime: tomorrow.toISOString(),
-          timeZone: 'America/Los_Angeles',
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         end: {
           dateTime: endTime.toISOString(),
-          timeZone: 'America/Los_Angeles',
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         // Create Google Meet conference to test host management
         conferenceData: {
@@ -446,11 +428,11 @@ This is an automated scheduling session. Recording will be enabled.
         description: 'This is a test calendar event to verify Google Meet host management settings after admin console changes.',
         start: {
           dateTime: tomorrow.toISOString(),
-          timeZone: 'America/Los_Angeles',
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         end: {
           dateTime: endTime.toISOString(),
-          timeZone: 'America/Los_Angeles',
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         // Create Google Meet conference to test host management
         conferenceData: {
