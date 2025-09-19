@@ -52,6 +52,10 @@ export interface Config {
     term: string;
     total_students: number;
   };
+  organization?: {
+    domain: string; // e.g. "shawnschwartz.com" - used to identify internal users
+    timezone: string; // e.g. "America/Los_Angeles" - used for calendar events
+  };
   scheduling: {
     exam_duration_minutes: number;
     buffer_minutes: number;
