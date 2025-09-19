@@ -1,0 +1,43 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env.*
+.DS_Store
+*.log
+coverage
+.nyc_output
+
+# Sensitive files that should never be in container
+google-credentials.json
+psych-10-admin-bots-*.json
+*.pem
+*.key
+*.p12
+
+# Development files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Testing
+test
+tests
+spec
+__tests__
+
+# Documentation
+docs
+wiki
+
+# Build artifacts
+dist
+build
+target
+
+# Temporary files
+tmp
+temp
