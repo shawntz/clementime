@@ -56,6 +56,10 @@ export interface Config {
     domain: string; // e.g. "shawnschwartz.com" - used to identify internal users
     timezone: string; // e.g. "America/Los_Angeles" - used for calendar events
   };
+  terminology?: {
+    facilitator_label?: string; // Custom label for "Facilitator" (e.g., "TA", "Instructor", "Coach")
+    participant_label?: string; // Custom label for "Participant" (e.g., "Student", "Client", "Patient")
+  };
   scheduling: {
     exam_duration_minutes: number;
     buffer_minutes: number;

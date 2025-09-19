@@ -11,6 +11,12 @@ organization:
   domain: "university.edu"  # Your organization's email domain
   timezone: "America/Los_Angeles"  # Timezone for calendar events
 
+# Terminology configuration (optional)
+# Customize labels used throughout the application
+terminology:
+  facilitator_label: "TA"           # Default: "Facilitator" (options: "TA", "Instructor", "Coach", etc.)
+  participant_label: "Student"     # Default: "Participant" (options: "Student", "Client", "Patient", etc.)
+
 scheduling:
   exam_duration_minutes: 15
   buffer_minutes: 5

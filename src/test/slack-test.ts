@@ -63,7 +63,7 @@ async function testSlackNotifications() {
         for (const slot of slots.slice(0, 3)) { // Only send first 3 messages per section
           try {
             console.log(`    🔄 Sending notification for ${slot.student.name}...`);
-            await slackService.notifyStudent(slot);
+            await slackService.notifyParticipant(slot);
             messageCount++;
             console.log(`    ✅ Sent notification for ${slot.student.name}`);
 

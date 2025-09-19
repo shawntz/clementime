@@ -8,6 +8,15 @@ export class SlackNotificationService {
   private client: WebClient;
   private config: Config;
 
+  // Helper methods for configurable terminology
+  private getFacilitatorLabel(): string {
+    return this.config.terminology?.facilitator_label || 'Facilitator';
+  }
+
+  private getParticipantLabel(): string {
+    return this.config.terminology?.participant_label || 'Participant';
+  }
+
   constructor(config: Config) {
     this.config = config;
     this.client = new WebClient(process.env.SLACK_BOT_TOKEN);
@@ -59,7 +68,7 @@ export class SlackNotificationService {
 
     // Skip if no target channel
     if (!targetChannel) {
-      console.warn(`No Slack ID for participant ${slot.student.name}, skipping notification`);
+      console.warn(`No Slack ID for ${this.getParticipantLabel().toLowerCase()} ${slot.student.name}, skipping notification`);
       return;
     }
 
@@ -99,7 +108,7 @@ export class SlackNotificationService {
               },
               {
                 type: 'mrkdwn',
-                text: `*Facilitator:*\n${slot.ta.name}`,
+                text: `*${this.getFacilitatorLabel()}:*\n${slot.ta.name}`,
               },
             ],
           },
@@ -122,15 +131,15 @@ export class SlackNotificationService {
         ],
       });
 
-      console.log(`✅ Notification sent to participant: ${slot.student.name}`);
+      console.log(`✅ Notification sent to ${this.getParticipantLabel().toLowerCase()}: ${slot.student.name}`);
     } catch (error) {
-      console.error(`❌ Failed to notify participant ${slot.student.name}:`, error);
+      console.error(`❌ Failed to notify ${this.getParticipantLabel().toLowerCase()} ${slot.student.name}:`, error);
       throw error;
     }
   }
 
   async notifyFacilitator(taSlackId: string, slots: ScheduleSlot[]): Promise<void> {
-    const taName = slots[0]?.ta.name || 'Facilitator';
+    const taName = slots[0]?.ta.name || this.getFacilitatorLabel();
 
     const blocks = [
       {
@@ -184,9 +193,9 @@ export class SlackNotificationService {
         blocks,
       });
 
-      console.log(`✅ Schedule sent to facilitator: ${taName}`);
+      console.log(`✅ Schedule sent to ${this.getFacilitatorLabel().toLowerCase()}: ${taName}`);
     } catch (error) {
-      console.error(`❌ Failed to notify facilitator ${taName}:`, error);
+      console.error(`❌ Failed to notify ${this.getFacilitatorLabel().toLowerCase()} ${taName}:`, error);
       throw error;
     }
   }
@@ -202,7 +211,7 @@ export class SlackNotificationService {
 
     // Skip if no target channel
     if (!targetChannel) {
-      console.warn(`No Slack ID for participant ${slot.student.name}, skipping reminder`);
+      console.warn(`No Slack ID for ${this.getParticipantLabel().toLowerCase()} ${slot.student.name}, skipping reminder`);
       return;
     }
 
@@ -223,7 +232,7 @@ export class SlackNotificationService {
             type: 'section' as const,
             text: {
               type: 'mrkdwn' as const,
-              text: `${reminderText}\n\n*Details:*\n📅 ${format(slot.start_time, 'EEEE, MMMM d, yyyy')}\n⏰ ${format(slot.start_time, 'h:mm a')} - ${format(slot.end_time, 'h:mm a')}\n📍 ${slot.location}\n👨‍🏫 Facilitator: ${slot.ta.name}` +
+              text: `${reminderText}\n\n*Details:*\n📅 ${format(slot.start_time, 'EEEE, MMMM d, yyyy')}\n⏰ ${format(slot.start_time, 'h:mm a')} - ${format(slot.end_time, 'h:mm a')}\n📍 ${slot.location}\n👨‍🏫 ${this.getFacilitatorLabel()}: ${slot.ta.name}` +
               (slot.meet_link ? `\n🔗 <${slot.meet_link}|Join Google Meet>` : ''),
             },
           },
@@ -249,14 +258,14 @@ export class SlackNotificationService {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `🟢 *Meeting has started*\n\n*Participant:* ${slot.student.name}\n*Facilitator:* ${slot.ta.name}\n*Time:* ${format(slot.start_time, 'h:mm a')} - ${format(slot.end_time, 'h:mm a')}`,
+              text: `🟢 *Meeting has started*\n\n*${this.getParticipantLabel()}:* ${slot.student.name}\n*${this.getFacilitatorLabel()}:* ${slot.ta.name}\n*Time:* ${format(slot.start_time, 'h:mm a')} - ${format(slot.end_time, 'h:mm a')}`,
             },
           },
         ],
       });
 
-      const channelType = targetChannel === slot.ta.slack_id ? 'Facilitator DM' : 'Facilitator channel';
-      console.log(`✅ Meeting started notification sent to ${channelType} for facilitator: ${slot.ta.name}`);
+      const channelType = targetChannel === slot.ta.slack_id ? `${this.getFacilitatorLabel()} DM` : `${this.getFacilitatorLabel()} channel`;
+      console.log(`✅ Meeting started notification sent to ${channelType} for ${this.getFacilitatorLabel().toLowerCase()}: ${slot.ta.name}`);
     } catch (error) {
       console.error(`❌ Failed to notify about meeting start:`, error);
     }
@@ -301,7 +310,7 @@ export class SlackNotificationService {
         );
 
         if (exactMatch?.id) {
-          console.log(`✅ Found facilitator channel for meeting: ${expectedChannelName}`);
+          console.log(`✅ Found ${this.getFacilitatorLabel().toLowerCase()} channel for meeting: ${expectedChannelName}`);
           return exactMatch.id;
         }
 
@@ -312,15 +321,15 @@ export class SlackNotificationService {
         );
 
         if (partialMatch?.id) {
-          console.log(`✅ Found partial facilitator channel match for meeting: ${partialMatch.name}`);
+          console.log(`✅ Found partial ${this.getFacilitatorLabel().toLowerCase()} channel match for meeting: ${partialMatch.name}`);
           return partialMatch.id;
         }
       }
 
-      console.log(`⚠️  No facilitator channel found for ${slot.ta.name}, falling back to DM`);
+      console.log(`⚠️  No ${this.getFacilitatorLabel().toLowerCase()} channel found for ${slot.ta.name}, falling back to DM`);
       return slot.ta.slack_id;
     } catch (error) {
-      console.error(`❌ Error finding facilitator channel for meeting, falling back to DM:`, error);
+      console.error(`❌ Error finding ${this.getFacilitatorLabel().toLowerCase()} channel for meeting, falling back to DM:`, error);
       return slot.ta.slack_id;
     }
   }
@@ -352,10 +361,10 @@ export class SlackNotificationService {
         throw new Error('Failed to get channel ID');
       }
 
-      console.log(`✅ Created facilitator channel: ${channelName} (${channelId})`);
+      console.log(`✅ Created ${this.getFacilitatorLabel().toLowerCase()} channel: ${channelName} (${channelId})`);
       return channelId;
     } catch (error) {
-      console.warn(`⚠️  Could not create facilitator channel ${channelName} (likely already exists):`, error);
+      console.warn(`⚠️  Could not create ${this.getFacilitatorLabel().toLowerCase()} channel ${channelName} (likely already exists):`, error);
       return null; // Return null instead of throwing, allowing workflow to continue
     }
   }
@@ -391,7 +400,7 @@ export class SlackNotificationService {
 
       console.log(`✅ Generated recording Google Meet link for ${taName}: ${meetingSpace.meetingUri}`);
       return meetingSpace.meetingUri;
-    } catch (error) {
+    } catch (error: any) {
       console.warn(`⚠️  Google Meet API unavailable (${error.message}), generating simple Meet link`);
 
       // Generate a simple Google Meet link as fallback
@@ -431,13 +440,13 @@ export class SlackNotificationService {
         const usersToInvite = [taSlackId, ...this.config.admin_users].filter(Boolean);
         await this.inviteUsersToChannel(channelId, usersToInvite);
         targetChannel = channelId;
-        console.log(`✅ Using facilitator channel ${channelId} for ${taName}`);
+        console.log(`✅ Using ${this.getFacilitatorLabel().toLowerCase()} channel ${channelId} for ${taName}`);
       } catch (error) {
         console.warn(`⚠️  Could not invite users to channel, falling back to DM:`, error);
         targetChannel = taSlackId;
       }
     } else {
-      console.log(`📩 Sending facilitator schedule via direct message to ${taName}`);
+      console.log(`📩 Sending ${this.getFacilitatorLabel().toLowerCase()} schedule via direct message to ${taName}`);
     }
 
     try {
@@ -487,7 +496,7 @@ export class SlackNotificationService {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `*Today's Schedule (${sortedSlots.length} participants):*\n\n${scheduleText}`,
+            text: `*Today's Schedule (${sortedSlots.length} ${this.getParticipantLabel().toLowerCase()}s):*\n\n${scheduleText}`,
           },
         });
 
@@ -524,7 +533,7 @@ export class SlackNotificationService {
         blocks.push({
           type: 'actions',
           elements: actionElements,
-        });
+        } as any);
 
         blocks.push({
           type: 'context',
@@ -534,7 +543,7 @@ export class SlackNotificationService {
               text: `📋 Course: ${this.config.course.name} | 📅 Week ${weekNumber} | 👥 ${this.config.admin_users.length + 1} members`,
             },
           ],
-        });
+        } as any);
 
         await this.client.chat.postMessage({
           channel: targetChannel,
@@ -556,12 +565,12 @@ export class SlackNotificationService {
           thread_ts: undefined, // Post as a new message, not a thread
         });
 
-        console.log(`✅ Sent facilitator schedule to ${targetChannel === taSlackId ? 'DM' : 'channel'} for ${taName} on ${format(examDate, 'MMMM d, yyyy')}`);
+        console.log(`✅ Sent ${this.getFacilitatorLabel().toLowerCase()} schedule to ${targetChannel === taSlackId ? 'DM' : 'channel'} for ${taName} on ${format(examDate, 'MMMM d, yyyy')}`);
       }
     } catch (error) {
-      console.error(`❌ Failed to send facilitator schedule for ${taName}:`, error);
+      console.error(`❌ Failed to send ${this.getFacilitatorLabel().toLowerCase()} schedule for ${taName}:`, error);
       // Don't throw error to allow other facilitators to continue receiving their schedules
-      console.log(`⚠️  Continuing with other facilitator notifications despite error for ${taName}`);
+      console.log(`⚠️  Continuing with other ${this.getFacilitatorLabel().toLowerCase()} notifications despite error for ${taName}`);
     }
   }
 
@@ -571,7 +580,7 @@ export class SlackNotificationService {
     message += `**Date:** ${format(slot.start_time, 'EEEE, MMMM d, yyyy')}\n`;
     message += `**Time:** ${format(slot.start_time, 'h:mm a')} - ${format(slot.end_time, 'h:mm a')}\n`;
     message += `**Location:** ${slot.location}\n`;
-    message += `**Facilitator:** ${slot.ta.name}\n`;
+    message += `**${this.getFacilitatorLabel()}:** ${slot.ta.name}\n`;
 
     if (slot.meet_link) {
       message += `**Google Meet Link:** ${slot.meet_link}\n`;

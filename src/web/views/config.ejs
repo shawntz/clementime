@@ -42,7 +42,7 @@
                     <p class="text-lg font-semibold text-orange-800"><%= config.course.term %></p>
                 </div>
                 <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Total Participants</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Total <%= participantLabel %>s</label>
                     <p class="text-lg font-semibold text-orange-800"><%= config.course.total_students %></p>
                 </div>
                 <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
@@ -64,7 +64,7 @@
                                 <p class="font-semibold text-orange-800"><%= section.id %></p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Facilitator Name</label>
+                                <label class="block text-sm font-medium text-gray-700"><%= facilitatorLabel %> Name</label>
                                 <p class="font-semibold text-orange-800"><%= section.ta_name %></p>
                             </div>
                             <div>
@@ -72,7 +72,7 @@
                                 <p class="font-semibold text-orange-800"><%= section.location %></p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Participants</label>
+                                <label class="block text-sm font-medium text-gray-700"><%= participantLabel %>s</label>
                                 <p class="font-semibold text-orange-800"><%= section.students %></p>
                             </div>
                         </div>

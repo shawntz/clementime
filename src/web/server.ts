@@ -11,6 +11,15 @@ export class WebServer {
   private config: Config;
   private orchestration: OrchestrationService;
 
+  // Helper methods for configurable terminology
+  private getFacilitatorLabel(): string {
+    return this.config.terminology?.facilitator_label || 'Facilitator';
+  }
+
+  private getParticipantLabel(): string {
+    return this.config.terminology?.participant_label || 'Participant';
+  }
+
   constructor(config: Config) {
     this.config = config;
     this.app = express();
@@ -63,6 +72,8 @@ export class WebServer {
         config: this.config,
         stats,
         schedules: schedules.size > 0,
+        facilitatorLabel: this.getFacilitatorLabel(),
+        participantLabel: this.getParticipantLabel(),
       });
     } catch (error) {
       console.error('Dashboard render error:', error);
@@ -79,6 +90,8 @@ export class WebServer {
         config: this.config,
         schedules: formattedSchedules,
         hasSchedules: schedules.size > 0,
+        facilitatorLabel: this.getFacilitatorLabel(),
+        participantLabel: this.getParticipantLabel(),
       });
     } catch (error) {
       console.error('Schedules render error:', error);
@@ -143,7 +156,11 @@ export class WebServer {
   }
 
   private renderConfig(_req: express.Request, res: express.Response): void {
-    res.render('config', { config: this.config });
+    res.render('config', {
+      config: this.config,
+      facilitatorLabel: this.getFacilitatorLabel(),
+      participantLabel: this.getParticipantLabel(),
+    });
   }
 
   private saveConfig(_req: express.Request, res: express.Response): void {
@@ -317,7 +334,7 @@ export class WebServer {
 
           for (const slot of slots) {
             try {
-              await testSlack.notifyStudent(slot);
+              await testSlack.notifyParticipant(slot);
               notificationCount++;
               await new Promise(resolve => setTimeout(resolve, 300)); // Small delay between messages
             } catch (error) {

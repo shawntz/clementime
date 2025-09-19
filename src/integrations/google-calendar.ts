@@ -17,6 +17,15 @@ export class GoogleCalendarService {
   private auth!: GoogleAuth;
   private calendar: any;
 
+  // Helper methods for configurable terminology
+  private getFacilitatorLabel(): string {
+    return this.config.terminology?.facilitator_label || 'Facilitator';
+  }
+
+  private getParticipantLabel(): string {
+    return this.config.terminology?.participant_label || 'Participant';
+  }
+
   constructor(config: Config) {
     this.config = config;
     this.initializeAuth();
@@ -77,14 +86,14 @@ export class GoogleCalendarService {
 
       if (isInternalTA) {
         // If facilitator is in our workspace, create directly on their calendar
-        console.log(`  📅 Creating on internal facilitator calendar: ${slot.ta.email}`);
+        console.log(`  📅 Creating on internal ${this.getFacilitatorLabel().toLowerCase()} calendar: ${slot.ta.email}`);
         calendarService = await this.impersonateUser(slot.ta.email);
       } else {
         // For external facilitators, create on an admin's calendar within the workspace
         // This allows us to send invitations properly
         const workspaceAdmin = adminEmails.find(email => email.endsWith(`@${organizationDomain}`));
         if (workspaceAdmin) {
-          console.log(`  📧 Creating on admin calendar (${workspaceAdmin}), inviting external facilitator: ${slot.ta.email}`);
+          console.log(`  📧 Creating on admin calendar (${workspaceAdmin}), inviting external ${this.getFacilitatorLabel().toLowerCase()}: ${slot.ta.email}`);
           calendarService = await this.impersonateUser(workspaceAdmin);
         } else {
           console.log(`  ⚠️  No workspace admin found, creating without invitations`);
@@ -96,9 +105,9 @@ export class GoogleCalendarService {
         description: `
 Scheduled Session
 
-Participant: ${slot.student.name}
+${this.getParticipantLabel()}: ${slot.student.name}
 Email: ${slot.student.email}
-Facilitator: ${slot.ta.name}
+${this.getFacilitatorLabel()}: ${slot.ta.name}
 Section: ${slot.section_id}
 Location: ${slot.location}
 
