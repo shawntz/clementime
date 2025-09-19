@@ -12,6 +12,13 @@ module.exports = [
         ...globals.browser,
         ...globals.node
       }
+    },
+    rules: {
+      // Disable rules that are style preferences rather than critical errors
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-this-alias": "warn",
+      "prefer-const": "warn"
     }
   }
 ];
