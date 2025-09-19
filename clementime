@@ -1,0 +1,274 @@
+#!/bin/bash
+
+# ClemenTime - Intelligent Scheduling Automation Platform
+# Usage: ./clementime [start|stop|restart|status|logs|update] [config_file]
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_NAME="clementime"
+DOCKER_IMAGE="clementime:latest"
+CONTAINER_NAME="clementime-scheduler"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+ORANGE='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Print with color
+print_status() {
+    echo -e "${BLUE}[ClemenTime]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[ClemenTime]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ClemenTime]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${ORANGE}[ClemenTime]${NC} $1"
+}
+
+# Show header
+show_header() {
+    echo -e "${ORANGE}"
+    echo "  ┌─────────────────────────────────────┐"
+    echo "  │            🍊 ClemenTime            │"
+    echo "  │   Intelligent Scheduling Platform   │"
+    echo "  └─────────────────────────────────────┘"
+    echo -e "${NC}"
+}
+
+# Check if Docker is installed and running
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker is not installed. Please install Docker first."
+        exit 1
+    fi
+
+    if ! docker info &> /dev/null; then
+        print_error "Docker is not running. Please start Docker first."
+        exit 1
+    fi
+}
+
+# Check if config file exists
+check_config() {
+    local config_file="${1:-config.yml}"
+
+    if [[ ! -f "$config_file" ]]; then
+        print_error "Configuration file '$config_file' not found."
+        print_status "Creating example configuration..."
+
+        if [[ -f "config.example.yml" ]]; then
+            cp config.example.yml "$config_file"
+            print_warning "Please edit '$config_file' with your settings before starting."
+        else
+            print_error "Example configuration file not found. Please create '$config_file' manually."
+        fi
+        exit 1
+    fi
+}
+
+# Check if .env file exists
+check_env() {
+    if [[ ! -f ".env" ]]; then
+        print_warning ".env file not found."
+
+        if [[ -f ".env.example" ]]; then
+            cp .env.example .env
+            print_warning "Created .env from example. Please configure your environment variables."
+        else
+            print_error "No .env.example found. Please create .env file with your credentials."
+        fi
+        exit 1
+    fi
+}
+
+# Load environment variables
+load_env() {
+    if [[ -f ".env" ]]; then
+        export $(grep -v '^#' .env | xargs)
+    fi
+}
+
+# Start the service
+start_service() {
+    show_header
+    local config_file="${1:-config.yml}"
+
+    print_status "Starting ClemenTime Scheduling Platform..."
+
+    check_docker
+    check_config "$config_file"
+    check_env
+    load_env
+
+    # Stop existing container if running
+    if docker ps -q -f name="$CONTAINER_NAME" | grep -q .; then
+        print_warning "Stopping existing ClemenTime instance..."
+        docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
+        docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    fi
+
+    # Create necessary directories
+    mkdir -p data logs
+
+    # Set config file path
+    export CONFIG_PATH="$SCRIPT_DIR/$config_file"
+    export DATA_PATH="$SCRIPT_DIR/data"
+    export LOGS_PATH="$SCRIPT_DIR/logs"
+
+    print_status "Using local ClemenTime image..."
+    # Check if local image exists, build if not
+    if ! docker image inspect "$DOCKER_IMAGE" &> /dev/null; then
+        print_status "Building ClemenTime image..."
+        docker build -t "$DOCKER_IMAGE" .
+    fi
+
+    print_status "Starting ClemenTime container..."
+    docker-compose up -d
+
+    print_success "ClemenTime is starting! 🎉"
+    print_status "Access your scheduling platform at: http://localhost:${PORT:-4001}"
+    print_status "Configuration: $config_file"
+    print_status "Logs: ./clementime logs"
+    print_status "Status: ./clementime status"
+}
+
+# Stop the service
+stop_service() {
+    show_header
+    print_status "Stopping ClemenTime..."
+
+    check_docker
+    docker-compose down
+
+    print_success "ClemenTime stopped successfully."
+}
+
+# Restart the service
+restart_service() {
+    stop_service
+    start_service "$1"
+}
+
+# Show service status
+show_status() {
+    show_header
+    check_docker
+
+    if docker ps -q -f name="$CONTAINER_NAME" | grep -q .; then
+        print_success "✅ ClemenTime is running"
+        echo
+        docker ps -f name="$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        echo
+        print_status "🌐 Web interface: http://localhost:${PORT:-4001}"
+        print_status "📋 Health check: curl http://localhost:${PORT:-4001}/health"
+    else
+        print_warning "❌ ClemenTime is not running"
+        print_status "Start with: ./clementime start"
+    fi
+}
+
+# Show logs
+show_logs() {
+    show_header
+    check_docker
+
+    if docker ps -q -f name="$CONTAINER_NAME" | grep -q .; then
+        print_status "Showing ClemenTime logs (Ctrl+C to exit):"
+        echo
+        docker logs -f "$CONTAINER_NAME"
+    else
+        print_error "ClemenTime is not running"
+    fi
+}
+
+# Update the service
+update_service() {
+    show_header
+    print_status "Updating ClemenTime..."
+
+    check_docker
+
+    # Pull latest image
+    print_status "Using local ClemenTime image..."
+    # Check if local image exists, build if not
+    if ! docker image inspect "$DOCKER_IMAGE" &> /dev/null; then
+        print_status "Building ClemenTime image..."
+        docker build -t "$DOCKER_IMAGE" .
+    fi
+
+    # Restart if running
+    if docker ps -q -f name="$CONTAINER_NAME" | grep -q .; then
+        print_status "Restarting ClemenTime with new image..."
+        restart_service "$1"
+    else
+        print_success "ClemenTime updated. Use './clementime start' to run with latest version."
+    fi
+}
+
+# Show help
+show_help() {
+    show_header
+    echo "Usage: ./clementime [command] [config_file]"
+    echo
+    echo "Commands:"
+    echo "  start [config]    Start ClemenTime (default: config.yml)"
+    echo "  stop              Stop ClemenTime"
+    echo "  restart [config]  Restart ClemenTime"
+    echo "  status            Show service status"
+    echo "  logs              Show live logs"
+    echo "  update [config]   Update to latest version"
+    echo "  help              Show this help"
+    echo
+    echo "Examples:"
+    echo "  ./clementime start"
+    echo "  ./clementime start my-course-config.yml"
+    echo "  ./clementime status"
+    echo "  ./clementime logs"
+    echo
+    echo "Configuration:"
+    echo "  - Edit config.yml for your scheduling setup"
+    echo "  - Edit .env for API credentials"
+    echo "  - View logs in ./logs/ directory"
+    echo
+    echo "Made with ❤️ by @shawntz"
+}
+
+# Main script logic
+case "${1:-help}" in
+    start)
+        start_service "$2"
+        ;;
+    stop)
+        stop_service
+        ;;
+    restart)
+        restart_service "$2"
+        ;;
+    status)
+        show_status
+        ;;
+    logs)
+        show_logs
+        ;;
+    update)
+        update_service "$2"
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    *)
+        print_error "Unknown command: $1"
+        echo
+        show_help
+        exit 1
+        ;;
+esac
