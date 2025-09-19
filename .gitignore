@@ -31,6 +31,7 @@ slack-credentials.json
 !config.example.json
 !**/package.json
 !.env.example
+!app-manifest.json
 # Google service account keys
 *-admin-bots-*.json
 service-account-*.json
