@@ -130,3 +130,5 @@ config-production.yml
 schedules/
 recordings/
 exports/
+config.yml
+config-psych10-example.yml
