@@ -29,6 +29,10 @@ const ConfigSchema = z.object({
     term: z.string(),
     total_students: z.number(),
   }),
+  organization: z.object({
+    domain: z.string(),
+    timezone: z.string(),
+  }).optional(),
   scheduling: z.object({
     exam_duration_minutes: z.number(),
     buffer_minutes: z.number(),
