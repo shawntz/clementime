@@ -1,0 +1,139 @@
+# ClemenTime Scheduler Configuration
+# Example configuration file showing CSV usage and environment variable support
+
+course:
+  name: "Statistics 101"
+  term: "Fall 2024"
+  total_students: 150
+
+# Organization settings (optional)
+organization:
+  domain: "university.edu"  # Your organization's email domain
+  timezone: "America/Los_Angeles"  # Timezone for calendar events
+
+scheduling:
+  exam_duration_minutes: 15
+  buffer_minutes: 5
+  start_time: "09:00"
+  end_time: "17:00"
+  excluded_days:
+    - Saturday
+    - Sunday
+  schedule_frequency_weeks: 2
+  break_duration_minutes: 5
+
+sections:
+  # Example using CSV file for students
+  - id: "section_01"
+    ta_name: "John Doe"
+    ta_email: "john.doe@university.edu"
+    # ta_slack_id and google_email loaded from FACILITATOR_MAPPING env variable
+    location: "Room 101, Building A"
+    preferred_days:
+      - Monday
+      - Wednesday
+    students_csv: "data/students/section_01.csv"  # Load students from CSV
+
+  # Example using inline students (traditional way)
+  - id: "section_02"
+    ta_name: "Jane Smith"
+    ta_email: "jane.smith@university.edu"
+    location: "Room 202, Building B"
+    preferred_days:
+      - Tuesday
+      - Thursday
+    students:
+      - name: "Test Student 1"
+        email: "test1@university.edu"
+        slack_id: "U99999999"
+      - name: "Test Student 2"
+        email: "test2@university.edu"
+        slack_id: "U88888888"
+
+  # Example mixing both CSV and inline students (CSV takes priority for duplicates)
+  - id: "section_03"
+    ta_name: "Bob Wilson"
+    ta_email: "bob.wilson@university.edu"
+    location: "Room 303, Building C"
+    preferred_days:
+      - Monday
+      - Friday
+    students_csv: "data/students/section_02.csv"
+    students:
+      - name: "Additional Student"
+        email: "additional@university.edu"
+        slack_id: "U77777777"
+
+google_meet:
+  recording_settings:
+    auto_recording: true
+    save_to_drive: true
+
+notifications:
+  reminder_days_before: [7, 3, 1]
+  reminder_time: "09:00"
+  include_meet_link: true
+  include_location: true
+  ta_summary_enabled: true
+  ta_summary_time: "08:00"
+
+# Teaching team admin users who receive TA channel notifications
+admin_users:
+  - "U12345678"  # Professor Slack ID
+  - "U87654321"  # Head TA Slack ID
+  - "U11111111"  # Course coordinator Slack ID
+
+# Week-by-week Google Form links for grade submission
+weekly_forms:
+  - week: 1
+    google_form_url: "https://forms.gle/week1-grades"
+    description: "Week 1 Grade Submission Form"
+  - week: 2
+    google_form_url: "https://forms.gle/week2-grades"
+    description: "Week 2 Grade Submission Form"
+  - week: 3
+    google_form_url: "https://forms.gle/week3-grades"
+    description: "Week 3 Grade Submission Form"
+  # Add more weeks as needed
+
+
+# Slack Channel Configuration (Optional)
+# Configure prefixes and suffixes for TA channel names
+slack_channels:
+  prefix: "psych10"     # Will become "psych10-ta-..."
+  suffix: "fall2025"    # Will become "...-fall2025"
+
+# Test Mode Configuration (Optional)
+# When enabled, all Slack notifications will be redirected to the specified user
+# This is useful for testing the system without spamming actual students
+test_mode:
+  enabled: false
+  redirect_to_slack_id: "U12345678"  # Your Slack user ID for receiving test messages
+  fake_student_prefix: "Test Student"  # Prefix for generated fake student names
+  number_of_fake_students: 30  # Number of fake students to generate for testing
+
+# Environment variables that can be used:
+#
+# Slack Configuration:
+#   SLACK_BOT_TOKEN=xoxb-your-bot-token
+#   SLACK_APP_TOKEN=xapp-your-app-token
+#   SLACK_SIGNING_SECRET=your-signing-secret
+#
+# Required Slack Bot Scopes for TA workflow:
+#   - chat:write (send messages to users and channels)
+#   - chat:write.public (send messages to public channels)
+#   - im:write (send direct messages)
+#   - users:read (read user information)
+#   - channels:read (read public channel information)
+#   - groups:write (create and manage private channels for TA workflows)
+#   - groups:read (read private channel information)
+#
+# Google Meet Configuration:
+#   GOOGLE_MEET_CLIENT_ID=your-client-id
+#   GOOGLE_MEET_CLIENT_SECRET=your-client-secret
+#   GOOGLE_MEET_REDIRECT_URI=your-redirect-uri
+#   GOOGLE_MEET_REFRESH_TOKEN=your-refresh-token
+#
+# Facilitator Configuration:
+# Set FACILITATOR_MAPPING in .env file with JSON mapping:
+# FACILITATOR_MAPPING={"section_01":{"slack_id":"U12345678","google_email":"ta@university.edu"}}
