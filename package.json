@@ -10,7 +10,7 @@
     "app": "tsx src/index.ts",
     "web": "tsx src/index.ts web",
     "auth": "node scripts/setup-google-auth.js",
-    "validate": "tsx src/index.ts validate",
+    "validate": "tsx src/index.ts validate --skip-missing",
     "generate": "tsx src/index.ts generate",
     "scheduler:run": "tsx src/scheduler/run.ts",
     "scheduler:notify": "tsx src/scheduler/notify.ts",

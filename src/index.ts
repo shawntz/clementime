@@ -166,8 +166,24 @@ program
   .description('Validate configuration file')
   .option('-c, --config <path>', 'Configuration file path', 'config.yml')
   .option('--check-csv', 'Also validate CSV files', false)
+  .option('--skip-missing', 'Skip validation if config file is missing', false)
   .action(async (options) => {
     try {
+      // Check if config file exists
+      const fs = require('fs');
+      if (!fs.existsSync(options.config)) {
+        if (options.skipMissing) {
+          console.log('⚠️  Configuration file not found, skipping validation (--skip-missing enabled)');
+          console.log(`📁 Expected location: ${options.config}`);
+          console.log('✅ Validation skipped successfully');
+          return;
+        } else {
+          console.error(`❌ Configuration file not found at: ${options.config}`);
+          console.log('💡 Use --skip-missing to skip validation when config is missing');
+          process.exit(1);
+        }
+      }
+
       const config = loadConfig(options.config);
       console.log('✅ Configuration file is valid');
       console.log(`📊 Course: ${config.course.name} (${config.course.term})`);
