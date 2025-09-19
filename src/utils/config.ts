@@ -123,7 +123,24 @@ export function loadConfig(configPath?: string): Config {
         section.students = [];
       }
 
-      // Fill in optional fields with environment variables if available
+      // Fill in optional fields from FACILITATOR_MAPPING environment variable
+      if (process.env.FACILITATOR_MAPPING) {
+        try {
+          const mapping = JSON.parse(process.env.FACILITATOR_MAPPING);
+          if (mapping[section.id]) {
+            if (!section.ta_slack_id && mapping[section.id].slack_id) {
+              section.ta_slack_id = mapping[section.id].slack_id;
+            }
+            if (!section.google_email && mapping[section.id].google_email) {
+              section.google_email = mapping[section.id].google_email;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to parse FACILITATOR_MAPPING JSON:', e);
+        }
+      }
+
+      // Fallback to old individual env vars for backward compatibility
       if (!section.ta_slack_id && process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`]) {
         section.ta_slack_id = process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`];
       }
