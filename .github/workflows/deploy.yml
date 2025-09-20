@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: shawntz/clementime
+  IMAGE_NAME: shawnschwartz/clementime
 
 jobs:
   # Test job to ensure code quality before deployment
