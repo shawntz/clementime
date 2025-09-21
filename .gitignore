@@ -133,3 +133,6 @@ recordings/
 exports/
 config.yml
 config-psych10-example.yml
+data/clementime.db-shm
+data/clementime.db-wal
+data/clementime.db
