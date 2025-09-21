@@ -131,7 +131,7 @@ start_service() {
   docker-compose up -d
 
   print_success "ClemenTime is starting! 🎉"
-  print_status "Access your scheduling platform at: http://localhost:${PORT:-4001}"
+  print_status "Access your scheduling platform at: http://localhost:${PORT:-3000}"
   print_status "Configuration: $config_file"
   print_status "Logs: ./clementime logs"
   print_status "Status: ./clementime status"
@@ -165,8 +165,8 @@ show_status() {
     echo
     docker ps -f name="$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     echo
-    print_status "🌐 Web interface: http://localhost:${PORT:-4001}"
-    print_status "📋 Health check: curl http://localhost:${PORT:-4001}/health"
+    print_status "🌐 Web interface: http://localhost:${PORT:-3000}"
+    print_status "📋 Health check: curl http://localhost:${PORT:-3000}/health"
   else
     print_warning "❌ ClemenTime is not running"
     print_status "Start with: ./clementime start"

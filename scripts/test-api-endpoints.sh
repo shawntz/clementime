@@ -4,7 +4,7 @@ echo "🧪 Testing Clementime API Endpoints"
 echo "===================================="
 echo ""
 
-SERVER_URL="http://localhost:4001"
+SERVER_URL="http://localhost:3000"
 
 # Check if server is running
 echo "1. Checking server health..."
@@ -12,8 +12,8 @@ HEALTH_RESPONSE=$(curl -s $SERVER_URL/health)
 if [ $? -eq 0 ]; then
     echo "✅ Server is running: $HEALTH_RESPONSE"
 else
-    echo "❌ Server is not running on port 4001"
-    echo "💡 Start the server with: npm run web -- --port 4001"
+    echo "❌ Server is not running on port 3000"
+    echo "💡 Start the server with: npm run web -- --port 3000"
     exit 1
 fi
 
