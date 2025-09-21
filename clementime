@@ -158,6 +158,7 @@ restart_service() {
 show_status() {
   show_header
   check_docker
+  load_env
 
   if docker ps -q -f name="$CONTAINER_NAME" | grep -q .; then
     print_success "✅ ClemenTime is running"
