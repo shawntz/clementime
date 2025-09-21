@@ -4,7 +4,7 @@ services:
     container_name: clementime-scheduler
     command: ["npx", "tsx", "src/index.ts", "web"]
     ports:
-      - "${PORT:-4001}:3000"
+      - "${PORT:-3000}:3000"
     volumes:
       - ${CONFIG_PATH:-./config.yml}:/app/config.yml:ro
       - ${DATA_PATH:-./data}:/app/data
@@ -21,10 +21,6 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_REFRESH_TOKEN=${GOOGLE_REFRESH_TOKEN}
-
-      # Google Drive
-      - GOOGLE_DRIVE_SHARED_FOLDER_ID=${GOOGLE_DRIVE_SHARED_FOLDER_ID}
-      - GOOGLE_DRIVE_RECORDINGS_FOLDER=${GOOGLE_DRIVE_RECORDINGS_FOLDER}
 
       # Slack
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
