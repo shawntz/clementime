@@ -106,12 +106,12 @@ This is an automated scheduling session. Recording will be enabled.
           timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
         },
         attendees: [
-          // Add facilitator as attendee
-          { email: slot.ta.email },
+          // Add facilitator as attendee (only if email is valid)
+          ...(slot.ta.email ? [{ email: slot.ta.email }] : []),
           // Add AI recording service if enabled
           ...(this.config.ai_recording?.enabled && this.config.ai_recording?.auto_invite ?
             [{ email: this.config.ai_recording.service_email }] : []),
-        ],
+        ].filter(attendee => attendee.email && attendee.email.trim() !== ''),
         // Create Google Meet conference
         conferenceData: {
           createRequest: {
