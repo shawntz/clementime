@@ -99,7 +99,62 @@
             message: '',
             startDate: new Date().toISOString().split('T')[0],
             weeks: 2,
-            dryRun: true
+            dryRun: true,
+            generateSchedules() {
+                this.loading = true;
+                this.message = '';
+
+                fetch('/schedules/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        startDate: this.startDate,
+                        weeks: parseInt(this.weeks)
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    this.loading = false;
+                    if (result.success) {
+                        this.message = 'Schedules generated successfully!';
+                        setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                        this.message = 'Error: ' + result.error;
+                    }
+                })
+                .catch(error => {
+                    this.loading = false;
+                    this.message = 'Error: ' + error.message;
+                });
+            },
+            runWorkflow() {
+                this.loading = true;
+                this.message = '';
+
+                fetch('/schedules/run-workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        startDate: this.startDate,
+                        weeks: parseInt(this.weeks),
+                        dryRun: this.dryRun
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    this.loading = false;
+                    if (result.success) {
+                        this.message = 'Workflow completed successfully!';
+                        setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                        this.message = 'Error: ' + result.error;
+                    }
+                })
+                .catch(error => {
+                    this.loading = false;
+                    this.message = 'Error: ' + error.message;
+                });
+            }
         }">
             <h2 class="text-2xl font-bold mb-4">🚀 Quick Actions</h2>
 
@@ -172,63 +227,5 @@
         </div>
     </div>
 
-    <script>
-        function generateSchedules() {
-            this.loading = true;
-            this.message = '';
-
-            fetch('/schedules/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    startDate: this.startDate,
-                    weeks: parseInt(this.weeks)
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                this.loading = false;
-                if (data.success) {
-                    this.message = 'Schedules generated successfully!';
-                    setTimeout(() => window.location.reload(), 2000);
-                } else {
-                    this.message = 'Error: ' + data.error;
-                }
-            })
-            .catch(error => {
-                this.loading = false;
-                this.message = 'Error: ' + error.message;
-            });
-        }
-
-        function runWorkflow() {
-            this.loading = true;
-            this.message = '';
-
-            fetch('/schedules/run-workflow', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    startDate: this.startDate,
-                    weeks: parseInt(this.weeks),
-                    dryRun: this.dryRun
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                this.loading = false;
-                if (data.success) {
-                    this.message = 'Workflow completed successfully!';
-                    setTimeout(() => window.location.reload(), 2000);
-                } else {
-                    this.message = 'Error: ' + data.error;
-                }
-            })
-            .catch(error => {
-                this.loading = false;
-                this.message = 'Error: ' + error.message;
-            });
-        }
-    </script>
 </body>
 </html>

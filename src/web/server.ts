@@ -272,7 +272,7 @@ export class WebServer {
       await this.orchestration.runFullWorkflow(
         new Date(startDate),
         parseInt(weeks),
-        dryRun === 'true'
+        Boolean(dryRun)
       );
 
       res.json({ success: true, message: 'Workflow completed successfully' });
