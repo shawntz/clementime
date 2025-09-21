@@ -1,15 +1,21 @@
 import express from 'express';
+import session from 'express-session';
+import passport from 'passport';
 import * as path from 'path';
 import { Config, ScheduleSlot } from '../types';
 import { OrchestrationService } from '../services/orchestration';
 import { SlackNotificationService } from '../integrations/slack';
 import { TestDataGenerator } from '../utils/test-data-generator';
+import { DatabaseService } from '../database';
+import { AuthService } from '../auth';
 import { format } from 'date-fns';
 
 export class WebServer {
   private app: express.Application;
   private config: Config;
   private orchestration: OrchestrationService;
+  private db: DatabaseService;
+  private auth: AuthService;
 
   // Helper methods for configurable terminology
   private getFacilitatorLabel(): string {
@@ -23,9 +29,12 @@ export class WebServer {
   constructor(config: Config) {
     this.config = config;
     this.app = express();
-    this.orchestration = new OrchestrationService(config);
+    this.db = new DatabaseService(config);
+    this.auth = new AuthService(config, this.db);
+    this.orchestration = new OrchestrationService(config, this.db);
 
     this.setupMiddleware();
+    this.setupAuthRoutes();
     this.setupRoutes();
   }
 
@@ -35,32 +44,150 @@ export class WebServer {
     this.app.use(express.static(path.join(__dirname, 'public')));
     this.app.set('view engine', 'ejs');
     this.app.set('views', path.join(__dirname, 'views'));
+
+    // Session configuration
+    const sessionSecret = process.env.SESSION_SECRET || 'clementime-secret-' + Math.random().toString(36);
+    this.app.use(session({
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true
+      }
+    }));
+
+    // Initialize Passport
+    this.app.use(passport.initialize());
+    this.app.use(passport.session());
+
+    // Make auth available to all views
+    this.app.use((req, res, next) => {
+      res.locals.user = req.user || null;
+      res.locals.isAuthenticated = req.isAuthenticated();
+      next();
+    });
+  }
+
+  private setupAuthRoutes(): void {
+    // Login page
+    this.app.get('/auth/login', (req, res) => {
+      if (req.isAuthenticated()) {
+        res.redirect('/');
+        return;
+      }
+      res.render('login', {
+        config: this.config,
+        error: req.query.error,
+        facilitatorLabel: this.getFacilitatorLabel(),
+        participantLabel: this.getParticipantLabel()
+      });
+    });
+
+    // Google OAuth routes
+    this.app.get('/auth/google',
+      passport.authenticate('google', { scope: ['profile', 'email'] })
+    );
+
+    this.app.get('/auth/google/callback',
+      passport.authenticate('google', {
+        failureRedirect: '/auth/login?error=unauthorized',
+        failureMessage: true
+      }),
+      (req, res) => {
+        res.redirect('/');
+      }
+    );
+
+    // Logout
+    this.app.get('/auth/logout', (req, res, next) => {
+      req.logout((err) => {
+        if (err) {
+          return next(err);
+        }
+        res.redirect('/auth/login');
+      });
+    });
+
+    // Admin routes for managing authorized users
+    this.app.get('/admin/users', this.auth.requireAuth.bind(this.auth), this.renderAdminUsers.bind(this));
+    this.app.post('/admin/users/add', this.auth.requireAuth.bind(this.auth), this.addAuthorizedUser.bind(this));
+    this.app.post('/admin/users/remove', this.auth.requireAuth.bind(this.auth), this.removeAuthorizedUser.bind(this));
   }
 
   private setupRoutes(): void {
-    this.app.get('/', this.renderDashboard.bind(this));
-    this.app.get('/schedules', this.renderSchedules.bind(this));
-    this.app.get('/schedules/api', this.getSchedulesAPI.bind(this));
-    this.app.post('/schedules/generate', this.generateSchedules.bind(this));
-    this.app.post('/schedules/run-workflow', this.runWorkflow.bind(this));
+    // Protected routes - require authentication
+    this.app.get('/', this.auth.requireAuth.bind(this.auth), this.renderDashboard.bind(this));
+    this.app.get('/schedules', this.auth.requireAuth.bind(this.auth), this.renderSchedules.bind(this));
+    this.app.get('/schedules/api', this.auth.requireAuth.bind(this.auth), this.getSchedulesAPI.bind(this));
+    this.app.post('/schedules/generate', this.auth.requireAuth.bind(this.auth), this.generateSchedules.bind(this));
+    this.app.post('/schedules/run-workflow', this.auth.requireAuth.bind(this.auth), this.runWorkflow.bind(this));
 
-    this.app.get('/config', this.renderConfig.bind(this));
-    this.app.post('/config/save', this.saveConfig.bind(this));
+    this.app.get('/config', this.auth.requireAuth.bind(this.auth), this.renderConfig.bind(this));
+    this.app.post('/config/save', this.auth.requireAuth.bind(this.auth), this.saveConfig.bind(this));
 
 
     this.app.get('/health', (req, res) => {
       res.json({ status: 'healthy', timestamp: new Date().toISOString() });
     });
 
-    this.app.get('/api/sections', (req, res) => {
+    this.app.get('/api/sections', this.auth.requireAuth.bind(this.auth), (req, res) => {
       res.json(this.config.sections);
     });
 
-    this.app.get('/api/stats', this.getStats.bind(this));
+    this.app.get('/api/stats', this.auth.requireAuth.bind(this.auth), this.getStats.bind(this));
+    this.app.get('/api/workflow-runs', this.auth.requireAuth.bind(this.auth), this.getWorkflowRuns.bind(this));
 
-    // Test mode endpoints
-    this.app.post('/test/generate-fake-schedules', this.generateTestSchedules.bind(this));
-    this.app.get('/test/config', this.getTestConfig.bind(this));
+    // Test mode endpoints (also protected)
+    this.app.post('/test/generate-fake-schedules', this.auth.requireAuth.bind(this.auth), this.generateTestSchedules.bind(this));
+    this.app.get('/test/config', this.auth.requireAuth.bind(this.auth), this.getTestConfig.bind(this));
+  }
+
+  private async renderAdminUsers(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const users = this.db.getAuthorizedUsers();
+      res.render('admin-users', {
+        config: this.config,
+        users,
+        facilitatorLabel: this.getFacilitatorLabel(),
+        participantLabel: this.getParticipantLabel(),
+        message: req.query.message
+      });
+    } catch (error) {
+      console.error('Admin users render error:', error);
+      res.status(500).render('error', { message: 'Failed to load admin users' });
+    }
+  }
+
+  private async addAuthorizedUser(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (email) {
+        this.auth.addAuthorizedUser(email);
+        res.redirect('/admin/users?message=User added successfully');
+      } else {
+        res.redirect('/admin/users?message=Email is required');
+      }
+    } catch (error) {
+      console.error('Add user error:', error);
+      res.redirect('/admin/users?message=Failed to add user');
+    }
+  }
+
+  private async removeAuthorizedUser(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (email) {
+        this.auth.removeAuthorizedUser(email);
+        res.redirect('/admin/users?message=User removed successfully');
+      } else {
+        res.redirect('/admin/users?message=Email is required');
+      }
+    } catch (error) {
+      console.error('Remove user error:', error);
+      res.redirect('/admin/users?message=Failed to remove user');
+    }
   }
 
   private async renderDashboard(_req: express.Request, res: express.Response): Promise<void> {
@@ -176,6 +303,16 @@ export class WebServer {
     } catch (error) {
       console.error('Stats API error:', error);
       res.status(500).json({ error: 'Failed to calculate stats' });
+    }
+  }
+
+  private getWorkflowRuns(_req: express.Request, res: express.Response): void {
+    try {
+      const runs = this.db.getWorkflowRuns(50);
+      res.json(runs);
+    } catch (error) {
+      console.error('Workflow runs API error:', error);
+      res.status(500).json({ error: 'Failed to get workflow runs' });
     }
   }
 

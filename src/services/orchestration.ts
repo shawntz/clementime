@@ -3,6 +3,7 @@ import { SchedulingAlgorithm } from '../scheduler/algorithm';
 import { SlackNotificationService } from '../integrations/slack';
 import { GoogleMeetService } from '../integrations/google-meet';
 import { GoogleCalendarService } from '../integrations/google-calendar';
+import { DatabaseService } from '../database';
 import { format, isBefore, differenceInDays } from 'date-fns';
 import * as cron from 'node-cron';
 
@@ -12,14 +13,31 @@ export class OrchestrationService {
   private slack: SlackNotificationService;
   private meet?: GoogleMeetService; // Lazy initialization (legacy)
   private calendar: GoogleCalendarService;
+  private db: DatabaseService;
   private schedules: Map<number, Map<string, ScheduleSlot[]>> = new Map();
 
-  constructor(config: Config) {
+  constructor(config: Config, db?: DatabaseService) {
     this.config = config;
     this.scheduler = new SchedulingAlgorithm(config);
     this.slack = new SlackNotificationService(config);
     // Don't initialize GoogleMeetService here to avoid auth errors (legacy)
     this.calendar = new GoogleCalendarService(config);
+    this.db = db || new DatabaseService(config);
+
+    // Load existing schedules from database
+    this.loadSchedulesFromDatabase();
+  }
+
+  private loadSchedulesFromDatabase(): void {
+    try {
+      const savedSchedules = this.db.loadSchedules();
+      if (savedSchedules.size > 0) {
+        this.schedules = savedSchedules;
+        console.log(`📚 Loaded ${savedSchedules.size} weeks of schedules from database`);
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not load schedules from database:', error);
+    }
   }
 
   private getMeetService(): GoogleMeetService {
@@ -32,9 +50,28 @@ export class OrchestrationService {
   async runFullWorkflow(startDate: Date, weeks: number, dryRun: boolean = false): Promise<void> {
     console.log('🔄 Starting full automation workflow...\n');
 
-    console.log('1️⃣ Generating schedules...');
-    const schedules = this.scheduler.generateRecurringSchedule(startDate, weeks);
-    this.schedules = schedules;
+    // Track workflow run in database
+    const runId = this.db.startWorkflowRun(startDate, weeks, dryRun);
+    let slotsCreated = 0;
+    let notificationsSent = 0;
+
+    try {
+      console.log('1️⃣ Generating schedules...');
+      const schedules = this.scheduler.generateRecurringSchedule(startDate, weeks);
+      this.schedules = schedules;
+
+      // Save schedules to database
+      if (!dryRun) {
+        console.log('💾 Saving schedules to database...');
+        this.db.saveSchedules(schedules);
+
+        // Count slots created
+        for (const weekSchedule of schedules.values()) {
+          for (const slots of weekSchedule.values()) {
+            slotsCreated += slots.length;
+          }
+        }
+      }
 
     if (!dryRun) {
       console.log('2️⃣ Creating Calendar Events with Google Meet...');
@@ -53,6 +90,16 @@ export class OrchestrationService {
     }
 
     this.printScheduleSummary(schedules);
+
+      // Update workflow run as completed
+      if (!dryRun) {
+        this.db.completeWorkflowRun(runId, slotsCreated, notificationsSent);
+      }
+    } catch (error) {
+      // Mark workflow run as failed
+      this.db.failWorkflowRun(runId, error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
   }
 
   private async createCalendarEvents(schedules: Map<number, Map<string, ScheduleSlot[]>>): Promise<void> {
@@ -246,5 +293,9 @@ export class OrchestrationService {
   async regenerateSchedule(startDate: Date, weeks: number): Promise<void> {
     console.log('🔄 Regenerating schedules...');
     this.schedules = this.scheduler.generateRecurringSchedule(startDate, weeks);
+
+    // Save to database
+    console.log('💾 Saving schedules to database...');
+    this.db.saveSchedules(this.schedules);
   }
 }

@@ -108,4 +108,5 @@ export interface Config {
     number_of_fake_students?: number;
     test_email?: string;
   };
+  authorized_google_users?: string[]; // List of Google email addresses allowed to access the dashboard
 }

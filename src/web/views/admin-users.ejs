@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - <%= config.course.name %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-calendar-check me-2"></i>
+                ClemenTime
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+                <a class="nav-link" href="/schedules">
+                    <i class="bi bi-calendar3 me-1"></i> Schedules
+                </a>
+                <a class="nav-link active" href="/admin/users">
+                    <i class="bi bi-people me-1"></i> Users
+                </a>
+                <a class="nav-link" href="/auth/logout">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2><i class="bi bi-people-fill me-2"></i>Authorized Users</h2>
+
+        <% if (message) { %>
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <%= message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Add New User</h5>
+            </div>
+            <div class="card-body">
+                <form action="/admin/users/add" method="POST" class="row g-3">
+                    <div class="col-md-9">
+                        <input type="email" class="form-control" name="email"
+                               placeholder="user@example.com" required>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-person-plus me-2"></i>Add User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Current Authorized Users</h5>
+            </div>
+            <div class="card-body">
+                <% if (users && users.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Last Login</th>
+                                <th>Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% users.forEach(user => { %>
+                            <tr>
+                                <td>
+                                    <% if (user.picture) { %>
+                                    <img src="<%= user.picture %>" alt="Profile"
+                                         class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                    <% } %>
+                                    <%= user.google_email %>
+                                </td>
+                                <td><%= user.name || '-' %></td>
+                                <td>
+                                    <% if (user.last_login) { %>
+                                        <%= new Date(user.last_login).toLocaleString() %>
+                                    <% } else { %>
+                                        Never
+                                    <% } %>
+                                </td>
+                                <td><%= new Date(user.created_at).toLocaleDateString() %></td>
+                                <td>
+                                    <form action="/admin/users/remove" method="POST"
+                                          onsubmit="return confirm('Are you sure you want to remove this user?')"
+                                          style="display: inline;">
+                                        <input type="hidden" name="email" value="<%= user.google_email %>">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                <p class="text-muted mb-0">No authorized users yet. Add users above to grant access.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Configuration</h5>
+            </div>
+            <div class="card-body">
+                <p>You can also add authorized users through the configuration file by adding an
+                   <code>authorized_google_users</code> section:</p>
+                <pre class="bg-light p-3 rounded"><code>authorized_google_users:
+  - "admin@university.edu"
+  - "ta1@university.edu"
+  - "ta2@university.edu"</code></pre>
+                <p class="mb-0">Users added through the configuration file will be automatically
+                   authorized when the server starts.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

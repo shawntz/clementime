@@ -1,0 +1,366 @@
+import Database from 'better-sqlite3';
+import { ScheduleSlot, Config } from '../types';
+import { format } from 'date-fns';
+import * as path from 'path';
+import * as fs from 'fs';
+
+export class DatabaseService {
+  private db: Database.Database;
+  private config: Config;
+
+  constructor(config: Config, dbPath?: string) {
+    this.config = config;
+
+    // Default to data/clementime.db in the project root
+    const databasePath = dbPath || path.join(process.cwd(), 'data', 'clementime.db');
+
+    // Ensure the data directory exists
+    const dataDir = path.dirname(databasePath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    this.db = new Database(databasePath);
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('foreign_keys = ON');
+
+    this.initializeSchema();
+  }
+
+  private initializeSchema(): void {
+    // Create tables for schedule data
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS schedules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        week_number INTEGER NOT NULL,
+        section_id TEXT NOT NULL,
+        student_name TEXT NOT NULL,
+        student_email TEXT NOT NULL,
+        student_slack_id TEXT,
+        ta_id TEXT NOT NULL,
+        ta_name TEXT NOT NULL,
+        ta_email TEXT NOT NULL,
+        ta_slack_id TEXT,
+        ta_google_email TEXT,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        location TEXT,
+        meet_link TEXT,
+        meet_space_name TEXT,
+        meet_code TEXT,
+        recording_url TEXT,
+        calendar_event_id TEXT,
+        calendar_link TEXT,
+        meeting_start_notified INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(week_number, section_id, student_email)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_schedules_week ON schedules(week_number);
+      CREATE INDEX IF NOT EXISTS idx_schedules_section ON schedules(section_id);
+      CREATE INDEX IF NOT EXISTS idx_schedules_student_email ON schedules(student_email);
+      CREATE INDEX IF NOT EXISTS idx_schedules_ta_email ON schedules(ta_email);
+      CREATE INDEX IF NOT EXISTS idx_schedules_start_time ON schedules(start_time);
+
+      -- Table for authenticated users
+      CREATE TABLE IF NOT EXISTS authorized_users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        google_email TEXT UNIQUE NOT NULL,
+        google_id TEXT UNIQUE,
+        name TEXT,
+        picture TEXT,
+        is_admin INTEGER DEFAULT 0,
+        last_login DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_auth_users_email ON authorized_users(google_email);
+
+      -- Table for session data (if needed for persistence)
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        user_email TEXT,
+        data TEXT,
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_email) REFERENCES authorized_users(google_email) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_email);
+      CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+      -- Table for workflow runs (audit trail)
+      CREATE TABLE IF NOT EXISTS workflow_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        start_date TEXT NOT NULL,
+        weeks INTEGER NOT NULL,
+        dry_run INTEGER DEFAULT 0,
+        status TEXT CHECK(status IN ('pending', 'running', 'completed', 'failed')) DEFAULT 'pending',
+        error_message TEXT,
+        slots_created INTEGER DEFAULT 0,
+        notifications_sent INTEGER DEFAULT 0,
+        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_workflow_runs_status ON workflow_runs(status);
+      CREATE INDEX IF NOT EXISTS idx_workflow_runs_started ON workflow_runs(started_at);
+
+      -- Trigger to update the updated_at timestamp
+      CREATE TRIGGER IF NOT EXISTS update_schedules_timestamp
+      AFTER UPDATE ON schedules
+      BEGIN
+        UPDATE schedules SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS update_auth_users_timestamp
+      AFTER UPDATE ON authorized_users
+      BEGIN
+        UPDATE authorized_users SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+      END;
+    `);
+  }
+
+  // Schedule-related methods
+  saveScheduleSlot(weekNumber: number, sectionId: string, slot: ScheduleSlot): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO schedules (
+        week_number, section_id, student_name, student_email, student_slack_id,
+        ta_id, ta_name, ta_email, ta_slack_id, ta_google_email,
+        start_time, end_time, location,
+        meet_link, meet_space_name, meet_code, recording_url,
+        calendar_event_id, calendar_link, meeting_start_notified
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      weekNumber,
+      sectionId,
+      slot.student.name,
+      slot.student.email,
+      slot.student.slack_id || null,
+      slot.ta.id,
+      slot.ta.name,
+      slot.ta.email,
+      slot.ta.slack_id,
+      slot.ta.google_email,
+      slot.start_time.toISOString(),
+      slot.end_time.toISOString(),
+      slot.location,
+      slot.meet_link || null,
+      slot.meet_space_name || null,
+      slot.meet_code || null,
+      slot.recording_url || null,
+      slot.calendar_event_id || null,
+      slot.calendar_link || null,
+      slot.meeting_start_notified ? 1 : 0
+    );
+  }
+
+  saveSchedules(schedules: Map<number, Map<string, ScheduleSlot[]>>): void {
+    const transaction = this.db.transaction(() => {
+      for (const [weekNum, weekSchedule] of schedules) {
+        for (const [sectionId, slots] of weekSchedule) {
+          for (const slot of slots) {
+            this.saveScheduleSlot(weekNum, sectionId, slot);
+          }
+        }
+      }
+    });
+
+    transaction();
+  }
+
+  loadSchedules(): Map<number, Map<string, ScheduleSlot[]>> {
+    const schedules = new Map<number, Map<string, ScheduleSlot[]>>();
+
+    const rows = this.db.prepare(`
+      SELECT * FROM schedules ORDER BY week_number, section_id, start_time
+    `).all();
+
+    for (const row of rows as any[]) {
+      const weekNum = row.week_number;
+      const sectionId = row.section_id;
+
+      if (!schedules.has(weekNum)) {
+        schedules.set(weekNum, new Map());
+      }
+
+      const weekSchedule = schedules.get(weekNum)!;
+      if (!weekSchedule.has(sectionId)) {
+        weekSchedule.set(sectionId, []);
+      }
+
+      const slot: ScheduleSlot = {
+        student: {
+          name: row.student_name,
+          email: row.student_email,
+          slack_id: row.student_slack_id
+        },
+        ta: {
+          id: row.ta_id,
+          name: row.ta_name,
+          email: row.ta_email,
+          slack_id: row.ta_slack_id,
+          google_email: row.ta_google_email
+        },
+        section_id: sectionId,
+        start_time: new Date(row.start_time),
+        end_time: new Date(row.end_time),
+        location: row.location,
+        meet_link: row.meet_link,
+        meet_space_name: row.meet_space_name,
+        meet_code: row.meet_code,
+        recording_url: row.recording_url,
+        calendar_event_id: row.calendar_event_id,
+        calendar_link: row.calendar_link,
+        meeting_start_notified: row.meeting_start_notified === 1
+      };
+
+      weekSchedule.get(sectionId)!.push(slot);
+    }
+
+    return schedules;
+  }
+
+  clearSchedules(): void {
+    this.db.prepare('DELETE FROM schedules').run();
+  }
+
+  getSchedulesByWeek(weekNumber: number): Map<string, ScheduleSlot[]> {
+    const weekSchedule = new Map<string, ScheduleSlot[]>();
+
+    const rows = this.db.prepare(`
+      SELECT * FROM schedules WHERE week_number = ? ORDER BY section_id, start_time
+    `).all(weekNumber);
+
+    for (const row of rows as any[]) {
+      const sectionId = row.section_id;
+
+      if (!weekSchedule.has(sectionId)) {
+        weekSchedule.set(sectionId, []);
+      }
+
+      const slot: ScheduleSlot = {
+        student: {
+          name: row.student_name,
+          email: row.student_email,
+          slack_id: row.student_slack_id
+        },
+        ta: {
+          id: row.ta_id,
+          name: row.ta_name,
+          email: row.ta_email,
+          slack_id: row.ta_slack_id,
+          google_email: row.ta_google_email
+        },
+        section_id: sectionId,
+        start_time: new Date(row.start_time),
+        end_time: new Date(row.end_time),
+        location: row.location,
+        meet_link: row.meet_link,
+        meet_space_name: row.meet_space_name,
+        meet_code: row.meet_code,
+        recording_url: row.recording_url,
+        calendar_event_id: row.calendar_event_id,
+        calendar_link: row.calendar_link,
+        meeting_start_notified: row.meeting_start_notified === 1
+      };
+
+      weekSchedule.get(sectionId)!.push(slot);
+    }
+
+    return weekSchedule;
+  }
+
+  // User authentication methods
+  addAuthorizedUser(email: string, googleId?: string, name?: string, picture?: string): void {
+    const stmt = this.db.prepare(`
+      INSERT OR IGNORE INTO authorized_users (google_email, google_id, name, picture)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    stmt.run(email, googleId || null, name || null, picture || null);
+  }
+
+  isUserAuthorized(email: string): boolean {
+    const row = this.db.prepare('SELECT 1 FROM authorized_users WHERE google_email = ?').get(email);
+    return !!row;
+  }
+
+  updateUserLogin(email: string, googleId?: string, name?: string, picture?: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE authorized_users
+      SET last_login = CURRENT_TIMESTAMP,
+          google_id = COALESCE(?, google_id),
+          name = COALESCE(?, name),
+          picture = COALESCE(?, picture)
+      WHERE google_email = ?
+    `);
+
+    stmt.run(googleId, name, picture, email);
+  }
+
+  getAuthorizedUsers(): any[] {
+    return this.db.prepare('SELECT * FROM authorized_users ORDER BY google_email').all();
+  }
+
+  removeAuthorizedUser(email: string): void {
+    this.db.prepare('DELETE FROM authorized_users WHERE google_email = ?').run(email);
+  }
+
+  // Workflow run tracking
+  startWorkflowRun(startDate: Date, weeks: number, dryRun: boolean): number {
+    const stmt = this.db.prepare(`
+      INSERT INTO workflow_runs (start_date, weeks, dry_run, status)
+      VALUES (?, ?, ?, 'running')
+    `);
+
+    const result = stmt.run(format(startDate, 'yyyy-MM-dd'), weeks, dryRun ? 1 : 0);
+    return result.lastInsertRowid as number;
+  }
+
+  completeWorkflowRun(runId: number, slotsCreated: number, notificationsSent: number): void {
+    const stmt = this.db.prepare(`
+      UPDATE workflow_runs
+      SET status = 'completed',
+          completed_at = CURRENT_TIMESTAMP,
+          slots_created = ?,
+          notifications_sent = ?
+      WHERE id = ?
+    `);
+
+    stmt.run(slotsCreated, notificationsSent, runId);
+  }
+
+  failWorkflowRun(runId: number, errorMessage: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE workflow_runs
+      SET status = 'failed',
+          completed_at = CURRENT_TIMESTAMP,
+          error_message = ?
+      WHERE id = ?
+    `);
+
+    stmt.run(errorMessage, runId);
+  }
+
+  getWorkflowRuns(limit: number = 50): any[] {
+    return this.db.prepare(`
+      SELECT * FROM workflow_runs
+      ORDER BY started_at DESC
+      LIMIT ?
+    `).all(limit);
+  }
+
+  // Clean up old sessions
+  cleanupExpiredSessions(): void {
+    this.db.prepare('DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP').run();
+  }
+
+  close(): void {
+    this.db.close();
+  }
+}
