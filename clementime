@@ -7,7 +7,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_NAME="clementime"
-DOCKER_IMAGE="clementime:latest"
+DOCKER_IMAGE="shawntz/clementime:latest"
 CONTAINER_NAME="clementime-scheduler"
 
 # Colors for output
@@ -124,12 +124,8 @@ start_service() {
     export DATA_PATH="$SCRIPT_DIR/data"
     export LOGS_PATH="$SCRIPT_DIR/logs"
 
-    print_status "Using local ClemenTime image..."
-    # Check if local image exists, build if not
-    if ! docker image inspect "$DOCKER_IMAGE" &> /dev/null; then
-        print_status "Building ClemenTime image..."
-        docker build -t "$DOCKER_IMAGE" .
-    fi
+    print_status "Pulling ClemenTime image from Docker Hub..."
+    docker pull "$DOCKER_IMAGE"
 
     print_status "Starting ClemenTime container..."
     docker-compose up -d
@@ -197,13 +193,23 @@ update_service() {
 
     check_docker
 
-    # Pull latest image
-    print_status "Using local ClemenTime image..."
-    # Check if local image exists, build if not
-    if ! docker image inspect "$DOCKER_IMAGE" &> /dev/null; then
-        print_status "Building ClemenTime image..."
-        docker build -t "$DOCKER_IMAGE" .
+    # Update the clementime script itself
+    print_status "Updating ClemenTime script..."
+    local script_url="https://raw.githubusercontent.com/shawntz/clementime/main/clementime"
+    local temp_script=$(mktemp)
+
+    if curl -fsSL "$script_url" -o "$temp_script"; then
+        chmod +x "$temp_script"
+        mv "$temp_script" "$0"
+        print_success "ClemenTime script updated!"
+    else
+        print_error "Failed to update script from GitHub"
+        rm -f "$temp_script"
     fi
+
+    # Pull latest image
+    print_status "Pulling ClemenTime image from Docker Hub..."
+    docker pull "$DOCKER_IMAGE"
 
     # Restart if running
     if docker ps -q -f name="$CONTAINER_NAME" | grep -q .; then
