@@ -61,6 +61,7 @@ const ConfigSchema = z.object({
     ta_summary_time: z.string(),
   }),
   admin_users: z.array(z.string()),
+  authorized_google_users: z.array(z.string()).optional(),
   weekly_forms: z.array(z.object({
     week: z.number(),
     google_form_url: z.string(),

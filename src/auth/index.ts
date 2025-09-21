@@ -29,24 +29,53 @@ export class AuthService {
   }
 
   private loadAuthorizedUsers(): void {
-    // Load from config's authorized_google_users if it exists
-    if ((this.config as any).authorized_google_users) {
-      const users = (this.config as any).authorized_google_users;
-      if (Array.isArray(users)) {
-        users.forEach((email: string) => {
-          this.authorizedEmails.add(email.toLowerCase());
-          // Add to database as well
-          this.db.addAuthorizedUser(email.toLowerCase());
-        });
-      }
-    }
+  console.log('🔍 Loading authorized users...');
 
-    // Also load from database
-    const dbUsers = this.db.getAuthorizedUsers();
-    dbUsers.forEach(user => {
-      this.authorizedEmails.add(user.google_email.toLowerCase());
-    });
+  const norm = (s: string) => s.trim().toLowerCase();
+
+  // ENV seed
+  const envUsers = (process.env.AUTHORIZED_GOOGLE_USERS ?? '')
+    .split(',')
+    .map(s => norm(s))
+    .filter(Boolean);
+
+  if (envUsers.length) {
+    console.log('ENV authorized users:', envUsers);
+    envUsers.forEach(e => { this.authorizedEmails.add(e); this.db.addAuthorizedUser(e); });
   }
+
+  // YAML / Config (support both snake_case and camelCase)
+  const cfgUsersSnake = (this.config as any).authorized_google_users as string[] | undefined;
+  const cfgUsersCamel = (this.config as any).authorizedGoogleUsers as string[] | undefined;
+  const cfgUsers = (cfgUsersSnake ?? cfgUsersCamel ?? []).map(norm).filter(Boolean);
+
+  if (cfgUsers.length) {
+    console.log('Config authorized users:', cfgUsers);
+    cfgUsers.forEach(e => { this.authorizedEmails.add(e); this.db.addAuthorizedUser(e); });
+  } else {
+    console.log('No authorized users found in config');
+  }
+
+  // DB (if synchronous)
+  try {
+    const dbUsers = this.db.getAuthorizedUsers?.() ?? [];
+    console.log('Users from database:', dbUsers);
+    dbUsers.forEach((u: any) => {
+      if (u?.google_email) this.authorizedEmails.add(norm(u.google_email));
+    });
+  } catch (e) {
+    console.warn('Skipping DB authorized users (error):', e);
+  }
+
+  const finalList = Array.from(this.authorizedEmails);
+  console.log('Final authorized emails:', finalList);
+
+  // Fail fast if you expect *someone* to be allowed
+  if (!finalList.length && process.env.FAIL_IF_NO_AUTHORIZED === '1') {
+    throw new Error('No authorized users loaded (ENV/config/DB all empty).');
+  }
+}
+
 
   private setupPassport(): void {
     const clientId = process.env.GOOGLE_MEET_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
