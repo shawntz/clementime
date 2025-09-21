@@ -5,6 +5,7 @@ course:
   name: "Statistics 101"
   term: "Fall 2024"
   total_students: 150
+  instructor: "Professor Smith"
 
 # Organization settings (optional)
 organization:
@@ -39,6 +40,11 @@ sections:
       - Monday
       - Wednesday
     students_csv: "data/students/section_01.csv"  # CSV with columns: name, email, slack_id
+    # Optional: Split students across multiple weeks for oral exams
+    student_split:
+      enabled: true  # Enable student splitting
+      split_percentage: 50  # 50% of students in first week, 50% in second week
+      weeks_between_splits: 2  # 2 weeks between splits (week 1&2, then week 3&4, etc.)
 
   # Example using inline students (good for small sections)
   - id: "section_02"
@@ -55,8 +61,14 @@ sections:
       - name: "Student Name 2"
         email: "student2@university.edu"
         slack_id: "U88888888"
+    # Optional: Different split configuration (60/40 split with 1 week between)
+    student_split:
+      enabled: true
+      split_percentage: 60  # 60% in first week, 40% in second week
+      weeks_between_splits: 1  # 1 week between splits (week 1, then week 2, etc.)
 
 google_meet:
+  calendar_invites_enabled: false  # Whether to create calendar invites with meeting links (default: false)
   recording_settings:
     auto_recording: true
     save_to_drive: true
@@ -77,6 +89,7 @@ notifications:
   include_location: true
   ta_summary_enabled: true
   ta_summary_time: "08:00"
+  student_notification_title: "Session for {name}" # Customizable title template
 
 # Slack IDs of teaching team admins who receive TA channel notifications
 admin_users:
@@ -93,6 +106,16 @@ weekly_forms:
     description: "Week 2 Grade Submission"
   # Add more weeks as needed
 
+# Recording configuration for TA sessions (optional)
+recording:
+  base_url: "https://stanford.zoom.us/rec/" # Base recording URL
+  ta_specific: true # Each TA gets unique recording links
+
+# Web UI Configuration (optional)
+# Customize the web interface appearance and branding
+web_ui:
+  navbar_title: "Session Scheduler" # Custom title for the navbar
+  server_base_url: "http://localhost:3000" # Base URL for the web server (change for deployment)
 
 # Slack Channel Configuration (optional)
 # Configure prefixes and suffixes for TA channel names
@@ -107,6 +130,7 @@ test_mode:
   redirect_to_slack_id: "U12345678"  # Your Slack ID for test messages
   fake_student_prefix: "Test Student"
   number_of_fake_students: 30
+  test_email: "test@university.edu" # Email for testing calendar invites
 
 # Dashboard Authentication (required for production)
 # Google email addresses authorized to access the web dashboard
