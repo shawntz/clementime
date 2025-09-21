@@ -1,6 +1,6 @@
 services:
   clementime:
-    image: shawntz/clementime:latest
+    image: shawnschwartz/clementime:latest
     container_name: clementime-scheduler
     command: ["npx", "tsx", "src/index.ts", "web"]
     ports:

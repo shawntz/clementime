@@ -11,6 +11,7 @@ FILES_TO_DOWNLOAD=(
   "docker-compose.yml"
   "config.example.yml"
   ".env.example"
+  "README.md"
 )
 
 echo "🍊 Installing ClemenTime..."
