@@ -22,7 +22,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@google-apps/meet": "^0.7.0",
     "@slack/bolt": "^3.15.0",
     "@slack/web-api": "^6.11.0",
     "@types/better-sqlite3": "^7.6.13",

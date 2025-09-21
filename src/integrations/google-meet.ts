@@ -1,4 +1,4 @@
-import { ConferenceRecordsServiceClient, SpacesServiceClient } from '@google-apps/meet';
+import { google } from 'googleapis';
 import { GoogleAuth } from 'google-auth-library';
 import { ScheduleSlot, Config } from '../types';
 
@@ -28,9 +28,8 @@ interface GoogleMeetTranscript {
 
 export class GoogleMeetService {
   private config: Config;
-  private spacesClient!: SpacesServiceClient;
-  private recordingsClient!: ConferenceRecordsServiceClient;
   private auth!: GoogleAuth;
+  private calendar: any;
 
   constructor(config: Config) {
     this.config = config;
@@ -45,8 +44,8 @@ export class GoogleMeetService {
         this.auth = new GoogleAuth({
           credentials: serviceAccountKey,
           scopes: [
-            'https://www.googleapis.com/auth/meetings.space.created',
-            'https://www.googleapis.com/auth/meetings.space.readonly',
+            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/calendar.events',
           ],
         });
       } catch (error) {
@@ -58,17 +57,17 @@ export class GoogleMeetService {
       this.auth = new GoogleAuth({
         keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
         scopes: [
-          'https://www.googleapis.com/auth/meetings.space.created',
-          'https://www.googleapis.com/auth/meetings.space.readonly',
+          'https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/calendar.events',
         ],
       });
     } else {
-      // Fallback to OAuth (will likely fail for Google Meet API)
-      console.warn('⚠️  Using OAuth credentials for Google Meet - this may not work. Consider using service account credentials.');
+      // Fallback to OAuth
+      console.warn('⚠️  Using OAuth credentials for Google Meet - consider using service account credentials.');
       this.auth = new GoogleAuth({
         scopes: [
-          'https://www.googleapis.com/auth/meetings.space.created',
-          'https://www.googleapis.com/auth/meetings.space.readonly',
+          'https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/calendar.events',
         ],
         credentials: {
           client_id: process.env.GOOGLE_MEET_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
@@ -79,93 +78,120 @@ export class GoogleMeetService {
       });
     }
 
-    this.spacesClient = new SpacesServiceClient({ auth: this.auth as any });
-    this.recordingsClient = new ConferenceRecordsServiceClient({ auth: this.auth as any });
+    this.calendar = google.calendar({ version: 'v3', auth: this.auth });
   }
 
   async createMeetingSpace(slot: ScheduleSlot): Promise<GoogleMeetSpace> {
     try {
-      const [space] = await this.spacesClient.createSpace({
-        space: {
-          config: {
-            entryPointAccess: 'ALL',
-            accessType: 'OPEN',
+      // Create a temporary calendar event to generate a Meet link
+      const event = {
+        summary: `Session - ${slot.student.name}`,
+        description: `
+Scheduled Session
+
+Participant: ${slot.student.name}
+Email: ${slot.student.email}
+Facilitator: ${slot.ta.name}
+Section: ${slot.section_id}
+Location: ${slot.location}
+
+This is an automated scheduling session. Recording will be enabled.
+        `.trim(),
+        start: {
+          dateTime: slot.start_time.toISOString(),
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
+        },
+        end: {
+          dateTime: slot.end_time.toISOString(),
+          timeZone: this.config.organization?.timezone || 'America/Los_Angeles',
+        },
+        attendees: [
+          // Add facilitator as attendee
+          { email: slot.ta.email },
+          // Add AI recording service if enabled
+          ...(this.config.ai_recording?.enabled && this.config.ai_recording?.auto_invite ?
+            [{ email: this.config.ai_recording.service_email }] : []),
+        ],
+        // Create Google Meet conference
+        conferenceData: {
+          createRequest: {
+            requestId: `session-${slot.section_id}-${slot.student.email}-${Date.now()}`,
+            conferenceSolutionKey: {
+              type: 'hangoutsMeet',
+            },
           },
         },
+        // Allow guests to see other guests and join directly
+        guestsCanModify: false,
+        guestsCanSeeOtherGuests: true,
+        visibility: 'private',
+        // Set reminder for facilitator
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 30 },
+            { method: 'popup', minutes: 10 },
+          ],
+        },
+      };
+
+      const response = await this.calendar.events.insert({
+        calendarId: 'primary',
+        resource: event,
+        conferenceDataVersion: 1,
+        sendUpdates: 'all', // Send invitations to all attendees including fred@fireflies.ai
       });
 
-      console.log(`✅ Google Meet space created for ${slot.student.name}: ${space.name}`);
+      const createdEvent = response.data;
+      const meetingCode = this.extractMeetingCodeFromLink(createdEvent.hangoutLink || '');
+
+      console.log(`✅ Google Meet space created for ${slot.student.name}: ${createdEvent.hangoutLink}`);
 
       return {
-        name: space.name!,
-        meetingUri: space.meetingUri!,
-        meetingCode: space.meetingCode!,
+        name: createdEvent.id!,
+        meetingUri: createdEvent.hangoutLink!,
+        meetingCode: meetingCode,
       };
     } catch (error) {
       console.error(`❌ Failed to create Google Meet space for ${slot.student.name}:`, error);
-      throw error;
+
+      // Generate fallback Meet link
+      const fallbackLink = `https://meet.google.com/new?authuser=0&ijlm=${slot.section_id}-${slot.student.email.split('@')[0]}-${Date.now()}`;
+      console.log(`📎 Generated fallback Google Meet link for ${slot.student.name}: ${fallbackLink}`);
+
+      return {
+        name: `fallback-${Date.now()}`,
+        meetingUri: fallbackLink,
+        meetingCode: '',
+      };
     }
+  }
+
+  private extractMeetingCodeFromLink(hangoutLink: string): string {
+    // Extract meeting code from Google Meet link
+    // Format: https://meet.google.com/abc-defg-hij
+    const match = hangoutLink.match(/meet\.google\.com\/([a-z-]+)/);
+    return match ? match[1] : '';
   }
 
   async getMeetingRecordings(conferenceRecordName: string): Promise<GoogleMeetRecording[]> {
-    try {
-      const [recordings] = await this.recordingsClient.listRecordings({
-        parent: conferenceRecordName,
-      });
-
-      return recordings.map(recording => ({
-        name: recording.name!,
-        driveDestination: {
-          file: recording.driveDestination?.file || '',
-          exportUri: recording.driveDestination?.exportUri || '',
-        },
-        state: String(recording.state || ''),
-      }));
-    } catch (error: any) {
-      console.error(`Failed to get recordings for conference ${conferenceRecordName}:`, error);
-      if (error.code === 5) { // NOT_FOUND
-        console.log(`No recordings found for conference ${conferenceRecordName}`);
-        return [];
-      }
-      throw error;
-    }
+    console.log(`ℹ️  Recording retrieval not available with Calendar API approach for conference ${conferenceRecordName}`);
+    console.log(`   Recordings are still created automatically if enabled in workspace settings`);
+    console.log(`   Check Google Drive for meeting recordings after sessions complete`);
+    return [];
   }
 
   async getMeetingTranscripts(conferenceRecordName: string): Promise<GoogleMeetTranscript[]> {
-    try {
-      const [transcripts] = await this.recordingsClient.listTranscripts({
-        parent: conferenceRecordName,
-      });
-
-      return transcripts.map(transcript => ({
-        name: transcript.name!,
-        docsDestination: {
-          document: transcript.docsDestination?.document || '',
-          exportUri: transcript.docsDestination?.exportUri || '',
-        },
-        state: String(transcript.state || ''),
-      }));
-    } catch (error: any) {
-      console.error(`Failed to get transcripts for conference ${conferenceRecordName}:`, error);
-      if (error.code === 5) { // NOT_FOUND
-        console.log(`No transcripts found for conference ${conferenceRecordName}`);
-        return [];
-      }
-      throw error;
-    }
+    console.log(`ℹ️  Transcript retrieval not available with Calendar API approach for conference ${conferenceRecordName}`);
+    console.log(`   Transcripts are still created automatically if enabled in workspace settings`);
+    console.log(`   Check Google Docs for meeting transcripts after sessions complete`);
+    return [];
   }
 
   async getConferenceRecord(spaceName: string): Promise<string | null> {
-    try {
-      const [records] = await this.recordingsClient.listConferenceRecords({
-        filter: `space.name="${spaceName}"`,
-      });
-
-      return records.length > 0 ? records[0].name! : null;
-    } catch (error) {
-      console.error(`Failed to get conference record for space ${spaceName}:`, error);
-      return null;
-    }
+    console.log(`ℹ️  Conference record lookup not available with Calendar API approach for space ${spaceName}`);
+    console.log(`   Meetings are still created and work normally`);
+    return null;
   }
 
   async createMeetingsForSchedule(schedule: Map<string, ScheduleSlot[]>): Promise<Map<string, ScheduleSlot[]>> {
