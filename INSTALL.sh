@@ -8,10 +8,14 @@ set -e
 REPO_URL="https://raw.githubusercontent.com/shawntz/clementime/main"
 FILES_TO_DOWNLOAD=(
   "clementime"
+  "Dockerfile"
+  "Dockerfile.gcloud"
   "docker-compose.yml"
   "config.example.yml"
   ".env.example"
   "README.md"
+  "gcloud-deploy.sh"
+  "gcloud-startup.sh"
 )
 
 echo "🍊 Installing ClemenTime..."
@@ -43,4 +47,3 @@ echo "3. Run: ./clementime start"
 echo ""
 echo "📚 For full documentation, visit:"
 echo "   https://github.com/shawntz/clementime"
-
