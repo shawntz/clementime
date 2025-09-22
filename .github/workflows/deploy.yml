@@ -17,6 +17,8 @@ jobs:
     name: 🏷️ Create Version Tag
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
     outputs:
       new_tag: ${{ steps.create_tag.outputs.new_tag }}
       tag_created: ${{ steps.create_tag.outputs.tag_created }}
