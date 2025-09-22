@@ -5,8 +5,7 @@
 set -e
 
 DOCKER_IMAGE="${DOCKER_IMAGE:-shawnschwartz/clementime}"
-# TAG="${TAG:-latest}"
-TAG="${gcloud}"
+TAG="${TAG:-gcloud-latest}"
 
 echo "🏗️ Building and pushing current version to Docker Hub..."
 echo "Image: $DOCKER_IMAGE:$TAG"
