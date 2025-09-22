@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { GoogleAuth } from 'google-auth-library';
+import { GoogleAuth, JWT } from 'google-auth-library';
 import { ScheduleSlot, Config } from '../types';
 import { format } from 'date-fns';
 
@@ -217,6 +217,15 @@ This is an automated scheduling session. Recording will be enabled.
 
   async createMeetingsForSchedule(schedule: Map<string, ScheduleSlot[]>): Promise<Map<string, ScheduleSlot[]>> {
     const updatedSchedule = new Map<string, ScheduleSlot[]>();
+
+    // Check if calendar invites are enabled (default: false)
+    const calendarInvitesEnabled = this.config.google_meet.calendar_invites_enabled === true;
+
+    if (!calendarInvitesEnabled) {
+      console.log('📅 Calendar invites disabled in configuration, skipping calendar event creation');
+      return schedule; // Return original schedule without calendar events
+    }
+
     const adminEmails = this.getAdminEmails();
 
     for (const [sectionId, slots] of schedule) {
@@ -296,20 +305,19 @@ This is an automated scheduling session. Recording will be enabled.
   async impersonateUser(userEmail: string): Promise<GoogleCalendarService> {
     if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
       const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-      const auth = new GoogleAuth({
-        credentials: serviceAccountKey,
+      const auth = new JWT({
+        email: serviceAccountKey.client_email,
+        key: serviceAccountKey.private_key,
         scopes: [
           'https://www.googleapis.com/auth/calendar',
           'https://www.googleapis.com/auth/calendar.events',
         ],
-        clientOptions: {
-          subject: userEmail, // Impersonate this user
-        },
+        subject: userEmail, // Impersonate this user
       });
 
       const newService = new GoogleCalendarService(this.config);
-      newService.auth = auth;
-      newService.calendar = google.calendar({ version: 'v3', auth: auth });
+      newService.auth = auth as any;
+      newService.calendar = google.calendar({ version: 'v3', auth: auth as any });
 
       return newService;
     }
