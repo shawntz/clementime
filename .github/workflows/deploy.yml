@@ -201,6 +201,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, docker, version]
     if: needs.version.outputs.tag_created == 'true'
+    permissions:
+      contents: write
 
     steps:
     - name: 📥 Checkout code
