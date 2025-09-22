@@ -148,7 +148,14 @@ export class OrchestrationService {
     for (const [sectionId, slots] of weekSchedule) {
       if (slots.length === 0) continue;
 
-      const taSlackId = slots[0]?.ta.slack_id;
+      let taSlackId = slots[0]?.ta.slack_id;
+
+      // In test mode, use the test Slack ID as fallback if TA doesn't have one
+      if (!taSlackId && this.config.test_mode?.enabled && this.config.test_mode.redirect_to_slack_id) {
+        taSlackId = this.config.test_mode.redirect_to_slack_id;
+        console.log(`    🧪 TEST MODE: Using test Slack ID for TA in section ${sectionId}`);
+      }
+
       if (!taSlackId) {
         console.warn(`    ⚠️  No Slack ID for TA in section ${sectionId}, skipping TA notifications`);
         continue;
@@ -297,5 +304,34 @@ export class OrchestrationService {
     // Save to database
     console.log('💾 Saving schedules to database...');
     this.db.saveSchedules(this.schedules);
+  }
+
+  updateRecordingUrl(sectionId: string, studentEmail: string, recordingUrl: string): void {
+    for (const [weekNum, weekSchedule] of this.schedules) {
+      const sectionSlots = weekSchedule.get(sectionId);
+      if (sectionSlots) {
+        const slot = sectionSlots.find(s => s.student.email === studentEmail);
+        if (slot) {
+          slot.recording_url = recordingUrl;
+          // Save updated schedules to database
+          this.db.saveSchedules(this.schedules);
+          console.log(`✅ Updated recording URL for ${studentEmail} in section ${sectionId}`);
+          return;
+        }
+      }
+    }
+    console.warn(`⚠️  Could not find slot for ${studentEmail} in section ${sectionId}`);
+  }
+
+  clearAllSchedules(): void {
+    console.log('🗑️ Clearing all schedules from orchestration service...');
+
+    // Clear in-memory schedules
+    this.schedules.clear();
+
+    // Clear schedules from database
+    this.db.clearSchedules();
+
+    console.log('✅ All schedules cleared successfully');
   }
 }
