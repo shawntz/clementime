@@ -134,6 +134,7 @@ jobs:
         tags: |
           type=ref,event=pr
           type=raw,value=${{ needs.version.outputs.new_tag }},enable=${{ needs.version.outputs.tag_created == 'true' }}
+          type=raw,value=latest,enable=${{ needs.version.outputs.tag_created == 'true' }}
 
     - name: 🏗️ Build and push Docker image
       id: docker-build
