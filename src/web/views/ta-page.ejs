@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= facilitatorLabel %> Schedule - Week <%= weekNumber %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+      defer
+    ></script>
+  </head>
+  <body class="bg-orange-50">
+    <%- include('partials/navbar') %>
+
+    <div class="container mx-auto p-6">
+      <!-- Header -->
+      <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-orange-800">
+              📋 <%= taInfo.name %> - Week <%= weekNumber %>
+            </h1>
+            <p class="text-gray-600 mt-2">
+              Session schedule for <%= config.course.name %> (<%= config.course.term %>)
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-500">Location</p>
+            <p class="font-semibold"><%= taInfo.location %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 text-orange-800">🔧 Quick Actions</h2>
+        <div class="flex flex-wrap gap-4">
+          <% if (weekForm) { %>
+          <a
+            href="<%= weekForm.google_form_url %>"
+            target="_blank"
+            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors duration-200 inline-flex items-center"
+          >
+            📝 Grade Week <%= weekNumber %>
+          </a>
+          <% } %>
+          <a
+            href="/recording"
+            class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors duration-200 inline-flex items-center"
+          >
+            🎥 Recording Center
+          </a>
+          <a
+            href="/schedules"
+            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 inline-flex items-center"
+          >
+            📅 Full Schedule
+          </a>
+        </div>
+      </div>
+
+      <!-- Schedule Overview -->
+      <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 text-orange-800">
+          📊 Week <%= weekNumber %> Overview
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-orange-800"><%= slots.length %></div>
+              <div class="text-sm text-gray-600">Total Sessions</div>
+            </div>
+          </div>
+          <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-orange-800">
+                <% if (slots.length > 0) { %>
+                  <%= new Date(slots[0].startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) %>
+                <% } else { %>
+                  No Sessions
+                <% } %>
+              </div>
+              <div class="text-sm text-gray-600">Session Date</div>
+            </div>
+          </div>
+          <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-orange-800">
+                <% if (slots.length > 0) { %>
+                  <%= slots.filter(slot => slot.recordingUrl).length %>/<%= slots.length %>
+                <% } else { %>
+                  0/0
+                <% } %>
+              </div>
+              <div class="text-sm text-gray-600">Recordings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sessions List -->
+      <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6">
+        <h2 class="text-xl font-semibold mb-4 text-orange-800">
+          🗓️ Session Schedule
+        </h2>
+
+        <% if (slots.length === 0) { %>
+        <div class="text-center py-8">
+          <div class="text-gray-400 text-4xl mb-4">📅</div>
+          <p class="text-gray-600">No sessions scheduled for this week.</p>
+        </div>
+        <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-orange-100">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-orange-800">Time</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-orange-800"><%= participantLabel %></th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-orange-800">Email</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-orange-800">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% slots.forEach((slot, index) => { %>
+              <tr class="<%= index % 2 === 0 ? 'bg-white' : 'bg-orange-25' %>">
+                <td class="px-4 py-3">
+                  <div class="font-semibold">
+                    <%= new Date(slot.startTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    }) %>
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    <%= new Date(slot.endTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    }) %>
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="font-semibold"><%= slot.studentName %></div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="text-sm text-gray-600"><%= slot.studentEmail %></div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-2">
+                    <% if (slot.meetLink) { %>
+                    <a
+                      href="<%= slot.meetLink %>"
+                      target="_blank"
+                      class="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
+                    >
+                      📹 Meet
+                    </a>
+                    <% } %>
+                    <% if (slot.recordingUrl) { %>
+                    <a
+                      href="<%= slot.recordingUrl %>"
+                      target="_blank"
+                      class="bg-purple-500 text-white px-3 py-1 rounded text-xs hover:bg-purple-600 transition-colors"
+                    >
+                      🎥 Recording
+                    </a>
+                    <% } else { %>
+                    <a
+                      href="/recording?student=<%= encodeURIComponent(slot.studentName) %>&section=<%= taInfo.id %>&ta=<%= encodeURIComponent(taInfo.name) %>"
+                      class="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600 transition-colors"
+                    >
+                      🎥 Record
+                    </a>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Back to Dashboard -->
+      <div class="mt-6 text-center">
+        <a
+          href="/"
+          class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors duration-200 inline-flex items-center"
+        >
+          ← Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </body>
+</html>
