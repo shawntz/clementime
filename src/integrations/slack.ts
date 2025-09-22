@@ -78,17 +78,21 @@ export class SlackNotificationService {
         ? `🧪 [TEST MODE - Originally for: ${slot.student.name}]\n`
         : '';
 
+      // Get customizable title template or use default
+      const titleTemplate = this.config.notifications.student_notification_title || 'Session for {name}';
+      const notificationTitle = titleTemplate.replace('{name}', slot.student.name);
+
       await this.client.chat.postMessage({
         channel: targetChannel,
-        text: `${testModePrefix}📚 Session Appointment - ${this.config.course.name}`,
+        text: `${testModePrefix}📚 ${notificationTitle}`,
         blocks: [
           {
             type: 'header',
             text: {
               type: 'plain_text',
               text: this.config.test_mode?.enabled
-                ? `🧪 TEST: Session for ${slot.student.name}`
-                : `📚 Session Appointment`,
+                ? `🧪 TEST: ${notificationTitle}`
+                : `📚 ${notificationTitle}`,
             },
           },
           {
@@ -335,50 +339,135 @@ export class SlackNotificationService {
   }
 
   async createFacilitatorChannel(taName: string, examDate: Date, weekNumber: number): Promise<string | null> {
-    // Build channel name with configurable prefix and suffix
-    const baseChannelName = `ta-${taName.toLowerCase().replace(/\s+/g, '-')}-week${weekNumber}-${format(examDate, 'MM-dd')}`;
+    // Get custom session name from config (remove {name} placeholder if present)
+    const customSessionName = this.config.notifications.student_notification_title
+      ? this.config.notifications.student_notification_title.replace(/ for \{name\}$/, '').replace(/\{name\}/, '').trim()
+      : 'Session';
 
-    let channelName = baseChannelName;
+    // Convert custom session name to channel-friendly format
+    const sessionSlug = customSessionName.toLowerCase().replace(/\s+/g, '-');
 
-    // Add prefix if configured (with automatic dash)
+    // Build new channel name format: prefix-{custom-session-name}-{facilitator-label}-first-last-week{x}-suffix
+    const facilitatorLabel = this.getFacilitatorLabel().toLowerCase();
+    const taSlug = taName.toLowerCase().replace(/\s+/g, '-');
+
+    let channelParts = [];
+
+    // Add prefix if configured
     if (this.config.slack_channels?.prefix) {
-      channelName = `${this.config.slack_channels.prefix}-${channelName}`;
+      channelParts.push(this.config.slack_channels.prefix);
     }
 
-    // Add suffix if configured (with automatic dash)
+    // Add custom session name (optional)
+    if (sessionSlug && sessionSlug !== 'session') {
+      channelParts.push(sessionSlug);
+    } else if (!sessionSlug || sessionSlug === 'session') {
+      // Only add 'session' if there's no custom session name or it's just 'session'
+      channelParts.push('session');
+    }
+
+    // Add facilitator label and name
+    channelParts.push(facilitatorLabel);
+    channelParts.push(taSlug);
+
+    // Add week number
+    channelParts.push(`week${weekNumber}`);
+
+    // Add suffix if configured
     if (this.config.slack_channels?.suffix) {
-      channelName = `${channelName}-${this.config.slack_channels.suffix}`;
+      channelParts.push(this.config.slack_channels.suffix);
     }
 
+    const channelNameBase = channelParts.join('-');
+
+    // Try to find existing channel first
     try {
-      const result = await this.client.conversations.create({
-        name: channelName,
-        is_private: true,
+      const channels = await this.client.conversations.list({
+        types: 'private_channel',
+        limit: 1000,
       });
 
-      const channelId = result.channel?.id;
-      if (!channelId) {
-        throw new Error('Failed to get channel ID');
-      }
+      if (channels.channels) {
+        // Look for existing channel with exact name or with suffix
+        const existingChannel = channels.channels.find(channel =>
+          channel.name === channelNameBase ||
+          (channel.name?.startsWith(channelNameBase + '-') && /^-\d+$/.test(channel.name.slice(channelNameBase.length)))
+        );
 
-      console.log(`✅ Created ${this.getFacilitatorLabel().toLowerCase()} channel: ${channelName} (${channelId})`);
-      return channelId;
+        if (existingChannel?.id) {
+          console.log(`✅ Found existing ${this.getFacilitatorLabel().toLowerCase()} channel: ${existingChannel.name} (${existingChannel.id})`);
+          return existingChannel.id;
+        }
+      }
     } catch (error) {
-      console.warn(`⚠️  Could not create ${this.getFacilitatorLabel().toLowerCase()} channel ${channelName} (likely already exists):`, error);
-      return null; // Return null instead of throwing, allowing workflow to continue
+      console.warn(`⚠️  Error searching for existing channels:`, error);
     }
+
+    // Try to create channel with incremental suffix if needed
+    let attemptCount = 0;
+    let channelName = channelNameBase;
+
+    while (attemptCount < 10) { // Limit attempts to prevent infinite loop
+      try {
+        const result = await this.client.conversations.create({
+          name: channelName,
+          is_private: true,
+        });
+
+        const channelId = result.channel?.id;
+        if (!channelId) {
+          throw new Error('Failed to get channel ID');
+        }
+
+        console.log(`✅ Created ${this.getFacilitatorLabel().toLowerCase()} channel: ${channelName} (${channelId})`);
+        return channelId;
+      } catch (error: any) {
+        // Check if error is due to channel name already taken
+        if (error?.data?.error === 'name_taken' || error?.message?.includes('name_taken')) {
+          attemptCount++;
+          channelName = `${channelNameBase}-${attemptCount}`;
+          console.log(`⚠️  Channel name taken, trying: ${channelName}`);
+        } else {
+          console.warn(`⚠️  Could not create ${this.getFacilitatorLabel().toLowerCase()} channel ${channelName}:`, error);
+          return null;
+        }
+      }
+    }
+
+    console.error(`❌ Failed to create channel after ${attemptCount} attempts`);
+    return null;
   }
 
   async inviteUsersToChannel(channelId: string, userIds: string[]): Promise<void> {
     try {
+      // First check who's already in the channel
+      const members = await this.client.conversations.members({
+        channel: channelId,
+      });
+
+      const existingMembers = new Set(members.members || []);
+      const usersToInvite = userIds.filter(userId => !existingMembers.has(userId));
+
+      if (usersToInvite.length === 0) {
+        console.log(`ℹ️  All users already in channel ${channelId}`);
+        return;
+      }
+
       await this.client.conversations.invite({
         channel: channelId,
-        users: userIds.join(','),
+        users: usersToInvite.join(','),
       });
-      console.log(`✅ Invited ${userIds.length} users to channel ${channelId}`);
-    } catch (error) {
-      console.error(`❌ Failed to invite users to channel ${channelId}:`, error);
-      throw error;
+      console.log(`✅ Invited ${usersToInvite.length} new users to channel ${channelId} (${userIds.length - usersToInvite.length} already members)`);
+    } catch (error: any) {
+      // Handle specific Slack errors
+      if (error?.data?.error === 'already_in_channel') {
+        console.log(`ℹ️  Users already in channel ${channelId}`);
+      } else if (error?.data?.error === 'cant_invite_self') {
+        console.log(`ℹ️  Bot can't invite itself to channel ${channelId}`);
+      } else {
+        console.error(`❌ Failed to invite users to channel ${channelId}:`, error);
+        throw error;
+      }
     }
   }
 
@@ -465,12 +554,17 @@ export class SlackNotificationService {
         const examDate = daySlots[0].start_time;
         const sortedSlots = daySlots.sort((a, b) => a.start_time.getTime() - b.start_time.getTime());
 
+        // Get custom session name for header
+        const customSessionName = this.config.notifications.student_notification_title
+          ? this.config.notifications.student_notification_title.replace(/ for \{name\}$/, '').replace(/\{name\}/, '').trim()
+          : 'Session';
+
         const blocks = [
           {
             type: 'header',
             text: {
               type: 'plain_text',
-              text: `📋 ${taName} - Session Schedule`,
+              text: `📋 ${taName} - ${customSessionName} Schedule`,
             },
           },
           {
@@ -505,8 +599,12 @@ export class SlackNotificationService {
         });
 
         // Add action buttons
-        const actionElements: any[] = [
-          {
+        const actionElements: any[] = [];
+
+        // Check if calendar invites are enabled to determine which button to show
+        if (this.config.google_meet?.calendar_invites_enabled !== false) {
+          // Calendar invites are enabled, show Meet link
+          actionElements.push({
             type: 'button',
             text: {
               type: 'plain_text',
@@ -515,8 +613,23 @@ export class SlackNotificationService {
             style: 'primary',
             url: recordingLink,
             action_id: 'start_recording',
-          },
-        ];
+          });
+        } else {
+          // Calendar invites are disabled, show web UI button to TA page
+          const serverBaseUrl = this.config.web_ui?.server_base_url || 'http://localhost:3000';
+          const taPageUrl = `${serverBaseUrl}/ta/${encodeURIComponent(taName.toLowerCase().replace(/\s+/g, '-'))}/week/${weekNumber}`;
+
+          actionElements.push({
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: '🌐 Go to TA Page',
+            },
+            style: 'primary',
+            url: taPageUrl,
+            action_id: 'open_ta_page',
+          });
+        }
 
         if (googleForm) {
           actionElements.push({
@@ -553,7 +666,15 @@ export class SlackNotificationService {
 
         // Send backup plain text links
         let backupText = `📎 *Backup Links (in case buttons don't work):*\n`;
-        backupText += `🎥 Recording Meet Link: ${recordingLink}\n`;
+
+        if (this.config.google_meet?.calendar_invites_enabled !== false) {
+          backupText += `🎥 Recording Meet Link: ${recordingLink}\n`;
+        } else {
+          const serverBaseUrl = this.config.web_ui?.server_base_url || 'http://localhost:3000';
+          const taPageUrl = `${serverBaseUrl}/ta/${encodeURIComponent(taName.toLowerCase().replace(/\s+/g, '-'))}/week/${weekNumber}`;
+          backupText += `🌐 TA Page: ${taPageUrl}\n`;
+        }
+
         if (googleForm) {
           backupText += `📝 Grade Form: ${googleForm.url}\n`;
         }
