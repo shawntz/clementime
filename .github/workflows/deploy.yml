@@ -257,7 +257,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ needs.version.outputs.new_tag }}
-        name: 🍊 ClemenTime ${{ needs.version.outputs.new_tag }}
+        name: ${{ needs.version.outputs.new_tag }}
         body_path: release_notes.md
         draft: false
         prerelease: false
