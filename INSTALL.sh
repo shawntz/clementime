@@ -8,8 +8,6 @@ set -e
 REPO_URL="https://raw.githubusercontent.com/shawntz/clementime/main"
 FILES_TO_DOWNLOAD=(
   "clementime"
-  "Dockerfile"
-  "Dockerfile.gcloud"
   "docker-compose.yml"
   "config.example.yml"
   ".env.example"

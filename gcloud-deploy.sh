@@ -31,40 +31,40 @@ echo ""
 
 # Function to print step headers
 print_step() {
-    echo -e "${CYAN}$1${NC}"
+  echo -e "${CYAN}$1${NC}"
 }
 
 # Function to print success messages
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+  echo -e "${GREEN}✅ $1${NC}"
 }
 
 # Function to print warnings
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+  echo -e "${YELLOW}⚠️  $1${NC}"
 }
 
 # Function to print errors
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+  echo -e "${RED}❌ $1${NC}"
 }
 
 # Function to check if command exists
 command_exists() {
-    command -v "$1" >/dev/null 2>&1
+  command -v "$1" >/dev/null 2>&1
 }
 
 # Check prerequisites
 print_step "📋 Checking prerequisites..."
 
 if ! command_exists gcloud; then
-    print_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
-    exit 1
+  print_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
+  exit 1
 fi
 
 if ! command_exists docker; then
-    print_error "Docker is not installed. Please install it from https://docs.docker.com/get-docker/"
-    exit 1
+  print_error "Docker is not installed. Please install it from https://docs.docker.com/get-docker/"
+  exit 1
 fi
 
 print_success "All prerequisites are satisfied"
@@ -73,9 +73,9 @@ print_success "All prerequisites are satisfied"
 print_step "🔐 Checking Google Cloud authentication..."
 
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
-    print_error "No active Google Cloud authentication found"
-    echo "Please run: gcloud auth login"
-    exit 1
+  print_error "No active Google Cloud authentication found"
+  echo "Please run: gcloud auth login"
+  exit 1
 fi
 
 ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
@@ -83,7 +83,7 @@ print_success "Authenticated as: $ACTIVE_ACCOUNT"
 
 # Set project
 print_step "📋 Setting project to: $PROJECT_ID"
-gcloud config set project "$PROJECT_ID" > /dev/null 2>&1
+gcloud config set project "$PROJECT_ID" >/dev/null 2>&1
 print_success "Project set to $PROJECT_ID"
 
 # Enable required APIs
@@ -97,9 +97,9 @@ print_success "Required APIs enabled"
 print_step "📦 Checking configuration files..."
 
 if [ ! -f "config.yml" ]; then
-    print_warning "config.yml not found in current directory"
-    echo "Creating sample config.yml file..."
-    cat > config.yml << 'EOF'
+  print_warning "config.yml not found in current directory"
+  echo "Creating sample config.yml file..."
+  cat >config.yml <<'EOF'
 # Sample ClemenTime Configuration
 course:
   name: "Psychology 10"
@@ -129,13 +129,13 @@ schedule:
 #   - "ta1@example.com"
 #   - "ta2@example.com"
 EOF
-    print_warning "Please edit config.yml with your actual configuration before proceeding"
+  print_warning "Please edit config.yml with your actual configuration before proceeding"
 fi
 
 if [ ! -f ".env" ]; then
-    print_warning ".env file not found in current directory"
-    echo "Creating sample .env file..."
-    cat > .env << 'EOF'
+  print_warning ".env file not found in current directory"
+  echo "Creating sample .env file..."
+  cat >.env <<'EOF'
 # ClemenTime Environment Variables
 # Copy this file and fill in your actual values
 
@@ -166,8 +166,8 @@ SCHEDULER_DATABASE_PATH=/tmp/data/clementime.db
 # Optional: Service Account (for Google APIs)
 # GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
 EOF
-    print_warning "Please edit .env with your actual configuration before deploying"
-    print_warning "Make sure to set proper OAuth callback URL for your domain"
+  print_warning "Please edit .env with your actual configuration before deploying"
+  print_warning "Make sure to set proper OAuth callback URL for your domain"
 fi
 
 # Prepare environment variables for Cloud Run
@@ -175,20 +175,20 @@ print_step "🔒 Preparing environment variables..."
 
 # Read .env file and create base64 encoded version
 if [ -f ".env" ]; then
-    ENV_BASE64=$(base64 -i .env)
-    print_success ".env file encoded"
+  ENV_BASE64=$(base64 -i .env)
+  print_success ".env file encoded"
 else
-    print_error ".env file is required for deployment"
-    exit 1
+  print_error ".env file is required for deployment"
+  exit 1
 fi
 
 # Read config.yml and create base64 encoded version
 if [ -f "config.yml" ]; then
-    CONFIG_BASE64=$(base64 -i config.yml)
-    print_success "config.yml encoded"
+  CONFIG_BASE64=$(base64 -i config.yml)
+  print_success "config.yml encoded"
 else
-    print_error "config.yml file is required for deployment"
-    exit 1
+  print_error "config.yml file is required for deployment"
+  exit 1
 fi
 
 # Deploy to Cloud Run
@@ -214,7 +214,6 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-env-vars="NODE_ENV=production" \
   --set-env-vars="ENV_BASE64=$ENV_BASE64" \
   --set-env-vars="CONFIG_BASE64=$CONFIG_BASE64" \
-  --set-env-vars="PORT=3000" \
   --set-env-vars="SESSION_STORE=sqlite" \
   --set-env-vars="DATABASE_PATH=/tmp/data/clementime.db" \
   --set-env-vars="SCHEDULER_DATABASE_PATH=/tmp/data/clementime.db" \
@@ -262,3 +261,4 @@ echo -e "${CYAN}🗑️  To delete the service:${NC}"
 echo "gcloud run services delete $SERVICE_NAME --region=$REGION"
 echo ""
 echo -e "${PURPLE}════════════════════════════════════════════════════════════════════${NC}"
+
