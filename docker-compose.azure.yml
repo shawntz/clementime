@@ -1,0 +1,54 @@
+services:
+  clementime:
+    image: shawnschwartz/clementime:latest
+    container_name: clementime-azure
+    ports:
+      - "3000:3000"
+    environment:
+      # Base64 encoded configuration (will be set via environment variables)
+      - CONFIG_BASE64=${CONFIG_BASE64}
+      - ENV_BASE64=${ENV_BASE64}
+
+      # Direct environment variables for Azure
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/app/data/clementime.db
+
+      # Azure-specific settings
+      - AZURE_DEPLOYMENT=true
+      - WEBSITES_PORT=3000
+      - WEBSITES_ENABLE_APP_SERVICE_STORAGE=false
+
+    volumes:
+      - clementime-data:/app/data
+      - clementime-logs:/app/logs
+
+    restart: unless-stopped
+
+    # Health check for Azure Container Instances
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits for Azure
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  clementime-data:
+    driver: local
+  clementime-logs:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

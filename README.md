@@ -14,6 +14,9 @@
 ```bash
 curl -fsSL https://raw.githubusercontent.com/shawntz/clementime/main/INSTALL.sh | bash
 
+# or install for Azure deployment in current directory
+# curl -fsSL https://raw.githubusercontent.com/shawntz/clementime/main/INSTALL-AZURE.sh -c | bash
+
 cd clementime
 cp .env.example .env  # edit .env with your credentials
 cp config.example.yml config.yml  # update for your needs
