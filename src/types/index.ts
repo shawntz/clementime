@@ -70,6 +70,7 @@ export interface Config {
   };
   web_ui?: {
     navbar_title?: string; // Custom title for the navbar header (e.g., "Session Scheduler")
+    server_base_url?: string; // Base URL for the server (e.g., "https://clementime.example.com")
   };
   scheduling: {
     exam_duration_minutes: number;
@@ -95,6 +96,7 @@ export interface Config {
     include_location: boolean;
     ta_summary_enabled: boolean;
     ta_summary_time: string;
+    student_notification_title?: string;
   };
   admin_users: string[]; // Slack IDs of teaching team admins
   weekly_forms?: WeeklyFormConfig[]; // Week-by-week Google Form links

@@ -502,7 +502,7 @@ export class SlackNotificationService {
   }
 
   getGoogleFormForWeek(weekNumber: number): { url: string; description: string } | null {
-    const form = this.config.weekly_forms.find(f => f.week === weekNumber);
+    const form = this.config.weekly_forms?.find(f => f.week === weekNumber);
     return form ? { url: form.google_form_url, description: form.description || `Week ${weekNumber} Form` } : null;
   }
 
