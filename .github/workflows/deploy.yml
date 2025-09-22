@@ -132,11 +132,8 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
-          type=ref,event=branch
           type=ref,event=pr
-          type=raw,value=latest,enable={{is_default_branch}}
           type=raw,value=${{ needs.version.outputs.new_tag }},enable=${{ needs.version.outputs.tag_created == 'true' }}
-          type=sha,prefix={{branch}}-
 
     - name: 🏗️ Build and push Docker image
       id: docker-build
