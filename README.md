@@ -1,7 +1,9 @@
 # 🍊 ClemenTime
+
 **Transform any scheduling workflow into a smart, automated system that integrates seamlessly with Slack + Google Meet.**
 
 ### 🌟 Example Use Cases
+
 | **Academia** | **Corporate** | **Sports & Community** |
 |--------------|---------------|------------------------|
 | 📚 Sessions | 💼 Client meetings | ⚽ Practice sessions |
@@ -27,6 +29,7 @@ cp config.example.yml config.yml  # update for your needs
 ### What You Get
 
 The install script downloads:
+
 - `clementime` - Management CLI script
 - `docker-compose.yml` - Docker orchestration
 - `config.example.yml` - Configuration template
@@ -35,26 +38,30 @@ The install script downloads:
 
 ### Docker
 
-https://hub.docker.com/repository/docker/shawnschwartz/clementime
+<https://hub.docker.com/r/shawnschwartz/clementime>
 
 ## Usage
 
 ### Start ClemenTime
+
 ```bash
 ./clementime start
 ```
 
 ### Stop ClemenTime
+
 ```bash
 ./clementime stop
 ```
 
 ### View Logs
+
 ```bash
 ./clementime logs
 ```
 
 ### Update to Latest Version
+
 ```bash
 ./clementime update
 ```
@@ -91,12 +98,12 @@ https://hub.docker.com/repository/docker/shawnschwartz/clementime
 ## Documentation
 
 Full documentation available at:
-https://github.com/shawntz/clementime
+<https://github.com/shawntz/clementime>
 
 ## Support
 
-- GitHub Issues: https://github.com/shawntz/clementime/issues
-- Documentation: https://github.com/shawntz/clementime/wiki
+- GitHub Issues: <https://github.com/shawntz/clementime/issues>
+- Documentation: <https://github.com/shawntz/clementime/wiki>
 
 ## License
 
