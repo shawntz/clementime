@@ -1,100 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Schedules - Clementime</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-orange-50">
-    <nav class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold">🍊 Session Scheduler</h1>
-                <a href="https://github.com/your-username/clementime" target="_blank" class="text-xs text-orange-100 hover:text-white transition-colors duration-200 flex items-center mt-1">
-                    🧡 Powered by clementime
-                </a>
-            </div>
-            <div class="space-x-4">
-                <a href="/" class="hover:text-orange-200 transition-colors duration-200">Dashboard</a>
-                <a href="/schedules" class="hover:text-orange-200 font-semibold transition-colors duration-200">Schedules</a>
-                <a href="/config" class="hover:text-orange-200 transition-colors duration-200">Config</a>
-            </div>
-        </div>
-    </nav>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  </head>
+  <body class="bg-orange-50">
+    <%- include('partials/navbar') %>
 
     <div class="container mx-auto p-6">
-        <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
+      <div
+        class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6"
+      >
+        <div class="flex justify-between items-start">
+          <div>
             <h2 class="text-2xl font-bold mb-4">📅 Session Schedules</h2>
+            <% if (user && user.role === 'ta') { %>
+            <p class="text-gray-600">Your assigned sections: <span class="font-semibold"><%= user.sections?.join(', ') %></span></p>
+            <% } else { %>
             <p class="text-gray-600">View and manage all scheduled sessions</p>
+            <% } %>
+          </div>
+
+          <!-- Admin Controls -->
+          <% if (hasSchedules && user && user.role === 'admin') { %>
+          <div class="flex space-x-2">
+            <button
+              onclick="clearAllSchedules()"
+              class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center space-x-2"
+              title="Clear all schedules from database"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              <span>Clear All</span>
+            </button>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (hasSchedules) { %>
+      <!-- Schedules with Week Tabs -->
+      <div class="bg-white rounded-lg shadow-lg border border-orange-100 overflow-hidden"
+           x-data="{ activeWeek: 1, activeSection: {} }">
+
+        <!-- Week Tabs -->
+        <div class="border-b border-orange-100">
+          <nav class="flex space-x-1 p-1 bg-orange-50" aria-label="Week Tabs">
+            <% schedules.forEach((weekData, index) => { %>
+            <button
+              @click="activeWeek = <%= weekData.week %>; activeSection = {}"
+              :class="activeWeek === <%= weekData.week %> ? 'bg-orange-500 text-white' : 'text-orange-700 hover:text-orange-900 hover:bg-orange-100'"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200"
+            >
+              📅 Week <%= weekData.week %>
+            </button>
+            <% }); %>
+          </nav>
         </div>
 
-        <% if (hasSchedules) { %>
-            <% schedules.forEach(weekData => { %>
-                <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
-                    <div class="bg-gradient-to-r from-orange-100 to-orange-50 rounded-lg p-4 mb-4">
-                        <h3 class="text-xl font-bold text-orange-800">📅 Week <%= weekData.week %></h3>
-                    </div>
+        <!-- Week Content -->
+        <% schedules.forEach(weekData => { %>
+        <div x-show="activeWeek === <%= weekData.week %>" class="p-6">
 
-                    <% weekData.sections.forEach(section => { %>
-                        <div class="mb-6">
-                            <div class="bg-orange-50 rounded-lg p-3 mb-3 border border-orange-200">
-                                <h4 class="font-semibold text-orange-800">
-                                    📚 Section <%= section.id %> - <%= section.name %>
-                                </h4>
-                                <p class="text-sm text-gray-600">📍 <%= section.location %> • <%= section.slots.length %> sessions</p>
-                            </div>
+          <!-- Week Header with Grading Button -->
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-orange-800">📅 Week <%= weekData.week %> Sessions</h3>
+            <%
+            // Find the grading form for this week
+            const weekForm = (typeof weeklyForms !== 'undefined' && weeklyForms) ?
+              weeklyForms.find(form => form.week === weekData.week) : null;
+            %>
+            <% if (weekForm) { %>
+            <a
+              href="<%= weekForm.google_form_url %>"
+              target="_blank"
+              class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center space-x-2"
+              title="<%= weekForm.description || 'Open grading form for Week ' + weekData.week %>"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Grade Week <%= weekData.week %></span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </a>
+            <% } %>
+          </div>
 
-                            <div class="space-y-3">
-                                <% section.slots.forEach(slot => { %>
-                                    <div class="border border-orange-200 rounded-lg p-4 bg-orange-25 hover:bg-orange-50 transition-colors duration-200">
-                                        <div class="flex justify-between items-center">
-                                            <div class="flex-1">
-                                                <div class="font-semibold text-orange-700">
-                                                    👤 <%= slot.student %>
-                                                </div>
-                                                <div class="text-sm text-gray-600 mt-1">
-                                                    🕒 <%= slot.startTime %> - <%= slot.endTime %>
-                                                </div>
-                                            </div>
-                                            <div class="flex space-x-2">
-                                                <% if (slot.hasZoom) { %>
-                                                    <a href="<%= slot.zoomLink %>"
-                                                       target="_blank"
-                                                       class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors duration-200">
-                                                        📹 Join Meet
-                                                    </a>
-                                                <% } else { %>
-                                                    <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm">
-                                                        No meeting link
-                                                    </span>
-                                                <% } %>
-                                                <% if (slot.hasRecording) { %>
-                                                    <a href="<%= slot.recordingUrl %>"
-                                                       target="_blank"
-                                                       class="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition-colors duration-200">
-                                                        🎥 Recording
-                                                    </a>
-                                                <% } %>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <% }); %>
-                            </div>
-                        </div>
-                    <% }); %>
-                </div>
-            <% }); %>
-        <% } else { %>
-            <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-12 text-center">
-                <div class="text-6xl mb-4">📋</div>
-                <h3 class="text-xl font-bold text-gray-700 mb-2">No Schedules Available</h3>
-                <p class="text-gray-600 mb-6">Generate schedules to see them here.</p>
-                <a href="/" class="inline-block bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors duration-200">
-                    ← Back to Dashboard
-                </a>
+          <!-- Section Tabs -->
+          <div class="mb-6">
+            <div class="border-b border-gray-200">
+              <nav class="flex space-x-1 mb-4" aria-label="Section Tabs">
+                <% weekData.sections.forEach((section, sectionIndex) => { %>
+                <button
+                  @click="activeSection[<%= weekData.week %>] = '<%= section.id %>'"
+                  :class="(activeSection[<%= weekData.week %>] === '<%= section.id %>' || (!activeSection[<%= weekData.week %>] && <%= sectionIndex %> === 0)) ?
+                    'border-orange-500 text-orange-600 bg-orange-50' :
+                    'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                  class="py-2 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
+                >
+                  📚 <%= section.name %>
+                  <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    <%= section.slots.length %>
+                  </span>
+                </button>
+                <% }); %>
+              </nav>
             </div>
-        <% } %>
+          </div>
+
+          <!-- Section Content -->
+          <% weekData.sections.forEach((section, sectionIndex) => { %>
+          <div x-show="(activeSection[<%= weekData.week %>] === '<%= section.id %>') || (!activeSection[<%= weekData.week %>] && <%= sectionIndex %> === 0)">
+
+            <!-- Section Header -->
+            <div class="bg-gradient-to-r from-orange-100 to-orange-50 rounded-lg p-4 mb-4 border border-orange-200">
+              <h4 class="text-lg font-semibold text-orange-800">
+                📚 Section <%= section.id %> - <%= section.name %>
+              </h4>
+              <p class="text-sm text-gray-600 mt-1">
+                📍 <%= section.location %> • <%= section.slots.length %> sessions
+              </p>
+            </div>
+
+            <!-- Sessions Grid -->
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <% section.slots.forEach(slot => { %>
+              <div class="border border-orange-200 rounded-lg p-4 bg-white hover:bg-orange-25 transition-colors duration-200 shadow-sm">
+                <div class="space-y-3">
+                  <!-- Student Info -->
+                  <div>
+                    <div class="font-semibold text-orange-700 text-lg">
+                      👤 <%= slot.student %>
+                    </div>
+                    <div class="text-sm text-gray-600 flex items-center mt-1">
+                      🕒 <%= slot.startTime %> - <%= slot.endTime %>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex flex-col space-y-2">
+                    <% if (slot.hasMeetLink) { %>
+                    <a
+                      href="<%= slot.meetLink %>"
+                      target="_blank"
+                      class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm text-center hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <span>📹</span>
+                      <span>Join Meet</span>
+                    </a>
+                    <% } else if (calendarInvitesEnabled) { %>
+                    <div class="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-sm text-center">
+                      No meeting link
+                    </div>
+                    <% } %>
+
+                    <% if (slot.hasRecording) { %>
+                    <a
+                      href="<%= slot.recordingUrl %>"
+                      target="_blank"
+                      class="bg-orange-600 text-white px-3 py-2 rounded-lg text-sm text-center hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <span>🎥</span>
+                      <span>Recording</span>
+                    </a>
+                    <% } else { %>
+                    <button
+                      class="recording-btn bg-green-500 text-white px-3 py-2 rounded-lg text-sm text-center hover:bg-green-600 transition-colors duration-200 flex items-center justify-center space-x-2"
+                      data-student="<%= slot.student %>"
+                      data-time="<%= slot.startTime %>"
+                      data-section="<%= section.id %>"
+                      data-ta="<%= section.name %>"
+                      title="Start recording for this session"
+                    >
+                      <span>🎙️</span>
+                      <span>Start Recording</span>
+                    </button>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              <% }); %>
+            </div>
+          </div>
+          <% }); %>
+
+        </div>
+        <% }); %>
+      </div>
+      <% } else { %>
+      <div
+        class="bg-white rounded-lg shadow-lg border border-orange-100 p-12 text-center"
+      >
+        <div class="text-6xl mb-4">📋</div>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">
+          No Schedules Available
+        </h3>
+        <p class="text-gray-600 mb-6">Generate schedules to see them here.</p>
+        <a
+          href="/"
+          class="inline-block bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors duration-200"
+        >
+          ← Back to Dashboard
+        </a>
+      </div>
+      <% } %>
     </div>
-</body>
+
+    <script>
+      function clearAllSchedules() {
+        if (confirm('⚠️ Are you sure you want to delete ALL schedules from the database?\n\nThis action cannot be undone and will remove:\n• All scheduled sessions\n• All calendar events\n• All meeting links\n\nType "DELETE" to confirm this action.')) {
+          const confirmation = prompt('Please type "DELETE" to confirm:');
+          if (confirmation === 'DELETE') {
+            fetch('/schedules/clear-all', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            .then(response => response.json())
+            .then(result => {
+              if (result.success) {
+                alert('✅ All schedules have been cleared from the database.');
+                window.location.reload();
+              } else {
+                alert('❌ Failed to clear schedules: ' + (result.error || 'Unknown error'));
+              }
+            })
+            .catch(error => {
+              alert('❌ Error clearing schedules: ' + error.message);
+            });
+          } else {
+            alert('❌ Confirmation failed. Schedules were not deleted.');
+          }
+        }
+      }
+
+      function startRecording(studentName, sessionTime, sectionId, taName) {
+        // Create URL with session parameters
+        const recordingUrl = '/recording?' +
+          'student=' + encodeURIComponent(studentName) +
+          '&time=' + encodeURIComponent(sessionTime) +
+          '&section=' + encodeURIComponent(sectionId) +
+          '&ta=' + encodeURIComponent(taName);
+
+        // Open recording page in new tab
+        window.open(recordingUrl, '_blank');
+      }
+
+      // Add event delegation for recording buttons
+      document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(e) {
+          if (e.target.closest('.recording-btn')) {
+            const btn = e.target.closest('.recording-btn');
+            const studentName = btn.dataset.student;
+            const sessionTime = btn.dataset.time;
+            const sectionId = btn.dataset.section;
+            const taName = btn.dataset.ta;
+
+            startRecording(studentName, sessionTime, sectionId, taName);
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
