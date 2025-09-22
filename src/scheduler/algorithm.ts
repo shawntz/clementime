@@ -66,6 +66,115 @@ export class SchedulingAlgorithm {
     return schedule;
   }
 
+  private scheduleSectionForWeek(section: Section, startDate: Date, weekNumber: number): ScheduleSlot[] {
+    // Check if student splitting is enabled for this section
+    if (!section.student_split?.enabled) {
+      // No splitting, but still add variation for time slots across weeks
+      const studentsWithVariation = this.addTimeSlotVariation([...section.students], weekNumber);
+      const tempSection: Section = {
+        ...section,
+        students: studentsWithVariation
+      };
+      return this.scheduleSection(tempSection, startDate);
+    }
+
+    const splitConfig = section.student_split;
+    // Use a deterministic shuffle based on section ID and CYCLE (not week) to ensure consistency within a split cycle
+    const splitCycleLength = splitConfig.weeks_between_splits * 2;
+    const cycleNumber = Math.floor(weekNumber / splitCycleLength);
+    const students = this.getDeterministicShuffledStudents(section.students, section.id, cycleNumber);
+
+    // Calculate which students should be scheduled in this week
+    const studentsForThisWeek = this.getStudentsForWeek(students, weekNumber, splitConfig);
+
+    if (studentsForThisWeek.length === 0) {
+      // No students to schedule for this week
+      return [];
+    }
+
+    // Add time slot variation to prevent students from always getting the same time
+    const studentsWithVariation = this.addTimeSlotVariation(studentsForThisWeek, weekNumber);
+
+    // Create a temporary section with only the students for this week
+    const tempSection: Section = {
+      ...section,
+      students: studentsWithVariation
+    };
+
+    return this.scheduleSection(tempSection, startDate);
+  }
+
+  private getDeterministicShuffledStudents(students: Student[], sectionId: string, weekNumber: number): Student[] {
+    // Create a deterministic shuffle based on section ID and week number
+    const seed = this.hashCode(sectionId) + weekNumber;
+    return this.seededShuffle([...students], seed);
+  }
+
+  private addTimeSlotVariation(students: Student[], weekNumber: number): Student[] {
+    // Rotate the student order based on week number to vary time slot assignments
+    const rotationOffset = weekNumber % students.length;
+    return this.rotateArray(students, rotationOffset);
+  }
+
+  private hashCode(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  private seededShuffle<T>(array: T[], seed: number): T[] {
+    const shuffled = [...array];
+    let currentSeed = seed;
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      // Simple linear congruential generator for deterministic randomness
+      currentSeed = (currentSeed * 1664525 + 1013904223) % Math.pow(2, 32);
+      const j = Math.floor((currentSeed / Math.pow(2, 32)) * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+  }
+
+  private getStudentsForWeek(students: Student[], weekNumber: number, splitConfig: NonNullable<Section['student_split']>): Student[] {
+    const totalStudents = students.length;
+    const weeksBetweenSplits = splitConfig.weeks_between_splits;
+
+    // Simple split: divide students in half
+    const middleIndex = Math.ceil(totalStudents / 2);
+
+    // Determine which split cycle we're in and which part of the cycle
+    const splitCycleLength = weeksBetweenSplits * 2;
+    const positionInCycle = weekNumber % splitCycleLength;
+
+    console.log(`🔍 Student Split Debug for Week ${weekNumber}:`);
+    console.log(`  Total students: ${totalStudents}`);
+    console.log(`  Middle index: ${middleIndex}`);
+    console.log(`  Position in cycle: ${positionInCycle}`);
+    console.log(`  Weeks between splits: ${weeksBetweenSplits}`);
+
+    if (positionInCycle < weeksBetweenSplits) {
+      // First part of the cycle - schedule first half of students
+      const selectedStudents = students.slice(0, middleIndex);
+      console.log(`  → Selecting FIRST half (${selectedStudents.length} students): ${selectedStudents.map(s => s.name).join(', ')}`);
+      return selectedStudents;
+    } else {
+      // Second part of the cycle - schedule second half of students
+      const selectedStudents = students.slice(middleIndex);
+      console.log(`  → Selecting SECOND half (${selectedStudents.length} students): ${selectedStudents.map(s => s.name).join(', ')}`);
+      return selectedStudents;
+    }
+  }
+
+  private rotateArray<T>(array: T[], positions: number): T[] {
+    const normalizedPositions = positions % array.length;
+    return [...array.slice(normalizedPositions), ...array.slice(0, normalizedPositions)];
+  }
+
   private findNextAvailableSlot(
     student: Student,
     ta: TA,
@@ -164,10 +273,21 @@ export class SchedulingAlgorithm {
     for (let week = 0; week < weeks; week++) {
       const weekStart = addDays(startDate, week * this.config.scheduling.schedule_frequency_weeks * 7);
       this.usedSlots.clear();
-      const weekSchedule = this.generateSchedule(weekStart);
+      const weekSchedule = this.generateScheduleForWeek(weekStart, week);
       allSchedules.set(week, weekSchedule);
     }
 
     return allSchedules;
+  }
+
+  generateScheduleForWeek(startDate: Date, weekNumber: number): Map<string, ScheduleSlot[]> {
+    const scheduleBySection = new Map<string, ScheduleSlot[]>();
+
+    for (const section of this.config.sections) {
+      const sectionSchedule = this.scheduleSectionForWeek(section, startDate, weekNumber);
+      scheduleBySection.set(section.id, sectionSchedule);
+    }
+
+    return scheduleBySection;
   }
 }
