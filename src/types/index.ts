@@ -1,3 +1,5 @@
+export type UserRole = 'admin' | 'ta';
+
 export interface Student {
   name: string;
   email: string;
@@ -22,6 +24,11 @@ export interface Section {
   preferred_days: string[];
   students: Student[];
   students_csv?: string;  // Optional path to CSV file
+  student_split?: {
+    enabled: boolean;  // Whether to split students across multiple weeks
+    split_percentage: number;  // Percentage of students for first week (0-100, default: 50)
+    weeks_between_splits: number;  // Number of weeks between each split (default: 2)
+  };
 }
 
 export interface ScheduleSlot {
@@ -51,6 +58,7 @@ export interface Config {
     name: string;
     term: string;
     total_students: number;
+    instructor?: string;
   };
   organization?: {
     domain: string; // e.g. "shawnschwartz.com" - used to identify internal users
@@ -59,6 +67,9 @@ export interface Config {
   terminology?: {
     facilitator_label?: string; // Custom label for "Facilitator" (e.g., "TA", "Instructor", "Coach")
     participant_label?: string; // Custom label for "Participant" (e.g., "Student", "Client", "Patient")
+  };
+  web_ui?: {
+    navbar_title?: string; // Custom title for the navbar header (e.g., "Session Scheduler")
   };
   scheduling: {
     exam_duration_minutes: number;
@@ -70,6 +81,7 @@ export interface Config {
   };
   sections: Section[];
   google_meet: {
+    calendar_invites_enabled?: boolean; // Whether to create calendar invites with meeting links (default: false)
     recording_settings: {
       auto_recording: boolean;
       save_to_drive: boolean;
@@ -85,7 +97,7 @@ export interface Config {
     ta_summary_time: string;
   };
   admin_users: string[]; // Slack IDs of teaching team admins
-  weekly_forms: WeeklyFormConfig[]; // Week-by-week Google Form links
+  weekly_forms?: WeeklyFormConfig[]; // Week-by-week Google Form links
   recording: {
     base_url: string; // Base recording URL template
     ta_specific: boolean; // Whether each TA gets unique recording links

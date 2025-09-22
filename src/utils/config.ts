@@ -21,6 +21,11 @@ const SectionSchema = z.object({
   preferred_days: z.array(z.string()),
   students: z.array(StudentSchema).optional(),
   students_csv: z.string().optional(), // Path to CSV file
+  student_split: z.object({
+    enabled: z.boolean(),
+    split_percentage: z.number().min(0).max(100),
+    weeks_between_splits: z.number().min(1),
+  }).optional(),
 });
 
 const ConfigSchema = z.object({
@@ -28,6 +33,7 @@ const ConfigSchema = z.object({
     name: z.string(),
     term: z.string(),
     total_students: z.number(),
+    instructor: z.string().optional(),
   }),
   organization: z.object({
     domain: z.string(),
@@ -40,6 +46,7 @@ const ConfigSchema = z.object({
   scheduling: z.object({
     exam_duration_minutes: z.number(),
     buffer_minutes: z.number(),
+    break_duration_minutes: z.number().optional(),
     start_time: z.string(),
     end_time: z.string(),
     excluded_days: z.array(z.string()),
@@ -47,6 +54,7 @@ const ConfigSchema = z.object({
   }),
   sections: z.array(SectionSchema),
   google_meet: z.object({
+    calendar_invites_enabled: z.boolean().optional(),
     recording_settings: z.object({
       auto_recording: z.boolean(),
       folder_id: z.string().optional(),
@@ -59,6 +67,7 @@ const ConfigSchema = z.object({
     include_location: z.boolean(),
     ta_summary_enabled: z.boolean(),
     ta_summary_time: z.string(),
+    student_notification_title: z.string().optional(),
   }),
   admin_users: z.array(z.string()),
   authorized_google_users: z.array(z.string()).optional(),
@@ -77,6 +86,10 @@ const ConfigSchema = z.object({
     fake_student_prefix: z.string().optional(),
     number_of_fake_students: z.number().optional(),
     test_email: z.string().email().optional(),
+  }).optional(),
+  web_ui: z.object({
+    navbar_title: z.string().optional(),
+    server_base_url: z.string().optional(),
   }).optional(),
 });
 

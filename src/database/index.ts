@@ -70,6 +70,9 @@ export class DatabaseService {
         google_id TEXT UNIQUE,
         name TEXT,
         picture TEXT,
+        access_token TEXT,
+        refresh_token TEXT,
+        token_expires_at DATETIME,
         is_admin INTEGER DEFAULT 0,
         last_login DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -121,6 +124,29 @@ export class DatabaseService {
         UPDATE authorized_users SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
       END;
     `);
+
+    // Add columns for Google OAuth tokens if they don't exist (migration)
+    this.migrateSchema();
+  }
+
+  private migrateSchema(): void {
+    try {
+      // Check if access_token column exists
+      const columns = this.db.prepare("PRAGMA table_info(authorized_users)").all() as any[];
+      const hasAccessToken = columns.some(col => col.name === 'access_token');
+
+      if (!hasAccessToken) {
+        console.log('🔄 Migrating database schema to add OAuth token columns...');
+        this.db.exec(`
+          ALTER TABLE authorized_users ADD COLUMN access_token TEXT;
+          ALTER TABLE authorized_users ADD COLUMN refresh_token TEXT;
+          ALTER TABLE authorized_users ADD COLUMN token_expires_at DATETIME;
+        `);
+        console.log('✅ Database schema migration completed');
+      }
+    } catch (error) {
+      console.error('❌ Database migration failed:', error);
+    }
   }
 
   // Schedule-related methods
@@ -229,6 +255,60 @@ export class DatabaseService {
     this.db.prepare('DELETE FROM schedules').run();
   }
 
+  saveRecordingMetadata(metadata: {
+    studentName: string;
+    studentEmail: string;
+    taName: string;
+    sessionDate: Date;
+    weekNumber: number;
+    sectionId: string;
+    fileName: string;
+    fileSize: number;
+    duration: number;
+    recordedAt: Date;
+    recordedBy: string;
+  }): void {
+    // Create recordings table if it doesn't exist
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS recordings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_name TEXT NOT NULL,
+        student_email TEXT NOT NULL,
+        ta_name TEXT,
+        session_date TEXT,
+        week_number INTEGER,
+        section_id TEXT,
+        file_name TEXT NOT NULL,
+        file_size INTEGER,
+        duration INTEGER,
+        recorded_at TEXT NOT NULL,
+        recorded_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const stmt = this.db.prepare(`
+      INSERT INTO recordings (
+        student_name, student_email, ta_name, session_date, week_number,
+        section_id, file_name, file_size, duration, recorded_at, recorded_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      metadata.studentName,
+      metadata.studentEmail,
+      metadata.taName,
+      metadata.sessionDate.toISOString(),
+      metadata.weekNumber,
+      metadata.sectionId,
+      metadata.fileName,
+      metadata.fileSize,
+      metadata.duration,
+      metadata.recordedAt.toISOString(),
+      metadata.recordedBy
+    );
+  }
+
   getSchedulesByWeek(weekNumber: number): Map<string, ScheduleSlot[]> {
     const weekSchedule = new Map<string, ScheduleSlot[]>();
 
@@ -290,17 +370,20 @@ export class DatabaseService {
     return !!row;
   }
 
-  updateUserLogin(email: string, googleId?: string, name?: string, picture?: string): void {
+  updateUserLogin(email: string, googleId?: string, name?: string, picture?: string, accessToken?: string, refreshToken?: string): void {
     const stmt = this.db.prepare(`
       UPDATE authorized_users
       SET last_login = CURRENT_TIMESTAMP,
           google_id = COALESCE(?, google_id),
           name = COALESCE(?, name),
-          picture = COALESCE(?, picture)
+          picture = COALESCE(?, picture),
+          access_token = COALESCE(?, access_token),
+          refresh_token = COALESCE(?, refresh_token),
+          token_expires_at = CASE WHEN ? IS NOT NULL THEN datetime('now', '+1 hour') ELSE token_expires_at END
       WHERE google_email = ?
     `);
 
-    stmt.run(googleId, name, picture, email);
+    stmt.run(googleId, name, picture, accessToken, refreshToken, accessToken, email);
   }
 
   getAuthorizedUsers(): any[] {
