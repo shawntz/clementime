@@ -11,8 +11,14 @@ export class DatabaseService {
   constructor(config: Config, dbPath?: string) {
     this.config = config;
 
-    // Default to data/clementime.db in the project root
-    const databasePath = dbPath || path.join(process.cwd(), 'data', 'clementime.db');
+    // Use environment variable if set (for Cloud Run), otherwise default to data/clementime.db
+    const databasePath = dbPath || process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'clementime.db');
+
+    // Debug logging for Cloud Run
+    console.log('🗄️ DatabaseService initialization:');
+    console.log(`  - dbPath parameter: ${dbPath}`);
+    console.log(`  - DATABASE_PATH env: ${process.env.DATABASE_PATH}`);
+    console.log(`  - Final database path: ${databasePath}`);
 
     // Ensure the data directory exists
     const dataDir = path.dirname(databasePath);

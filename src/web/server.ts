@@ -1,6 +1,7 @@
 import express from "express";
 import session from "express-session";
 import passport from "passport";
+import connectSqlite3 from "connect-sqlite3";
 import * as path from "path";
 import { Config, ScheduleSlot } from "../types";
 import { OrchestrationService } from "../services/orchestration";
@@ -80,28 +81,78 @@ export class WebServer {
   private setupMiddleware(): void {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
-    this.app.use(
-      express.static(path.join(__dirname, "..", "..", "src", "web", "public"))
-    );
+
+    // In production, static files are copied to /app/src/web/public by Dockerfile
+    const publicPath = process.env.NODE_ENV === "production"
+      ? path.join(process.cwd(), "src", "web", "public")
+      : path.join(__dirname, "..", "..", "src", "web", "public");
+    this.app.use(express.static(publicPath));
     this.app.set("view engine", "ejs");
-    this.app.set("views", path.join(__dirname, "views"));
+    // In production, views are copied to /app/src/web/views by Dockerfile
+    const viewsPath = process.env.NODE_ENV === "production"
+      ? path.join(process.cwd(), "src", "web", "views")
+      : path.join(__dirname, "views");
+    this.app.set("views", viewsPath);
+
+    console.log(`📁 Views directory: ${viewsPath}`);
 
     // Session configuration
     const sessionSecret =
       process.env.SESSION_SECRET ||
       "clementime-secret-" + Math.random().toString(36);
+
+    // Create SQLite session store (using separate database file to avoid schema conflicts)
+    const SQLiteStore = connectSqlite3(session);
+    const mainDbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'clementime.db');
+    const sessionDir = path.dirname(mainDbPath);
+    const sessionDbName = "sessions.db";
+    const sessionStore = new SQLiteStore({
+      db: sessionDbName,
+      table: "sessions",
+      dir: sessionDir,
+    });
+
+    console.log('🔐 Session store configuration:');
+    console.log(`  - Session database: ${sessionDbName}`);
+    console.log(`  - Session directory: ${sessionDir}`);
+    console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`  - COOKIE_SECURE: ${process.env.COOKIE_SECURE}`);
+
+    // Check if we should use memory-based sessions instead of SQLite
+    const useMemoryStore = process.env.SESSION_STORE === "memory";
+
+    // TEMPORARILY disable secure cookies to test if HTTPS is causing issues
+    const cookieSecure = false; // process.env.COOKIE_SECURE === "true" || process.env.NODE_ENV === "production";
+
+    console.log('🍪 Session cookie configuration:');
+    console.log(`  - secure: ${cookieSecure}`);
+    console.log(`  - httpOnly: true`);
+    console.log(`  - sameSite: "lax"`);
+    console.log(`  - maxAge: ${24 * 60 * 60 * 1000}ms (24 hours)`);
+    console.log(`  - using store: ${useMemoryStore ? 'MemoryStore' : 'SQLite'}`);
+
     this.app.use(
       session({
         secret: sessionSecret,
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: process.env.SESSION_SAVE_UNINITIALIZED === "true" ? true : false,
+        store: useMemoryStore ? undefined : (sessionStore as any),
         cookie: {
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
-          secure: process.env.NODE_ENV === "production",
+          secure: cookieSecure,
           httpOnly: true,
+          sameSite: "lax", // Use "lax" for OAuth compatibility (not "strict")
         },
       })
     );
+
+    // Add cookie debugging middleware
+    this.app.use((req, res, next) => {
+      console.log(`🍪 Request to ${req.url}:`);
+      console.log(`  - Cookies: ${JSON.stringify(req.headers.cookie || 'none')}`);
+      console.log(`  - Session ID: ${req.session?.id || 'no session'}`);
+      next();
+    });
 
     // Initialize Passport
     this.app.use(passport.initialize());
@@ -147,6 +198,9 @@ export class WebServer {
         failureMessage: true,
       }),
       (req, res) => {
+        console.log(`🎉 OAuth Success! User:`, req.user);
+        console.log(`🔐 Session ID:`, req.session?.id);
+        console.log(`✅ Is Authenticated:`, req.isAuthenticated());
         res.redirect("/");
       }
     );

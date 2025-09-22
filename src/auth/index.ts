@@ -260,7 +260,13 @@ export class AuthService {
 
   // Middleware for protecting routes
   requireAuth(req: Request, res: Response, next: NextFunction): void {
+    console.log(`🔒 Auth Check for ${req.url}:`);
+    console.log(`  - Session ID: ${req.session?.id}`);
+    console.log(`  - Is Authenticated: ${req.isAuthenticated()}`);
+    console.log(`  - User: ${req.user ? JSON.stringify(req.user) : 'null'}`);
+
     if (!req.isAuthenticated()) {
+      console.log(`❌ Auth failed for ${req.url} - redirecting to login`);
       const acceptHeader = req.headers.accept || "";
       if (req.xhr || acceptHeader.indexOf("json") > -1) {
         res.status(401).json({ error: "Authentication required" });
@@ -268,6 +274,7 @@ export class AuthService {
         res.redirect("/auth/login");
       }
     } else {
+      console.log(`✅ Auth success for ${req.url} - proceeding`);
       next();
     }
   }
