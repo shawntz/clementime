@@ -115,6 +115,11 @@ export interface Config {
     auto_invite: boolean; // Whether to automatically add to all meeting invites
     notification_enabled?: boolean; // Whether to notify when AI bot joins/leaves
   };
+  google_sheets?: {
+    spreadsheet_url?: string; // URL to the Google Sheets spreadsheet
+    tab_mappings?: { [sectionId: string]: string }; // Map section IDs to sheet tab names
+    auto_refresh_minutes?: number; // How often to refresh student data (default: 15)
+  };
   test_mode?: {
     enabled: boolean;
     redirect_to_slack_id: string;

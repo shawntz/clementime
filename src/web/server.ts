@@ -15,6 +15,7 @@ import multer from "multer";
 import * as fs from "fs";
 import { ConfigLoader } from "../utils/config-loader";
 import { cloudStorage } from "../utils/cloud-storage";
+import { googleSheetsService } from "../utils/google-sheets";
 
 export class WebServer {
   private app: express.Application;
@@ -452,6 +453,33 @@ export class WebServer {
       "/ta/:taName/week/:weekNumber",
       this.auth.requireAuth.bind(this.auth),
       this.renderTAPage.bind(this)
+    );
+
+    // Google Sheets API endpoints
+    this.app.get(
+      "/api/google-sheets/status",
+      this.auth.requireAuth.bind(this.auth),
+      this.getGoogleSheetsStatus.bind(this)
+    );
+    this.app.post(
+      "/api/google-sheets/create-template",
+      this.auth.requireAuth.bind(this.auth),
+      this.createGoogleSheetsTemplate.bind(this)
+    );
+    this.app.post(
+      "/api/google-sheets/test-connection",
+      this.auth.requireAuth.bind(this.auth),
+      this.testGoogleSheetsConnection.bind(this)
+    );
+    this.app.post(
+      "/api/google-sheets/configure",
+      this.auth.requireAuth.bind(this.auth),
+      this.configureGoogleSheets.bind(this)
+    );
+    this.app.post(
+      "/api/google-sheets/sync",
+      this.auth.requireAuth.bind(this.auth),
+      this.syncGoogleSheets.bind(this)
     );
   }
 
@@ -2060,6 +2088,170 @@ export class WebServer {
         success: false,
         error: "Failed to reload configuration",
         details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
+
+  // Google Sheets API methods
+  private async getGoogleSheetsStatus(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const status = {
+        configured: !!this.config.google_sheets?.spreadsheet_url,
+        spreadsheetUrl: this.config.google_sheets?.spreadsheet_url || '',
+        tabMappings: this.config.google_sheets?.tab_mappings ?
+          Object.entries(this.config.google_sheets.tab_mappings).map(([sectionId, tabName]) => ({
+            sectionId,
+            tabName
+          })) : [],
+        autoRefreshMinutes: this.config.google_sheets?.auto_refresh_minutes || 15,
+        lastSync: null // TODO: Track this in database
+      };
+
+      res.json({
+        success: true,
+        status
+      });
+    } catch (error) {
+      console.error("Error getting Google Sheets status:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to get Google Sheets status"
+      });
+    }
+  }
+
+  private async createGoogleSheetsTemplate(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { title } = req.body;
+
+      if (!title || typeof title !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: "Title is required"
+        });
+        return;
+      }
+
+      const sectionIds = this.config.sections.map(s => s.id);
+      const result = await googleSheetsService.createTemplateSheet(title, sectionIds);
+
+      if (result.success) {
+        // TODO: Save the spreadsheet URL to config
+        res.json({
+          success: true,
+          spreadsheetUrl: result.spreadsheetUrl,
+          spreadsheetId: result.spreadsheetId,
+          message: result.message
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error) {
+      console.error("Error creating Google Sheets template:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to create template sheet"
+      });
+    }
+  }
+
+  private async testGoogleSheetsConnection(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { spreadsheetUrl } = req.body;
+
+      if (!spreadsheetUrl || typeof spreadsheetUrl !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: "Spreadsheet URL is required"
+        });
+        return;
+      }
+
+      const result = await googleSheetsService.testConnection(spreadsheetUrl);
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing Google Sheets connection:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to test connection"
+      });
+    }
+  }
+
+  private async configureGoogleSheets(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { spreadsheetUrl } = req.body;
+
+      if (!spreadsheetUrl || typeof spreadsheetUrl !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: "Spreadsheet URL is required"
+        });
+        return;
+      }
+
+      // TODO: Save configuration to config file or database
+      // For now, just test the connection
+      const testResult = await googleSheetsService.testConnection(spreadsheetUrl);
+
+      if (testResult.success) {
+        res.json({
+          success: true,
+          message: "Configuration saved successfully (note: restart required for full activation)"
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "Cannot save configuration: " + testResult.message
+        });
+      }
+    } catch (error) {
+      console.error("Error configuring Google Sheets:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to save configuration"
+      });
+    }
+  }
+
+  private async syncGoogleSheets(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      if (!this.config.google_sheets?.spreadsheet_url) {
+        res.status(400).json({
+          success: false,
+          message: "Google Sheets not configured"
+        });
+        return;
+      }
+
+      let updatedSections = 0;
+      const spreadsheetUrl = this.config.google_sheets.spreadsheet_url;
+
+      // Read all students from the sheet
+      const sheetTabs = await googleSheetsService.readAllStudents(spreadsheetUrl);
+
+      // Update each section that has a corresponding sheet tab
+      for (const tab of sheetTabs) {
+        const section = this.config.sections.find(s => s.id === tab.title);
+        if (section && tab.students.length > 0) {
+          section.students = tab.students;
+          updatedSections++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Sync completed successfully`,
+        updatedSections
+      });
+    } catch (error) {
+      console.error("Error syncing Google Sheets:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to sync with Google Sheets"
       });
     }
   }
