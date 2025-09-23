@@ -470,6 +470,11 @@ export class DatabaseService {
     return this.db.prepare('SELECT * FROM authorized_users ORDER BY google_email').all();
   }
 
+  getUserByEmail(email: string): any | null {
+    const stmt = this.db.prepare('SELECT * FROM authorized_users WHERE google_email = ?');
+    return stmt.get(email) || null;
+  }
+
   removeAuthorizedUser(email: string): void {
     this.db.prepare('DELETE FROM authorized_users WHERE google_email = ?').run(email);
   }

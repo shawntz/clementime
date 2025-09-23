@@ -225,6 +225,24 @@ export class WebServer {
         console.log(`🎉 OAuth Success! User:`, req.user);
         console.log(`🔐 Session ID:`, req.session?.id);
         console.log(`✅ Is Authenticated:`, req.isAuthenticated());
+
+        // Store Google tokens in session for recording features
+        const user = req.user as any;
+        if (user && user.email) {
+          try {
+            const userRecord = this.db.getUserByEmail(user.email);
+            if (userRecord && userRecord.access_token && userRecord.refresh_token) {
+              (req.session as any).googleAccessToken = userRecord.access_token;
+              (req.session as any).googleRefreshToken = userRecord.refresh_token;
+              console.log(`🔑 Stored Google tokens in session for ${user.email}`);
+            } else {
+              console.log(`⚠️ No tokens found for user ${user.email} in database`);
+            }
+          } catch (error) {
+            console.error('Failed to store Google tokens in session:', error);
+          }
+        }
+
         res.redirect("/");
       }
     );
@@ -1064,29 +1082,30 @@ export class WebServer {
     console.log(`  - STORAGE_BUCKET: ${process.env.STORAGE_BUCKET || 'not set'}`);
     console.log(`  - Cloud Storage enabled: ${cloudStorage.isCloudStorageEnabled()}`);
 
-    // Reload config with Cloud Storage support if enabled
-    if (cloudStorage.isCloudStorageEnabled()) {
-      try {
-        console.log('☁️  Initializing with Cloud Storage support...');
-        const originalStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
-        console.log(`📊 Original student count: ${originalStudentCount}`);
+    // Always try to reload config to handle Cloud Storage CSV files
+    try {
+      console.log('🔄 Reloading configuration with Cloud Storage support...');
+      const originalStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
+      console.log(`📊 Original student count: ${originalStudentCount}`);
 
-        this.config = await this.configLoader.loadConfig();
-        const newStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
-        console.log(`📊 New student count after Cloud Storage reload: ${newStudentCount}`);
+      // Use configLoader which handles both local and cloud storage
+      this.config = await this.configLoader.loadConfig();
+      const newStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
+      console.log(`📊 New student count after reload: ${newStudentCount}`);
 
-        // Reinitialize services with updated config
-        this.auth = new AuthService(this.config, this.db);
-        this.orchestration = new OrchestrationService(this.config, this.db);
+      // Log section details for debugging
+      this.config.sections.forEach((section, index) => {
+        console.log(`📚 Section ${index + 1}: ${section.id} (${section.ta_name}) - ${section.students.length} students`);
+      });
 
-        console.log('✅ Cloud Storage initialization complete');
-      } catch (error) {
-        console.error('❌ Failed to initialize with Cloud Storage:', error);
-        console.error('❌ Error details:', error);
-      }
-    } else {
-      console.log('📁 Cloud Storage not enabled - using local config only');
-      console.log('💡 To enable Cloud Storage, set USE_CLOUD_STORAGE=true and STORAGE_BUCKET=your-bucket-name');
+      // Reinitialize services with updated config
+      this.auth = new AuthService(this.config, this.db);
+      this.orchestration = new OrchestrationService(this.config, this.db);
+
+      console.log('✅ Configuration reload complete');
+    } catch (error) {
+      console.error('❌ Failed to reload configuration:', error);
+      console.error('❌ Error details:', error);
     }
   }
 
