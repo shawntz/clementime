@@ -112,7 +112,32 @@ export function loadConfig(configPath?: string): Config {
           ? section.students_csv
           : path.join(path.dirname(filePath), section.students_csv);
 
-        const csvStudents = loadStudentsFromCSV(csvPath);
+        let csvStudents: any[] = [];
+
+        // Try Cloud Storage first if enabled
+        if (process.env.USE_CLOUD_STORAGE === 'true') {
+          console.log(`🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`);
+          try {
+            // Use gsutil command for immediate sync access
+            const { execSync } = require('child_process');
+            const bucketName = process.env.STORAGE_BUCKET;
+            const tempPath = `/tmp/${section.id}_students.csv`;
+
+            execSync(`gsutil cp "gs://${bucketName}/${section.students_csv}" "${tempPath}"`, {
+              stdio: 'pipe',
+              timeout: 10000
+            });
+
+            csvStudents = loadStudentsFromCSV(tempPath);
+            console.log(`✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`);
+          } catch (cloudError) {
+            console.warn(`⚠️  Cloud Storage CSV load failed, trying local: ${cloudError}`);
+            csvStudents = loadStudentsFromCSV(csvPath);
+          }
+        } else {
+          csvStudents = loadStudentsFromCSV(csvPath);
+        }
+
         console.log(`Loaded ${csvStudents.length} students from ${section.students_csv} for section ${section.id}`);
 
         // If both CSV and inline students exist, merge them (CSV takes priority)
