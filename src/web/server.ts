@@ -1931,9 +1931,9 @@ export class WebServer {
           // For CSV files, parse and return structured data
           if (filePath.toLowerCase().endsWith('.csv')) {
             const lines = text.split('\n');
-            const headers = lines[0]?.split(',').map(h => h.trim()) || [];
-            const rows = lines.slice(1).filter(line => line.trim()).map(line =>
-              line.split(',').map(cell => cell.trim())
+            const headers = lines[0]?.split(',').map((h: string) => h.trim()) || [];
+            const rows = lines.slice(1).filter((line: string) => line.trim()).map((line: string) =>
+              line.split(',').map((cell: string) => cell.trim())
             );
 
             res.json({
@@ -1978,9 +1978,9 @@ export class WebServer {
         // For CSV files, parse and return structured data
         if (filePath.toLowerCase().endsWith('.csv')) {
           const lines = content.split('\n');
-          const headers = lines[0]?.split(',').map(h => h.trim()) || [];
-          const rows = lines.slice(1).filter(line => line.trim()).map(line =>
-            line.split(',').map(cell => cell.trim())
+          const headers = lines[0]?.split(',').map((h: string) => h.trim()) || [];
+          const rows = lines.slice(1).filter((line: string) => line.trim()).map((line: string) =>
+            line.split(',').map((cell: string) => cell.trim())
           );
 
           res.json({
