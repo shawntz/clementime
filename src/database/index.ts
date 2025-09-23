@@ -51,7 +51,17 @@ export class DatabaseService {
       const cloudDbPath = 'data/clementime.db';
       if (await cloudStorage.fileExists(cloudDbPath)) {
         console.log('☁️  Downloading existing database from Cloud Storage...');
-        await cloudStorage.downloadToTemp(cloudDbPath);
+        const tempDbPath = await cloudStorage.downloadToTemp(cloudDbPath);
+
+        // Ensure the target directory exists
+        const dataDir = path.dirname(databasePath);
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+
+        // Copy the downloaded database to the actual database path
+        await fs.promises.copyFile(tempDbPath, databasePath);
+        console.log(`✅ Database restored from Cloud Storage to ${databasePath}`);
       } else {
         console.log('☁️  No existing database in Cloud Storage, creating new one...');
       }

@@ -2,6 +2,7 @@ import { Storage, Bucket, File } from '@google-cloud/storage';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { execSync } from 'child_process';
 
 export class CloudStorageService {
   private storage: Storage | null = null;
@@ -58,6 +59,62 @@ export class CloudStorageService {
     } else {
       // Read from local filesystem
       return fs.promises.readFile(filePath);
+    }
+  }
+
+  /**
+   * Synchronous read for cases where async isn't possible (like config loading)
+   * Uses a cached download approach for Cloud Storage
+   */
+  readFileSync(filePath: string): Buffer {
+    if (this.isCloudStorageEnabled() && this.bucket) {
+      // For Cloud Storage, we need to use cached downloads from temp directory
+      const cloudPath = this.toCloudPath(filePath);
+      const cacheKey = `sync_${cloudPath}`;
+
+      // Check if we have it cached
+      if (this.localCache.has(cacheKey)) {
+        const cachedPath = this.localCache.get(cacheKey)!;
+        if (fs.existsSync(cachedPath)) {
+          console.log(`📋 Reading cached file: ${cachedPath}`);
+          return fs.readFileSync(cachedPath);
+        }
+      }
+
+      // Try to download to temp and cache it
+      try {
+        const tempPath = path.join(os.tmpdir(), 'clementime-cache', cloudPath);
+        const tempDir = path.dirname(tempPath);
+
+        // Ensure temp directory exists
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+
+        // Synchronously download using child_process (blocking but necessary)
+        const bucketName = this.bucketName;
+
+        try {
+          // Use gsutil for sync download if available in container
+          execSync(`gsutil cp "gs://${bucketName}/${cloudPath}" "${tempPath}"`, {
+            stdio: 'pipe',
+            timeout: 30000
+          });
+
+          this.localCache.set(cacheKey, tempPath);
+          console.log(`☁️  Downloaded and cached: ${cloudPath} → ${tempPath}`);
+          return fs.readFileSync(tempPath);
+        } catch (gsutilError) {
+          console.warn(`⚠️  gsutil download failed, trying alternative...`);
+          throw new Error(`Could not download ${cloudPath} synchronously`);
+        }
+      } catch (error) {
+        console.error(`❌ Sync Cloud Storage read failed for ${filePath}:`, error);
+        throw error;
+      }
+    } else {
+      // Read from local filesystem
+      return fs.readFileSync(filePath);
     }
   }
 

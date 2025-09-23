@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 import { Student } from '../types';
+import { cloudStorage } from './cloud-storage';
 
 export interface CSVStudent {
   name: string;
@@ -16,19 +17,34 @@ export interface CSVStudent {
  */
 export function loadStudentsFromCSV(csvPath: string): Student[] {
   try {
-    // Resolve the path relative to the project root
-    const resolvedPath = path.isAbsolute(csvPath)
-      ? csvPath
-      : path.resolve(process.cwd(), csvPath);
+    let fileContent: string;
+    console.log(`🔍 Loading CSV: ${csvPath}`);
 
-    // Check if file exists
-    if (!fs.existsSync(resolvedPath)) {
-      console.warn(`CSV file not found: ${resolvedPath}`);
-      return [];
+    // If Cloud Storage is enabled, try to read from there first
+    if (cloudStorage.isCloudStorageEnabled()) {
+      try {
+        // Try to read synchronously from cloud storage
+        const buffer = cloudStorage.readFileSync(csvPath);
+        fileContent = buffer.toString('utf-8');
+        console.log(`✅ Successfully loaded CSV from Cloud Storage: ${csvPath}`);
+      } catch (cloudError) {
+        console.warn(`⚠️  Could not load CSV from Cloud Storage: ${csvPath}`, cloudError);
+        return [];
+      }
+    } else {
+      // Local filesystem only
+      const resolvedPath = path.isAbsolute(csvPath)
+        ? csvPath
+        : path.resolve(process.cwd(), csvPath);
+
+      if (!fs.existsSync(resolvedPath)) {
+        console.warn(`CSV file not found: ${resolvedPath}`);
+        return [];
+      }
+
+      fileContent = fs.readFileSync(resolvedPath, 'utf-8');
+      console.log(`📁 Loaded CSV from local filesystem: ${resolvedPath}`);
     }
-
-    // Read the CSV file
-    const fileContent = fs.readFileSync(resolvedPath, 'utf-8');
 
     // Parse CSV with headers
     const records = parse(fileContent, {
