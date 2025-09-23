@@ -104,6 +104,22 @@ export class WebServer {
 
     console.log(`📁 Views directory: ${viewsPath}`);
 
+    // Check if views directory exists
+    try {
+      const viewsDirExists = fs.existsSync(viewsPath);
+      console.log(`📁 Views directory exists: ${viewsDirExists}`);
+
+      if (viewsDirExists) {
+        const viewFiles = fs.readdirSync(viewsPath);
+        console.log(`📁 View files found: ${viewFiles.join(', ')}`);
+
+        const configViewExists = fs.existsSync(path.join(viewsPath, 'config.ejs'));
+        console.log(`📁 Config view exists: ${configViewExists}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error checking views directory: ${error}`);
+    }
+
     // Session configuration
     const sessionSecret =
       process.env.SESSION_SECRET ||
@@ -680,20 +696,50 @@ export class WebServer {
   }
 
   private renderConfig(_req: express.Request, res: express.Response): void {
-    console.log('🔍 Config debug - instructor field:', this.config.course.instructor);
+    try {
+      console.log('🔍 Config debug - instructor field:', this.config?.course?.instructor);
+      console.log('🔍 Config debug - sections count:', this.config?.sections?.length);
+      console.log('🔍 Config debug - config exists:', !!this.config);
 
-    // Calculate actual total students from all sections
-    const actualTotalStudents = this.config.sections.reduce((total, section) => {
-      return total + section.students.length;
-    }, 0);
+      // Safely handle config that might be missing or malformed
+      if (!this.config) {
+        console.error('❌ Config is null or undefined');
+        res.status(500).render("error", {
+          message: "Configuration not loaded"
+        });
+        return;
+      }
 
-    res.render("config", {
-      config: this.config,
-      actualTotalStudents,
-      facilitatorLabel: this.getFacilitatorLabel(),
-      participantLabel: this.getParticipantLabel(),
-      currentPage: "config",
-    });
+      if (!this.config.sections) {
+        console.error('❌ Config sections is null or undefined');
+        res.status(500).render("error", {
+          message: "Configuration sections not found"
+        });
+        return;
+      }
+
+      // Calculate actual total students from all sections
+      const actualTotalStudents = this.config.sections.reduce((total, section) => {
+        return total + (section?.students?.length || 0);
+      }, 0);
+
+      console.log('✅ Config render - total students:', actualTotalStudents);
+
+      res.render("config", {
+        config: this.config,
+        actualTotalStudents,
+        facilitatorLabel: this.getFacilitatorLabel(),
+        participantLabel: this.getParticipantLabel(),
+        currentPage: "config",
+      });
+    } catch (error) {
+      console.error('❌ Config render error:', error);
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).render("error", {
+        message: "Failed to load configuration page",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   }
 
   private saveConfig(_req: express.Request, res: express.Response): void {
