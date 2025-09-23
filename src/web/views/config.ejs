@@ -259,23 +259,23 @@
                 </div>
 
                 <!-- CSV Preview -->
-                <div x-show="!loadingPreview && !previewError && previewData?.type === 'csv'">
+                <div x-show="!loadingPreview && !previewError && previewData && previewData.type === 'csv'">
                   <div class="mb-4">
                     <p class="text-sm text-gray-600">
-                      Showing <span x-text="previewData.rows?.length || 0"></span> of <span x-text="previewData.totalRows || 0"></span> rows
+                      Showing <span x-text="(previewData && previewData.rows ? previewData.rows.length : 0)"></span> of <span x-text="(previewData && previewData.totalRows ? previewData.totalRows : 0)"></span> rows
                     </p>
                   </div>
                   <div class="overflow-x-auto">
                     <table class="min-w-full border border-gray-200 rounded-lg">
                       <thead class="bg-gray-50">
                         <tr>
-                          <template x-for="header in previewData.headers" :key="header">
+                          <template x-for="header in (previewData && previewData.headers ? previewData.headers : [])" :key="header">
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200" x-text="header"></th>
                           </template>
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="(row, index) in previewData.rows" :key="index">
+                        <template x-for="(row, index) in (previewData && previewData.rows ? previewData.rows : [])" :key="index">
                           <tr :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
                             <template x-for="(cell, cellIndex) in row" :key="cellIndex">
                               <td class="px-4 py-2 text-sm text-gray-900 border-r border-gray-200 last:border-r-0" x-text="cell"></td>
@@ -288,8 +288,8 @@
                 </div>
 
                 <!-- Text Preview -->
-                <div x-show="!loadingPreview && !previewError && previewData?.type === 'text'">
-                  <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-auto" x-text="previewData.content"></pre>
+                <div x-show="!loadingPreview && !previewError && previewData && previewData.type === 'text'">
+                  <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-auto" x-text="(previewData && previewData.content ? previewData.content : '')"></pre>
                 </div>
               </div>
             </div>
@@ -520,12 +520,16 @@
                                item.name.toLowerCase().endsWith('.yml') ||
                                item.name.toLowerCase().endsWith('.yaml');
 
+              // Escape paths for use in onclick attribute
+              const escapedPath = item.path.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+              const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
               return `<div style="margin-left: ${indent}px" class="py-1 text-sm flex items-center justify-between hover:bg-gray-100 rounded px-2">
                 <div>
                   <span>${icon} ${item.name}</span>
                   <span class="text-gray-500 ml-2">(${size})</span>
                 </div>
-                ${canPreview ? `<button onclick="previewFileHandler('${item.path}', '${item.name}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 rounded border border-blue-300 hover:border-blue-500">👁️ Preview</button>` : ''}
+                ${canPreview ? `<button onclick="previewFileHandler('${escapedPath}', '${escapedName}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 rounded border border-blue-300 hover:border-blue-500">👁️ Preview</button>` : ''}
               </div>`;
             }
           },
@@ -640,8 +644,18 @@
             this.previewData = null;
 
             try {
-              const response = await fetch(`/api/file-preview/${encodeURIComponent(filePath)}`);
+              // Build the URL with the file path
+              const url = `/api/file-preview/${encodeURIComponent(filePath)}`;
+              console.log('Preview URL:', url);
+
+              const response = await fetch(url);
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
               const data = await response.json();
+              console.log('Preview data received:', data);
 
               if (data.success) {
                 this.previewData = data;
@@ -649,6 +663,7 @@
                 this.previewError = data.error || 'Failed to load file preview';
               }
             } catch (error) {
+              console.error('Preview error:', error);
               this.previewError = 'Error loading file preview: ' + error.message;
             } finally {
               this.loadingPreview = false;

@@ -318,7 +318,7 @@ export class WebServer {
       this.getFileTree.bind(this)
     );
     this.app.get(
-      "/api/file-preview/:path",
+      "/api/file-preview/*",
       this.auth.requireAuth.bind(this.auth),
       this.previewFile.bind(this)
     );
@@ -1920,7 +1920,8 @@ export class WebServer {
   // File preview endpoint
   private async previewFile(req: express.Request, res: express.Response): Promise<void> {
     try {
-      const filePath = req.params.path;
+      // Get the file path from the URL (everything after /api/file-preview/)
+      const filePath = decodeURIComponent(req.params[0] || '');
 
       if (cloudStorage.isCloudStorageEnabled()) {
         // Preview from Cloud Storage
