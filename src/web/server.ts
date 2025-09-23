@@ -781,12 +781,12 @@ export class WebServer {
     schedules: Map<number, Map<string, ScheduleSlot[]>>
   ): any {
     let totalSlots = 0;
-    let totalStudents = new Set<string>();
-    let totalSections = new Set<string>();
+    const totalStudents = new Set<string>();
+    const totalSections = new Set<string>();
     let slotsWithMeetLinks = 0;
     let slotsWithRecordings = 0;
 
-    for (const [weekNum, weekSchedule] of schedules) {
+    for (const [, weekSchedule] of schedules) {
       for (const [sectionId, slots] of weekSchedule) {
         totalSections.add(sectionId);
 
@@ -1025,7 +1025,7 @@ export class WebServer {
         });
 
         // Create separate TA channel for each exam date
-        for (const [dateKey, dateSlots] of slotsByDate) {
+        for (const [, dateSlots] of slotsByDate) {
           await slackService.sendTADaySchedule(
             taSlackId,
             dateSlots,
@@ -1952,7 +1952,7 @@ export class WebServer {
               content: text.substring(0, 10000) // First 10KB
             });
           }
-        } catch (error) {
+        } catch {
           res.status(404).json({
             success: false,
             error: `File not found in Cloud Storage: ${filePath}`
@@ -1960,8 +1960,6 @@ export class WebServer {
         }
       } else {
         // Preview from local filesystem
-        const fs = require('fs');
-        const path = require('path');
         const dataPath = process.env.NODE_ENV === "production" ? "/app/data" : path.join(process.cwd(), "data");
         const fullPath = path.join(dataPath, filePath);
 
