@@ -1102,7 +1102,7 @@ export class WebServer {
       this.auth = new AuthService(this.config, this.db);
       this.orchestration = new OrchestrationService(this.config, this.db);
 
-      console.log('✅ Configuration reload complete');
+      console.log('✅ Configuration reload complete (with Cloud Storage support)');
     } catch (error) {
       console.error('❌ Failed to reload configuration:', error);
       console.error('❌ Error details:', error);
