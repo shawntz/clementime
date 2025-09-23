@@ -33,8 +33,9 @@ export class ConfigLoader {
     // Load base config from YAML
     const config = loadBaseConfig(configPath);
 
-    // Check for active section mappings in database
+    // Handle CSV loading from Cloud Storage for each section
     for (const section of config.sections) {
+      // First check for active database mappings (highest priority)
       const activeMapping = this.db.getActiveSectionMapping(section.id);
 
       if (activeMapping) {
@@ -49,12 +50,44 @@ export class ConfigLoader {
         } else {
           console.log(`  ⚠️  No valid students found in database mapping, using config.yml`);
         }
+      } else if (section.students_csv && cloudStorage.isCloudStorageEnabled()) {
+        // Load CSV from Cloud Storage if specified in config
+        console.log(`☁️  Loading CSV from Cloud Storage for ${section.id}: ${section.students_csv}`);
+
+        try {
+          const csvStudents = await this.loadStudentsFromCloudStorage(section.students_csv);
+          if (csvStudents.length > 0) {
+            console.log(`  ✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`);
+            section.students = csvStudents;
+            // Remove the CSV path as it's no longer needed
+            delete section.students_csv;
+          } else {
+            console.log(`  ⚠️  No students found in Cloud Storage CSV, keeping existing config`);
+          }
+        } catch (error) {
+          console.error(`  ❌ Failed to load CSV from Cloud Storage: ${error}`);
+          console.log(`  📋 Falling back to config.yml students`);
+        }
       } else {
-        console.log(`📋 Using config.yml mapping for section ${section.id} (${section.students.length} students)`);
+        console.log(`📋 Using config.yml mapping for section ${section.id} (${section.students?.length || 0} students)`);
       }
     }
 
     return config;
+  }
+
+  /**
+   * Load students from CSV file in Cloud Storage
+   */
+  private async loadStudentsFromCloudStorage(csvPath: string): Promise<any[]> {
+    try {
+      const csvContent = await cloudStorage.readFile(csvPath);
+      const csvText = csvContent.toString('utf-8');
+      return this.parseCSVContent(csvText);
+    } catch (error) {
+      console.error(`Failed to load CSV from Cloud Storage: ${csvPath}`, error);
+      return [];
+    }
   }
 
   /**
