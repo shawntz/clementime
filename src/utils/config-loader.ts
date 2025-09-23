@@ -1,7 +1,6 @@
 import { Config } from '../types';
 import { DatabaseService } from '../database';
-import { loadConfig as loadBaseConfig, loadConfigSync } from './config';
-import { loadStudentsFromCSV } from './csv-loader';
+import { loadConfig as loadBaseConfig } from './config';
 import { cloudStorage } from './cloud-storage';
 
 export class ConfigLoader {

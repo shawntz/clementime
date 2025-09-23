@@ -448,7 +448,7 @@ export class GoogleSheetsService {
 
       await drive.permissions.create({
         fileId: spreadsheetId,
-        resource: {
+        requestBody: {
           role: 'reader',
           type: 'anyone'
         }
