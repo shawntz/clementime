@@ -4,6 +4,7 @@ import * as yaml from 'js-yaml';
 import { Config } from '../types';
 import { z } from 'zod';
 import { loadStudentsFromCSV } from './csv-loader';
+import { googleSheetsService } from './google-sheets';
 import { execSync } from 'child_process';
 
 const StudentSchema = z.object({
@@ -21,7 +22,8 @@ const SectionSchema = z.object({
   location: z.string(),
   preferred_days: z.array(z.string()),
   students: z.array(StudentSchema).optional(),
-  students_csv: z.string().optional(), // Path to CSV file
+  students_csv: z.string().optional(), // Path to CSV file (legacy)
+  google_sheet_tab: z.string().optional(), // Google Sheets tab name for this section
   student_split: z.object({
     enabled: z.boolean(),
     split_percentage: z.number().min(0).max(100),
@@ -92,9 +94,15 @@ const ConfigSchema = z.object({
     navbar_title: z.string().optional(),
     server_base_url: z.string().optional(),
   }).optional(),
+  google_sheets: z.object({
+    spreadsheet_url: z.string().optional(),
+    tab_mappings: z.record(z.string()).optional(), // { "section_01": "Sheet Tab Name" }
+    auto_refresh_minutes: z.number().optional(),
+  }).optional(),
 });
 
-export function loadConfig(configPath?: string): Config {
+// Sync version for backward compatibility (doesn't support Google Sheets)
+export function loadConfigSync(configPath?: string): Config {
   const filePath = configPath || path.join(process.cwd(), 'config.yml');
 
   if (!fs.existsSync(filePath)) {
@@ -104,10 +112,147 @@ export function loadConfig(configPath?: string): Config {
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const rawConfig = yaml.load(fileContents) as any;
 
-  // Process sections to load students from CSV if specified
+  // Process sections synchronously (CSV and inline only)
   if (rawConfig.sections && Array.isArray(rawConfig.sections)) {
     rawConfig.sections = rawConfig.sections.map((section: any) => {
       if (section.students_csv) {
+        // Load students from CSV file
+        const csvPath = path.isAbsolute(section.students_csv)
+          ? section.students_csv
+          : path.join(path.dirname(filePath), section.students_csv);
+
+        let csvStudents: any[] = [];
+
+        // Try Cloud Storage first if enabled
+        if (process.env.USE_CLOUD_STORAGE === 'true') {
+          console.log(`🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`);
+          try {
+            // Use gsutil command for immediate sync access
+            const bucketName = process.env.STORAGE_BUCKET;
+            const tempPath = `/tmp/${section.id}_students.csv`;
+
+            execSync(`gsutil cp "gs://${bucketName}/${section.students_csv}" "${tempPath}"`, {
+              stdio: 'pipe',
+              timeout: 10000
+            });
+
+            csvStudents = loadStudentsFromCSV(tempPath);
+            console.log(`✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`);
+          } catch (cloudError) {
+            console.warn(`⚠️  Cloud Storage CSV load failed, trying local: ${cloudError}`);
+            csvStudents = loadStudentsFromCSV(csvPath);
+          }
+        } else {
+          csvStudents = loadStudentsFromCSV(csvPath);
+        }
+
+        console.log(`Loaded ${csvStudents.length} students from ${section.students_csv} for section ${section.id}`);
+
+        // If both CSV and inline students exist, merge them (CSV takes priority)
+        if (section.students && Array.isArray(section.students)) {
+          const existingStudentsMap = new Map(
+            section.students.map((s: any) => [s.email.toLowerCase(), s])
+          );
+
+          csvStudents.forEach(csvStudent => {
+            existingStudentsMap.set(csvStudent.email.toLowerCase(), csvStudent);
+          });
+
+          section.students = Array.from(existingStudentsMap.values());
+        } else {
+          section.students = csvStudents;
+        }
+
+        delete section.students_csv;
+      }
+
+      if (!section.students) {
+        section.students = [];
+      }
+
+      // Fill in optional fields from environment variables
+      if (process.env.FACILITATOR_MAPPING) {
+        try {
+          const mapping = JSON.parse(process.env.FACILITATOR_MAPPING);
+          if (mapping[section.id]) {
+            if (!section.ta_slack_id && mapping[section.id].slack_id) {
+              section.ta_slack_id = mapping[section.id].slack_id;
+            }
+            if (!section.google_email && mapping[section.id].google_email) {
+              section.google_email = mapping[section.id].google_email;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to parse FACILITATOR_MAPPING JSON:', e);
+        }
+      }
+
+      if (!section.ta_slack_id && process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`]) {
+        section.ta_slack_id = process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`];
+      }
+      if (!section.google_email && process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`]) {
+        section.google_email = process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`];
+      }
+
+      return section;
+    });
+  }
+
+  try {
+    return ConfigSchema.parse(rawConfig) as Config;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('Configuration validation failed:', error.errors);
+      throw new Error('Invalid configuration file');
+    }
+    throw error;
+  }
+}
+
+// Async version with Google Sheets support
+export async function loadConfig(configPath?: string): Promise<Config> {
+  const filePath = configPath || path.join(process.cwd(), 'config.yml');
+
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Configuration file not found at: ${filePath}`);
+  }
+
+  const fileContents = fs.readFileSync(filePath, 'utf8');
+  const rawConfig = yaml.load(fileContents) as any;
+
+  // Process sections to load students from CSV or Google Sheets
+  if (rawConfig.sections && Array.isArray(rawConfig.sections)) {
+    rawConfig.sections = await Promise.all(rawConfig.sections.map(async (section: any) => {
+      // Priority: Google Sheets > CSV > inline students
+
+      // Try Google Sheets first
+      if (rawConfig.google_sheets?.spreadsheet_url &&
+          (section.google_sheet_tab || rawConfig.google_sheets?.tab_mappings?.[section.id])) {
+
+        const tabName = section.google_sheet_tab || rawConfig.google_sheets.tab_mappings[section.id];
+
+        try {
+          console.log(`📊 Loading students from Google Sheets tab: ${tabName} for section ${section.id}`);
+          const sheetStudents = await googleSheetsService.readStudentsFromTab(
+            rawConfig.google_sheets.spreadsheet_url,
+            tabName
+          );
+
+          console.log(`✅ Loaded ${sheetStudents.length} students from Google Sheets for section ${section.id}`);
+          section.students = sheetStudents;
+
+          // Remove CSV path since we're using Google Sheets
+          delete section.students_csv;
+          delete section.google_sheet_tab;
+
+        } catch (error) {
+          console.error(`❌ Failed to load Google Sheets data for section ${section.id}:`, error);
+          console.log('⚠️ Falling back to CSV or inline students');
+        }
+      }
+
+      // Fallback to CSV if Google Sheets failed or not configured
+      else if (section.students_csv) {
         // Load students from CSV file
         const csvPath = path.isAbsolute(section.students_csv)
           ? section.students_csv
@@ -192,7 +337,7 @@ export function loadConfig(configPath?: string): Config {
       }
 
       return section;
-    });
+    }));
   }
 
   try {

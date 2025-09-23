@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as dotenv from 'dotenv';
-import { loadConfig } from '../utils/config';
+import { loadConfigSync as loadConfig } from '../utils/config';
 import { SlackNotificationService } from '../integrations/slack';
 import { TestDataGenerator } from '../utils/test-data-generator';
 import { SchedulingAlgorithm } from '../scheduler/algorithm';

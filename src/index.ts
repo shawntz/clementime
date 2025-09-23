@@ -2,7 +2,7 @@
 
 import * as dotenv from 'dotenv';
 import { Command } from 'commander';
-import { loadConfig } from './utils/config';
+import { loadConfigSync, loadConfig } from './utils/config';
 import { SchedulingAlgorithm } from './scheduler/algorithm';
 import { OrchestrationService } from './services/orchestration';
 import { WebServer } from './web/server';
@@ -25,7 +25,7 @@ program
   .option('-c, --config <path>', 'Configuration file path', 'config.yml')
   .action(async (options) => {
     try {
-      const config = loadConfig(options.config);
+      const config = loadConfigSync(options.config);
       const algorithm = new SchedulingAlgorithm(config);
 
       const startDate = new Date(options.startDate);
@@ -65,7 +65,7 @@ program
   .option('--dry-run', 'Simulate without creating meetings or sending notifications')
   .action(async (options) => {
     try {
-      const config = loadConfig(options.config);
+      const config = loadConfigSync(options.config);
       const orchestration = new OrchestrationService(config);
 
       const startDate = new Date(options.startDate);
@@ -93,7 +93,7 @@ program
   .option('-t, --type <type>', 'Notification type (student|ta|reminder)', 'student')
   .action(async (options) => {
     try {
-      loadConfig(options.config);
+      loadConfigSync(options.config);
 
       console.log(`📬 Sending ${options.type} notifications...`);
 
@@ -114,7 +114,7 @@ program
   .action(async (options) => {
     try {
       // Load basic config first for initialization
-      const initialConfig = loadConfig(options.config);
+      const initialConfig = loadConfigSync(options.config);
       const webServer = new WebServer(initialConfig);
 
       const port = parseInt(options.port || process.env.PORT || '3000');
@@ -136,7 +136,7 @@ program
   .option('-s, --service <service>', 'Service to authenticate (google|meet|slack)', 'google')
   .action(async (options) => {
     try {
-      const config = loadConfig();
+      const config = loadConfigSync();
 
       switch (options.service) {
         case 'google':
@@ -187,7 +187,7 @@ program
         }
       }
 
-      const config = loadConfig(options.config);
+      const config = loadConfigSync(options.config);
       console.log('✅ Configuration file is valid');
       console.log(`📊 Course: ${config.course.name} (${config.course.term})`);
       console.log(`👥 Students: ${config.course.total_students}`);

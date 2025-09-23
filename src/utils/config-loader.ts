@@ -1,6 +1,6 @@
 import { Config } from '../types';
 import { DatabaseService } from '../database';
-import { loadConfig as loadBaseConfig } from './config';
+import { loadConfig as loadBaseConfig, loadConfigSync } from './config';
 import { loadStudentsFromCSV } from './csv-loader';
 import { cloudStorage } from './cloud-storage';
 
@@ -31,7 +31,7 @@ export class ConfigLoader {
     }
 
     // Load base config from YAML
-    const config = loadBaseConfig(configPath);
+    const config = await loadBaseConfig(configPath);
 
     // Handle CSV loading from Cloud Storage for each section
     for (const section of config.sections) {
