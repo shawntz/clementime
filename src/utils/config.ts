@@ -4,6 +4,7 @@ import * as yaml from 'js-yaml';
 import { Config } from '../types';
 import { z } from 'zod';
 import { loadStudentsFromCSV } from './csv-loader';
+import { execSync } from 'child_process';
 
 const StudentSchema = z.object({
   name: z.string(),
@@ -119,7 +120,6 @@ export function loadConfig(configPath?: string): Config {
           console.log(`🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`);
           try {
             // Use gsutil command for immediate sync access
-            const { execSync } = require('child_process');
             const bucketName = process.env.STORAGE_BUCKET;
             const tempPath = `/tmp/${section.id}_students.csv`;
 
