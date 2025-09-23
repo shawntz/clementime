@@ -17,7 +17,7 @@
 curl -fsSL https://raw.githubusercontent.com/shawntz/clementime/main/INSTALL.sh | bash
 
 # or install for Azure deployment in current directory
-# curl -fsSL https://raw.githubusercontent.com/shawntz/clementime/main/INSTALL-AZURE.sh -c | bash
+# curl -fsSL https://raw.githubusercontent.com/shawntz/clementime/main/INSTALL-AZURE.sh -c . | bash
 
 cd clementime
 cp .env.example .env  # edit .env with your credentials
@@ -96,6 +96,36 @@ The install script downloads:
 - 2GB disk space
 
 ## Documentation
+
+## New Features
+
+### Configuration Panel Enhancements
+
+The enhanced configuration panel now includes:
+
+1. **File Tree Viewer**: View the complete directory structure of `/app/data` mount point
+   - Navigate to Config → File Tree tab
+   - Real-time refresh capability
+   - Shows file sizes and directory structure
+
+2. **Section-Student CSV Mappings**: Manage student lists dynamically
+   - Upload CSV files per section
+   - Override config.yml mappings on-the-fly
+   - Activate/deactivate different student lists
+   - CSV format: `name,email,slack_id` (header required)
+
+### How to Use Section Mappings
+
+1. Navigate to Config → Section Mappings tab
+2. Upload a CSV file with student data for a specific section
+3. Select which mapping to activate from the dropdown
+4. The system will use the active database mapping instead of config.yml
+
+### Priority Order for Student Lists
+
+1. Active database mapping (if set)
+2. CSV file specified in config.yml
+3. Inline students in config.yml
 
 Full documentation available at:
 <https://github.com/shawntz/clementime>

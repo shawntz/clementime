@@ -260,6 +260,13 @@ export class AuthService {
 
   // Middleware for protecting routes
   requireAuth(req: Request, res: Response, next: NextFunction): void {
+    // Bypass auth for local testing
+    if (process.env.BYPASS_AUTH === "true") {
+      console.log(`🚫 Auth bypassed for ${req.url} (BYPASS_AUTH=true)`);
+      next();
+      return;
+    }
+
     console.log(`🔒 Auth Check for ${req.url}:`);
     console.log(`  - Session ID: ${req.session?.id}`);
     console.log(`  - Is Authenticated: ${req.isAuthenticated()}`);
@@ -291,6 +298,13 @@ export class AuthService {
 
   // Middleware for admin-only routes
   requireAdmin(req: Request, res: Response, next: NextFunction): void {
+    // Bypass auth for local testing
+    if (process.env.BYPASS_AUTH === "true") {
+      console.log(`🚫 Admin auth bypassed for ${req.url} (BYPASS_AUTH=true)`);
+      next();
+      return;
+    }
+
     if (!req.isAuthenticated()) {
       const acceptHeader = req.headers.accept || "";
       if (req.xhr || acceptHeader.indexOf("json") > -1) {

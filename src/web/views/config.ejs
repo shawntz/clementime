@@ -529,7 +529,7 @@
                   <span>${icon} ${item.name}</span>
                   <span class="text-gray-500 ml-2">(${size})</span>
                 </div>
-                ${canPreview ? `<button onclick="previewFileHandler('${escapedPath}', '${escapedName}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 rounded border border-blue-300 hover:border-blue-500">👁️ Preview</button>` : ''}
+                ${canPreview ? `<button onclick="window.previewFileHandler('${escapedPath}', '${escapedName}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 rounded border border-blue-300 hover:border-blue-500">👁️ Preview</button>` : ''}
               </div>`;
             }
           },
@@ -700,6 +700,9 @@
           },
 
           init() {
+            // Store reference to this component globally for access from dynamically generated HTML
+            window.configPanelInstance = this;
+
             // Load file tree on first visit to file tree tab
             this.$watch('activeTab', (value) => {
               if (value === 'filetree' && this.fileTree.length === 0) {
@@ -712,9 +715,12 @@
 
       // Global function to handle file preview clicks from rendered HTML
       window.previewFileHandler = function(filePath, fileName) {
-        // Get the Alpine.js instance
-        const configPanelInstance = document.querySelector('[x-data]').__x.$data;
-        configPanelInstance.previewFile(filePath, fileName);
+        // Use the stored reference set during init()
+        if (window.configPanelInstance && window.configPanelInstance.previewFile) {
+          window.configPanelInstance.previewFile(filePath, fileName);
+        } else {
+          console.error('Alpine component not initialized yet. Please try again.');
+        }
       };
     </script>
   </body>
