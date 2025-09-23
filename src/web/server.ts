@@ -317,6 +317,16 @@ export class WebServer {
       this.auth.requireAuth.bind(this.auth),
       this.getFileTree.bind(this)
     );
+    this.app.get(
+      "/api/file-preview/:path",
+      this.auth.requireAuth.bind(this.auth),
+      this.previewFile.bind(this)
+    );
+    this.app.post(
+      "/api/config/reload",
+      this.auth.requireAdmin.bind(this.auth),
+      this.reloadConfig.bind(this)
+    );
 
     // Section mapping APIs
     this.app.post(
@@ -1048,11 +1058,22 @@ export class WebServer {
   }
 
   async initialize(): Promise<void> {
+    // Debug Cloud Storage configuration
+    console.log('🔍 Checking Cloud Storage configuration...');
+    console.log(`  - USE_CLOUD_STORAGE: ${process.env.USE_CLOUD_STORAGE}`);
+    console.log(`  - STORAGE_BUCKET: ${process.env.STORAGE_BUCKET || 'not set'}`);
+    console.log(`  - Cloud Storage enabled: ${cloudStorage.isCloudStorageEnabled()}`);
+
     // Reload config with Cloud Storage support if enabled
     if (cloudStorage.isCloudStorageEnabled()) {
       try {
         console.log('☁️  Initializing with Cloud Storage support...');
+        const originalStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
+        console.log(`📊 Original student count: ${originalStudentCount}`);
+
         this.config = await this.configLoader.loadConfig();
+        const newStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
+        console.log(`📊 New student count after Cloud Storage reload: ${newStudentCount}`);
 
         // Reinitialize services with updated config
         this.auth = new AuthService(this.config, this.db);
@@ -1061,7 +1082,11 @@ export class WebServer {
         console.log('✅ Cloud Storage initialization complete');
       } catch (error) {
         console.error('❌ Failed to initialize with Cloud Storage:', error);
+        console.error('❌ Error details:', error);
       }
+    } else {
+      console.log('📁 Cloud Storage not enabled - using local config only');
+      console.log('💡 To enable Cloud Storage, set USE_CLOUD_STORAGE=true and STORAGE_BUCKET=your-bucket-name');
     }
   }
 
@@ -1888,6 +1913,135 @@ export class WebServer {
       res.status(500).json({
         success: false,
         error: "Failed to delete section mapping"
+      });
+    }
+  }
+
+  // File preview endpoint
+  private async previewFile(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const filePath = req.params.path;
+
+      if (cloudStorage.isCloudStorageEnabled()) {
+        // Preview from Cloud Storage
+        try {
+          const content = await cloudStorage.readFile(filePath);
+          const text = content.toString('utf-8');
+
+          // For CSV files, parse and return structured data
+          if (filePath.toLowerCase().endsWith('.csv')) {
+            const lines = text.split('\n');
+            const headers = lines[0]?.split(',').map(h => h.trim()) || [];
+            const rows = lines.slice(1).filter(line => line.trim()).map(line =>
+              line.split(',').map(cell => cell.trim())
+            );
+
+            res.json({
+              success: true,
+              type: 'csv',
+              headers,
+              rows: rows.slice(0, 50), // Limit to first 50 rows for preview
+              totalRows: rows.length,
+              content: text.substring(0, 10000) // First 10KB for text preview
+            });
+          } else {
+            // For other files, return text content
+            res.json({
+              success: true,
+              type: 'text',
+              content: text.substring(0, 10000) // First 10KB
+            });
+          }
+        } catch (error) {
+          res.status(404).json({
+            success: false,
+            error: `File not found in Cloud Storage: ${filePath}`
+          });
+        }
+      } else {
+        // Preview from local filesystem
+        const fs = require('fs');
+        const path = require('path');
+        const dataPath = process.env.NODE_ENV === "production" ? "/app/data" : path.join(process.cwd(), "data");
+        const fullPath = path.join(dataPath, filePath);
+
+        if (!fs.existsSync(fullPath)) {
+          res.status(404).json({
+            success: false,
+            error: `File not found: ${filePath}`
+          });
+          return;
+        }
+
+        const content = fs.readFileSync(fullPath, 'utf-8');
+
+        // For CSV files, parse and return structured data
+        if (filePath.toLowerCase().endsWith('.csv')) {
+          const lines = content.split('\n');
+          const headers = lines[0]?.split(',').map(h => h.trim()) || [];
+          const rows = lines.slice(1).filter(line => line.trim()).map(line =>
+            line.split(',').map(cell => cell.trim())
+          );
+
+          res.json({
+            success: true,
+            type: 'csv',
+            headers,
+            rows: rows.slice(0, 50), // Limit to first 50 rows for preview
+            totalRows: rows.length,
+            content: content.substring(0, 10000) // First 10KB for text preview
+          });
+        } else {
+          // For other files, return text content
+          res.json({
+            success: true,
+            type: 'text',
+            content: content.substring(0, 10000) // First 10KB
+          });
+        }
+      }
+    } catch (error) {
+      console.error("File preview error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to preview file",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
+
+  // Config reload endpoint
+  private async reloadConfig(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      console.log('🔄 Admin requested config reload');
+
+      // Reload config using ConfigLoader (supports Cloud Storage)
+      const newConfig = await this.configLoader.loadConfig();
+
+      // Update the server's config
+      this.config = newConfig;
+
+      // Reinitialize services with updated config
+      this.auth = new AuthService(this.config, this.db);
+      this.orchestration = new OrchestrationService(this.config, this.db);
+
+      console.log('✅ Config reloaded successfully');
+
+      // Return summary of loaded config
+      const summary = await this.configLoader.getConfigSummary();
+
+      res.json({
+        success: true,
+        message: "Configuration reloaded successfully",
+        timestamp: new Date().toISOString(),
+        summary
+      });
+    } catch (error) {
+      console.error("Config reload error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to reload configuration",
+        details: error instanceof Error ? error.message : "Unknown error"
       });
     }
   }

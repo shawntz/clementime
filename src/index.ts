@@ -113,10 +113,13 @@ program
   .option('-c, --config <path>', 'Configuration file path', 'config.yml')
   .action(async (options) => {
     try {
-      const config = loadConfig(options.config);
-      const webServer = new WebServer(config);
+      // Load basic config first for initialization
+      const initialConfig = loadConfig(options.config);
+      const webServer = new WebServer(initialConfig);
 
       const port = parseInt(options.port || process.env.PORT || '3000');
+
+      // Start the server which will properly initialize with Cloud Storage
       await webServer.start(port);
 
       console.log(`🌐 Web interface available at http://localhost:${port}`);

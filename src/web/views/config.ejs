@@ -188,6 +188,14 @@
             >
               ← Back to Dashboard
             </a>
+            <button
+              @click="reloadConfig()"
+              :disabled="reloadingConfig"
+              class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400"
+            >
+              <span x-show="!reloadingConfig">🔄 Reload Config & CSV Data</span>
+              <span x-show="reloadingConfig">Reloading...</span>
+            </button>
             <a
               href="/auth/google"
               class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors duration-200 inline-block"
@@ -227,6 +235,82 @@
                 <div x-html="renderTreeItem(item, 0)"></div>
               </template>
             </div>
+          </div>
+
+          <!-- File Preview Modal -->
+          <div x-show="showPreview" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showPreview = false">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl max-h-3/4 w-full mx-4 overflow-hidden">
+              <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold" x-text="previewFile.name"></h3>
+                <button @click="showPreview = false" class="text-gray-400 hover:text-gray-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="p-6 overflow-auto max-h-96">
+                <div x-show="loadingPreview" class="text-center py-8">
+                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  <p class="mt-2 text-gray-600">Loading preview...</p>
+                </div>
+
+                <div x-show="!loadingPreview && previewError" class="text-red-600 text-center py-8">
+                  <p x-text="previewError"></p>
+                </div>
+
+                <!-- CSV Preview -->
+                <div x-show="!loadingPreview && !previewError && previewData?.type === 'csv'">
+                  <div class="mb-4">
+                    <p class="text-sm text-gray-600">
+                      Showing <span x-text="previewData.rows?.length || 0"></span> of <span x-text="previewData.totalRows || 0"></span> rows
+                    </p>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-200 rounded-lg">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <template x-for="header in previewData.headers" :key="header">
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200" x-text="header"></th>
+                          </template>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="(row, index) in previewData.rows" :key="index">
+                          <tr :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                            <template x-for="(cell, cellIndex) in row" :key="cellIndex">
+                              <td class="px-4 py-2 text-sm text-gray-900 border-r border-gray-200 last:border-r-0" x-text="cell"></td>
+                            </template>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Text Preview -->
+                <div x-show="!loadingPreview && !previewError && previewData?.type === 'text'">
+                  <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-auto" x-text="previewData.content"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Mappings Tab -->
+      <div x-show="activeTab === 'mappings'" x-cloak>
+        <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-orange-800">📊 Section Student Mappings</h3>
+            <button
+              @click="reloadConfig()"
+              :disabled="reloadingConfig"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:bg-gray-400 text-sm"
+            >
+              <span x-show="!reloadingConfig">🔄 Reload All Data</span>
+              <span x-show="reloadingConfig">Reloading...</span>
+            </button>
+          </div>
 
             <div x-show="!loadingFileTree && !fileTreeError && fileTree.length === 0" class="text-gray-500 text-center py-4">
               <p>No files found in the data directory</p>
@@ -381,6 +465,12 @@
             sectionId: '',
             file: null
           },
+          showPreview: false,
+          previewFile: { name: '' },
+          previewData: null,
+          loadingPreview: false,
+          previewError: null,
+          reloadingConfig: false,
 
           async loadFileTree() {
             this.loadingFileTree = true;
@@ -425,9 +515,17 @@
                           item.size < 1024 * 1024 ? `${(item.size / 1024).toFixed(1)} KB` :
                           `${(item.size / 1024 / 1024).toFixed(1)} MB`;
 
-              return `<div style="margin-left: ${indent}px" class="py-1 text-sm">
-                <span>${icon} ${item.name}</span>
-                <span class="text-gray-500 ml-2">(${size})</span>
+              const canPreview = item.name.toLowerCase().endsWith('.csv') ||
+                               item.name.toLowerCase().endsWith('.txt') ||
+                               item.name.toLowerCase().endsWith('.yml') ||
+                               item.name.toLowerCase().endsWith('.yaml');
+
+              return `<div style="margin-left: ${indent}px" class="py-1 text-sm flex items-center justify-between hover:bg-gray-100 rounded px-2">
+                <div>
+                  <span>${icon} ${item.name}</span>
+                  <span class="text-gray-500 ml-2">(${size})</span>
+                </div>
+                ${canPreview ? `<button onclick="previewFileHandler('${item.path}', '${item.name}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 rounded border border-blue-300 hover:border-blue-500">👁️ Preview</button>` : ''}
               </div>`;
             }
           },
@@ -534,6 +632,58 @@
             }
           },
 
+          async previewFile(filePath, fileName) {
+            this.showPreview = true;
+            this.previewFile = { name: fileName };
+            this.loadingPreview = true;
+            this.previewError = null;
+            this.previewData = null;
+
+            try {
+              const response = await fetch(`/api/file-preview/${encodeURIComponent(filePath)}`);
+              const data = await response.json();
+
+              if (data.success) {
+                this.previewData = data;
+              } else {
+                this.previewError = data.error || 'Failed to load file preview';
+              }
+            } catch (error) {
+              this.previewError = 'Error loading file preview: ' + error.message;
+            } finally {
+              this.loadingPreview = false;
+            }
+          },
+
+          async reloadConfig() {
+            this.reloadingConfig = true;
+
+            try {
+              const response = await fetch('/api/config/reload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                alert('Configuration reloaded successfully! Please refresh the page to see changes.');
+                // Optionally reload the current tab data
+                if (this.activeTab === 'filetree') {
+                  await this.loadFileTree();
+                } else if (this.activeTab === 'mappings') {
+                  await this.loadMappings();
+                }
+              } else {
+                alert('Failed to reload configuration: ' + data.error);
+              }
+            } catch (error) {
+              alert('Error reloading configuration: ' + error.message);
+            } finally {
+              this.reloadingConfig = false;
+            }
+          },
+
           init() {
             // Load file tree on first visit to file tree tab
             this.$watch('activeTab', (value) => {
@@ -544,6 +694,13 @@
           }
         };
       }
+
+      // Global function to handle file preview clicks from rendered HTML
+      window.previewFileHandler = function(filePath, fileName) {
+        // Get the Alpine.js instance
+        const configPanelInstance = document.querySelector('[x-data]').__x.$data;
+        configPanelInstance.previewFile(filePath, fileName);
+      };
     </script>
   </body>
 </html>
