@@ -687,7 +687,7 @@ export class WebServer {
       return total + section.students.length;
     }, 0);
 
-    res.render("config-enhanced", {
+    res.render("config", {
       config: this.config,
       actualTotalStudents,
       facilitatorLabel: this.getFacilitatorLabel(),
