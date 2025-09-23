@@ -176,6 +176,14 @@ jobs:
     - name: ☁️ Build and push GCloud Docker image
       run: |
         chmod +x ./gcloud-to-dockerhub.sh
+        # Use versioned tag with .gcloud extension if we have a new tag
+        if [ "${{ needs.version.outputs.tag_created }}" == "true" ]; then
+          export TAG="${{ needs.version.outputs.new_tag }}.gcloud"
+          export LATEST_TAG="latest.gcloud"
+        else
+          export TAG="gcloud-latest"
+          export LATEST_TAG="latest.gcloud"
+        fi
         ./gcloud-to-dockerhub.sh
 
   # Deploy to staging on develop branch

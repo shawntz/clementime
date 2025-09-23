@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 PROJECT_ID="${PROJECT_ID:-psych-10-admin-bots}"
 SERVICE_NAME="${SERVICE_NAME:-clementime}"
 REGION="${REGION:-us-central1}"
-DOCKER_IMAGE="${DOCKER_IMAGE:-shawnschwartz/clementime:gcloud-latest}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-shawnschwartz/clementime:latest.gcloud}"
 BUCKET_NAME="${BUCKET_NAME:-${SERVICE_NAME}-data-${PROJECT_ID}}"
 MIN_INSTANCES="${MIN_INSTANCES:-1}"  # Keep at least 1 instance for data persistence
 MAX_INSTANCES="${MAX_INSTANCES:-10}"
@@ -260,6 +260,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --platform=managed \
   --region="$REGION" \
   --allow-unauthenticated \
+  --no-use-cache \
   --service-account="$SERVICE_ACCOUNT_EMAIL" \
   --set-env-vars="NODE_ENV=production" \
   --set-env-vars="ENV_BASE64=$ENV_BASE64" \
