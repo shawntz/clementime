@@ -12,6 +12,9 @@ import { AuthService } from "../auth";
 import { DriveUploadService } from "../services/drive-upload";
 import { format } from "date-fns";
 import multer from "multer";
+import * as fs from "fs";
+import { ConfigLoader } from "../utils/config-loader";
+import { cloudStorage } from "../utils/cloud-storage";
 
 export class WebServer {
   private app: express.Application;
@@ -20,6 +23,7 @@ export class WebServer {
   private db: DatabaseService;
   private auth: AuthService;
   private driveService: DriveUploadService | null = null;
+  private configLoader: ConfigLoader;
   private upload = multer({ storage: multer.memoryStorage() });
 
   // Helper methods for configurable terminology
@@ -32,11 +36,15 @@ export class WebServer {
   }
 
   constructor(config: Config) {
-    this.config = config;
     this.app = express();
     this.db = new DatabaseService(config);
-    this.auth = new AuthService(config, this.db);
-    this.orchestration = new OrchestrationService(config, this.db);
+    this.configLoader = new ConfigLoader(this.db);
+
+    // Use provided config initially (will be reloaded with cloud storage in initialize())
+    this.config = config;
+
+    this.auth = new AuthService(this.config, this.db);
+    this.orchestration = new OrchestrationService(this.config, this.db);
 
     // Initialize Drive service if credentials are available
     const clientId =
@@ -285,6 +293,36 @@ export class WebServer {
       "/config/save",
       this.auth.requireAuth.bind(this.auth),
       this.saveConfig.bind(this)
+    );
+
+    // File tree API
+    this.app.get(
+      "/api/file-tree",
+      this.auth.requireAuth.bind(this.auth),
+      this.getFileTree.bind(this)
+    );
+
+    // Section mapping APIs
+    this.app.post(
+      "/api/section-mapping/upload",
+      this.auth.requireAdmin.bind(this.auth),
+      this.upload.single("csvFile"),
+      this.uploadSectionMapping.bind(this)
+    );
+    this.app.get(
+      "/api/section-mappings",
+      this.auth.requireAuth.bind(this.auth),
+      this.getSectionMappings.bind(this)
+    );
+    this.app.post(
+      "/api/section-mapping/activate",
+      this.auth.requireAdmin.bind(this.auth),
+      this.activateSectionMapping.bind(this)
+    );
+    this.app.delete(
+      "/api/section-mapping/:id",
+      this.auth.requireAdmin.bind(this.auth),
+      this.deleteSectionMapping.bind(this)
     );
 
     this.app.get("/health", (req, res) => {
@@ -649,7 +687,7 @@ export class WebServer {
       return total + section.students.length;
     }, 0);
 
-    res.render("config", {
+    res.render("config-enhanced", {
       config: this.config,
       actualTotalStudents,
       facilitatorLabel: this.getFacilitatorLabel(),
@@ -963,10 +1001,38 @@ export class WebServer {
     });
   }
 
+  async initialize(): Promise<void> {
+    // Reload config with Cloud Storage support if enabled
+    if (cloudStorage.isCloudStorageEnabled()) {
+      try {
+        console.log('☁️  Initializing with Cloud Storage support...');
+        this.config = await this.configLoader.loadConfig();
+
+        // Reinitialize services with updated config
+        this.auth = new AuthService(this.config, this.db);
+        this.orchestration = new OrchestrationService(this.config, this.db);
+
+        console.log('✅ Cloud Storage initialization complete');
+      } catch (error) {
+        console.error('❌ Failed to initialize with Cloud Storage:', error);
+      }
+    }
+  }
+
   async start(port: number): Promise<void> {
+    // Initialize Cloud Storage if enabled
+    await this.initialize();
+
     return new Promise((resolve) => {
       this.app.listen(port, () => {
         console.log(`🌐 Web server started on http://localhost:${port}`);
+
+        if (cloudStorage.isCloudStorageEnabled()) {
+          console.log(`☁️  Using Cloud Storage: ${process.env.STORAGE_BUCKET}`);
+        } else {
+          console.log(`📁 Using local filesystem`);
+        }
+
         if (this.config.test_mode?.enabled) {
           console.log(
             `🧪 TEST MODE ENABLED - All notifications will be sent to: ${this.config.test_mode.redirect_to_slack_id}`
@@ -1495,6 +1561,288 @@ export class WebServer {
       res
         .status(500)
         .json({ success: false, error: "Failed to save recording metadata" });
+    }
+  }
+
+  // File tree endpoint
+  private async getFileTree(_req: express.Request, res: express.Response): Promise<void> {
+    try {
+      if (cloudStorage.isCloudStorageEnabled()) {
+        // Use Cloud Storage
+        const bucketName = process.env.STORAGE_BUCKET || '';
+        const tree = await this.buildCloudFileTree();
+        res.json({
+          success: true,
+          path: `gs://${bucketName}`,
+          tree,
+          source: 'cloud-storage'
+        });
+      } else {
+        // Use local filesystem
+        const dataPath = process.env.NODE_ENV === "production" ? "/app/data" : path.join(process.cwd(), "data");
+        const tree = this.buildFileTree(dataPath);
+        res.json({
+          success: true,
+          path: dataPath,
+          tree,
+          source: 'local-filesystem'
+        });
+      }
+    } catch (error) {
+      console.error("File tree error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to retrieve file tree",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
+
+  private buildFileTree(dirPath: string, basePath?: string): any[] {
+    const tree: any[] = [];
+    const base = basePath || dirPath;
+
+    try {
+      const items = fs.readdirSync(dirPath);
+
+      for (const item of items) {
+        const fullPath = path.join(dirPath, item);
+        const relativePath = path.relative(base, fullPath);
+        const stats = fs.statSync(fullPath);
+
+        if (stats.isDirectory()) {
+          tree.push({
+            name: item,
+            type: "directory",
+            path: relativePath,
+            children: this.buildFileTree(fullPath, base)
+          });
+        } else {
+          tree.push({
+            name: item,
+            type: "file",
+            path: relativePath,
+            size: stats.size,
+            modified: stats.mtime
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Error reading directory ${dirPath}:`, error);
+    }
+
+    return tree;
+  }
+
+  private async buildCloudFileTree(): Promise<any[]> {
+    const { Storage } = await import('@google-cloud/storage');
+    const storage = new Storage();
+    const bucketName = process.env.STORAGE_BUCKET;
+
+    if (!bucketName) {
+      throw new Error('STORAGE_BUCKET environment variable not set');
+    }
+
+    const bucket = storage.bucket(bucketName);
+    const [files] = await bucket.getFiles();
+
+    const tree: any[] = [];
+    const directoryMap = new Map<string, any>();
+
+    // Build directory structure
+    for (const file of files) {
+      const parts = file.name.split('/');
+      let currentLevel = tree;
+      let currentPath = '';
+
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
+
+        let dir = directoryMap.get(currentPath);
+        if (!dir) {
+          dir = {
+            name: parts[i],
+            type: 'directory',
+            path: currentPath,
+            children: []
+          };
+          directoryMap.set(currentPath, dir);
+          currentLevel.push(dir);
+        }
+        currentLevel = dir.children;
+      }
+
+      // Add file to its directory
+      if (parts.length > 0) {
+        const fileName = parts[parts.length - 1];
+        if (fileName) {
+          currentLevel.push({
+            name: fileName,
+            type: 'file',
+            path: file.name,
+            size: file.metadata.size || 0,
+            modified: file.metadata.updated || file.metadata.timeCreated
+          });
+        }
+      }
+    }
+
+    return tree;
+  }
+
+  // Section mapping endpoints
+  private async uploadSectionMapping(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { sectionId, name } = req.body;
+      const file = req.file;
+      const user = (req.user as any)?.email || "unknown";
+
+      if (!file || !sectionId || !name) {
+        res.status(400).json({
+          success: false,
+          error: "Missing required fields: file, sectionId, or name"
+        });
+        return;
+      }
+
+      // Validate section exists
+      const section = this.config.sections.find(s => s.id === sectionId);
+      if (!section) {
+        res.status(400).json({
+          success: false,
+          error: `Section ${sectionId} not found`
+        });
+        return;
+      }
+
+      // Parse CSV to validate format
+      const csvContent = file.buffer.toString("utf-8");
+      const lines = csvContent.split("\n").filter(line => line.trim());
+
+      if (lines.length < 2) {
+        res.status(400).json({
+          success: false,
+          error: "CSV file must contain header and at least one data row"
+        });
+        return;
+      }
+
+      // Save to database
+      const mappingId = this.db.saveSectionMapping(
+        name,
+        file.originalname,
+        csvContent,
+        sectionId,
+        user
+      );
+
+      // Also save CSV to Cloud Storage if enabled
+      if (cloudStorage.isCloudStorageEnabled()) {
+        const csvPath = `uploads/section-mappings/${sectionId}/${Date.now()}-${file.originalname}`;
+        await cloudStorage.writeFile(csvPath, csvContent);
+        console.log(`☁️  CSV saved to Cloud Storage: ${csvPath}`);
+      }
+
+      res.json({
+        success: true,
+        message: "Section mapping uploaded successfully",
+        mappingId,
+        rowCount: lines.length - 1
+      });
+    } catch (error) {
+      console.error("Upload section mapping error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to upload section mapping",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
+
+  private getSectionMappings(req: express.Request, res: express.Response): void {
+    try {
+      const { sectionId } = req.query;
+      const mappings = this.db.getSectionMappings(sectionId as string);
+
+      // Parse config.yml mappings
+      const configMappings = this.config.sections.map(section => ({
+        sectionId: section.id,
+        sectionName: section.ta_name,
+        studentCount: section.students.length,
+        hasConfigMapping: section.students.length > 0,
+        csvPath: (section as any).students_csv || null
+      }));
+
+      res.json({
+        success: true,
+        mappings,
+        configMappings,
+        sections: this.config.sections.map(s => ({
+          id: s.id,
+          name: s.ta_name,
+          location: s.location
+        }))
+      });
+    } catch (error) {
+      console.error("Get section mappings error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to retrieve section mappings"
+      });
+    }
+  }
+
+  private activateSectionMapping(req: express.Request, res: express.Response): void {
+    try {
+      const { mappingId, sectionId } = req.body;
+
+      if (!mappingId || !sectionId) {
+        res.status(400).json({
+          success: false,
+          error: "Missing mappingId or sectionId"
+        });
+        return;
+      }
+
+      this.db.setActiveSectionMapping(mappingId, sectionId);
+
+      res.json({
+        success: true,
+        message: "Section mapping activated successfully"
+      });
+    } catch (error) {
+      console.error("Activate section mapping error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to activate section mapping"
+      });
+    }
+  }
+
+  private deleteSectionMapping(req: express.Request, res: express.Response): void {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: "Missing mapping ID"
+        });
+        return;
+      }
+
+      this.db.deleteSectionMapping(parseInt(id));
+
+      res.json({
+        success: true,
+        message: "Section mapping deleted successfully"
+      });
+    } catch (error) {
+      console.error("Delete section mapping error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to delete section mapping"
+      });
     }
   }
 }

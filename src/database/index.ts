@@ -3,6 +3,7 @@ import { ScheduleSlot, Config } from '../types';
 import { format } from 'date-fns';
 import * as path from 'path';
 import * as fs from 'fs';
+import { cloudStorage } from '../utils/cloud-storage';
 
 export class DatabaseService {
   private db: Database.Database;
@@ -11,19 +12,25 @@ export class DatabaseService {
   constructor(config: Config, dbPath?: string) {
     this.config = config;
 
-    // Use environment variable if set (for Cloud Run), otherwise default to data/clementime.db
-    const databasePath = dbPath || process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'clementime.db');
+    // Get database path from cloud storage service (handles cloud vs local)
+    const databasePath = dbPath || cloudStorage.getDatabasePath();
 
     // Debug logging for Cloud Run
     console.log('🗄️ DatabaseService initialization:');
     console.log(`  - dbPath parameter: ${dbPath}`);
     console.log(`  - DATABASE_PATH env: ${process.env.DATABASE_PATH}`);
+    console.log(`  - Cloud Storage enabled: ${cloudStorage.isCloudStorageEnabled()}`);
     console.log(`  - Final database path: ${databasePath}`);
 
-    // Ensure the data directory exists
-    const dataDir = path.dirname(databasePath);
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+    // If using Cloud Storage, try to download existing database first
+    if (cloudStorage.isCloudStorageEnabled()) {
+      this.initializeCloudDatabase(databasePath);
+    } else {
+      // Ensure the data directory exists for local filesystem
+      const dataDir = path.dirname(databasePath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
     }
 
     this.db = new Database(databasePath);
@@ -31,6 +38,41 @@ export class DatabaseService {
     this.db.pragma('foreign_keys = ON');
 
     this.initializeSchema();
+
+    // If using Cloud Storage, set up periodic backup
+    if (cloudStorage.isCloudStorageEnabled()) {
+      this.setupCloudBackup(databasePath);
+    }
+  }
+
+  private async initializeCloudDatabase(databasePath: string): Promise<void> {
+    try {
+      // Check if database exists in Cloud Storage
+      const cloudDbPath = 'data/clementime.db';
+      if (await cloudStorage.fileExists(cloudDbPath)) {
+        console.log('☁️  Downloading existing database from Cloud Storage...');
+        await cloudStorage.downloadToTemp(cloudDbPath);
+      } else {
+        console.log('☁️  No existing database in Cloud Storage, creating new one...');
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not download database from Cloud Storage:', error);
+    }
+  }
+
+  private setupCloudBackup(databasePath: string): void {
+    // Backup database to Cloud Storage every 5 minutes
+    setInterval(async () => {
+      try {
+        if (fs.existsSync(databasePath)) {
+          const dbContent = await fs.promises.readFile(databasePath);
+          await cloudStorage.writeFile('data/clementime.db', dbContent);
+          console.log('☁️  Database backed up to Cloud Storage');
+        }
+      } catch (error) {
+        console.error('❌ Failed to backup database to Cloud Storage:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
   }
 
   private initializeSchema(): void {
@@ -128,6 +170,28 @@ export class DatabaseService {
       AFTER UPDATE ON authorized_users
       BEGIN
         UPDATE authorized_users SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+      END;
+
+      -- Table for section CSV mappings
+      CREATE TABLE IF NOT EXISTS section_mappings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        csv_content TEXT NOT NULL,
+        section_id TEXT NOT NULL,
+        is_active INTEGER DEFAULT 0,
+        uploaded_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_section_mappings_section ON section_mappings(section_id);
+      CREATE INDEX IF NOT EXISTS idx_section_mappings_active ON section_mappings(is_active);
+
+      CREATE TRIGGER IF NOT EXISTS update_section_mappings_timestamp
+      AFTER UPDATE ON section_mappings
+      BEGIN
+        UPDATE section_mappings SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
       END;
     `);
 
@@ -442,6 +506,49 @@ export class DatabaseService {
       ORDER BY started_at DESC
       LIMIT ?
     `).all(limit);
+  }
+
+  // Section mapping methods
+  saveSectionMapping(name: string, filename: string, csvContent: string, sectionId: string, uploadedBy: string): number {
+    const stmt = this.db.prepare(`
+      INSERT INTO section_mappings (name, filename, csv_content, section_id, uploaded_by)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const result = stmt.run(name, filename, csvContent, sectionId, uploadedBy);
+    return result.lastInsertRowid as number;
+  }
+
+  getSectionMappings(sectionId?: string): any[] {
+    if (sectionId) {
+      return this.db.prepare(`
+        SELECT * FROM section_mappings
+        WHERE section_id = ?
+        ORDER BY created_at DESC
+      `).all(sectionId);
+    }
+    return this.db.prepare('SELECT * FROM section_mappings ORDER BY section_id, created_at DESC').all();
+  }
+
+  getActiveSectionMapping(sectionId: string): any {
+    return this.db.prepare(`
+      SELECT * FROM section_mappings
+      WHERE section_id = ? AND is_active = 1
+      LIMIT 1
+    `).get(sectionId);
+  }
+
+  setActiveSectionMapping(mappingId: number, sectionId: string): void {
+    this.db.transaction(() => {
+      // Deactivate all mappings for this section
+      this.db.prepare('UPDATE section_mappings SET is_active = 0 WHERE section_id = ?').run(sectionId);
+      // Activate the specified mapping
+      this.db.prepare('UPDATE section_mappings SET is_active = 1 WHERE id = ? AND section_id = ?').run(mappingId, sectionId);
+    })();
+  }
+
+  deleteSectionMapping(mappingId: number): void {
+    this.db.prepare('DELETE FROM section_mappings WHERE id = ?').run(mappingId);
   }
 
   // Clean up old sessions
