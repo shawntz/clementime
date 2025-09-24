@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users - <%= config.course.name %></title>
+    <title>Manage <%= facilitatorLabel %>s - <%= config.course.name %></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -13,8 +13,8 @@
 
     <div class="container mx-auto p-6">
         <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
-            <h2 class="text-2xl font-bold mb-4">👥 Authorized Users</h2>
-            <p class="text-gray-600">Manage who can access the scheduling system</p>
+            <h2 class="text-2xl font-bold mb-4">👨‍🏫 Authorized <%= facilitatorLabel %>s</h2>
+            <p class="text-gray-600">Manage <%= facilitatorLabel.toLowerCase() %>s who can access the scheduling system</p>
         </div>
 
         <% if (message) { %>
@@ -24,20 +24,20 @@
         <% } %>
 
         <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
-            <h3 class="text-xl font-semibold mb-4 text-orange-800">Add New User</h3>
+            <h3 class="text-xl font-semibold mb-4 text-orange-800">Add New <%= facilitatorLabel %></h3>
             <form action="/admin/users/add" method="POST" class="flex gap-4">
                 <div class="flex-1">
                     <input type="email" class="w-full border border-gray-300 rounded-lg px-4 py-2" name="email"
-                           placeholder="user@example.com" required>
+                           placeholder="<%= facilitatorLabel.toLowerCase() %>@example.com" required>
                 </div>
                 <button type="submit" class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-200">
-                    <i class="bi bi-person-plus me-2"></i>Add User
+                    <i class="bi bi-person-plus me-2"></i>Add <%= facilitatorLabel %>
                 </button>
             </form>
         </div>
 
         <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
-            <h3 class="text-xl font-semibold mb-4 text-orange-800">Current Authorized Users</h3>
+            <h3 class="text-xl font-semibold mb-4 text-orange-800">Current Authorized <%= facilitatorLabel %>s</h3>
             <% if (users && users.length > 0) { %>
             <div class="overflow-x-auto">
                 <table class="min-w-full table-auto">
