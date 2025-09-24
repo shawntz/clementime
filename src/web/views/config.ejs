@@ -9,6 +9,9 @@
       src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
       defer
     ></script>
+    <style>
+      [x-cloak] { display: none !important; }
+    </style>
   </head>
   <body class="bg-orange-50">
     <%- include('partials/navbar') %>
@@ -453,9 +456,10 @@
       </div>
 
       <!-- Google Sheets Tab -->
-      <div x-show="activeTab === 'googlesheets'" x-cloak>
+      <div x-show="activeTab === 'googlesheets'">
         <div class="bg-white rounded-lg shadow-lg border border-orange-100 p-6 mb-6">
           <h3 class="text-xl font-semibold mb-4 text-orange-800">📊 Google Sheets Integration</h3>
+          
 
           <!-- Current Configuration -->
           <div class="mb-6">
@@ -885,19 +889,47 @@
 
           // Google Sheets functions
           async loadGoogleSheetsStatus() {
+            console.log('🔄 Loading Google Sheets status...');
             this.loadingGoogleSheets = true;
 
             try {
               const response = await fetch('/api/google-sheets/status');
+              
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              
               const data = await response.json();
+
+              console.log('📊 Google Sheets API response:', data);
 
               if (data.success) {
                 this.googleSheetsStatus = data.status;
+                console.log('✅ Google Sheets status loaded:', this.googleSheetsStatus);
+              } else {
+                console.error('Failed to load Google Sheets status:', data.error);
+                // Set default status if API fails
+                this.googleSheetsStatus = {
+                  configured: false,
+                  spreadsheetUrl: '',
+                  tabMappings: [],
+                  lastSync: null,
+                  autoRefreshMinutes: 15
+                };
               }
             } catch (error) {
               console.error('Error loading Google Sheets status:', error);
+              // Set default status if API fails
+              this.googleSheetsStatus = {
+                configured: false,
+                spreadsheetUrl: '',
+                tabMappings: [],
+                lastSync: null,
+                autoRefreshMinutes: 15
+              };
             } finally {
               this.loadingGoogleSheets = false;
+              console.log('🏁 Google Sheets loading complete');
             }
           },
 
@@ -1028,15 +1060,32 @@
           },
 
           init() {
+            console.log('🚀 Config panel initializing...');
+            
             // Store reference to this component globally for access from dynamically generated HTML
             window.configPanelInstance = this;
 
+            // Load initial data
+            console.log('📊 Loading initial Google Sheets status...');
+            this.loadGoogleSheetsStatus();
+
             // Load file tree on first visit to file tree tab
             this.$watch('activeTab', (value) => {
+              console.log('🔄 Tab changed to:', value);
               if (value === 'filetree' && this.fileTree.length === 0) {
                 this.loadFileTree();
+              } else if (value === 'googlesheets') {
+                // Reload Google Sheets status when switching to that tab
+                console.log('📊 Reloading Google Sheets status for tab switch...');
+                this.loadGoogleSheetsStatus();
+              } else if (value === 'mappings') {
+                // Load mappings when switching to that tab
+                console.log('📊 Loading section mappings...');
+                this.loadMappings();
               }
             });
+            
+            console.log('✅ Config panel initialized');
           }
         };
       }

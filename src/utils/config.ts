@@ -1,11 +1,11 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as yaml from 'js-yaml';
-import { Config } from '../types';
-import { z } from 'zod';
-import { loadStudentsFromCSV } from './csv-loader';
-import { googleSheetsService } from './google-sheets';
-import { execSync } from 'child_process';
+import * as fs from "fs";
+import * as path from "path";
+import * as yaml from "js-yaml";
+import { Config } from "../types";
+import { z } from "zod";
+import { loadStudentsFromCSV } from "./csv-loader";
+import { googleSheetsService } from "./google-sheets";
+import { execSync } from "child_process";
 
 const StudentSchema = z.object({
   name: z.string(),
@@ -24,11 +24,13 @@ const SectionSchema = z.object({
   students: z.array(StudentSchema).optional(),
   students_csv: z.string().optional(), // Path to CSV file (legacy)
   google_sheet_tab: z.string().optional(), // Google Sheets tab name for this section
-  student_split: z.object({
-    enabled: z.boolean(),
-    split_percentage: z.number().min(0).max(100),
-    weeks_between_splits: z.number().min(1),
-  }).optional(),
+  student_split: z
+    .object({
+      enabled: z.boolean(),
+      split_percentage: z.number().min(0).max(100),
+      weeks_between_splits: z.number().min(1),
+    })
+    .optional(),
 });
 
 const ConfigSchema = z.object({
@@ -38,14 +40,18 @@ const ConfigSchema = z.object({
     total_students: z.number(),
     instructor: z.string().optional(),
   }),
-  organization: z.object({
-    domain: z.string(),
-    timezone: z.string(),
-  }).optional(),
-  terminology: z.object({
-    facilitator_label: z.string().optional(),
-    participant_label: z.string().optional(),
-  }).optional(),
+  organization: z
+    .object({
+      domain: z.string(),
+      timezone: z.string(),
+    })
+    .optional(),
+  terminology: z
+    .object({
+      facilitator_label: z.string().optional(),
+      participant_label: z.string().optional(),
+    })
+    .optional(),
   scheduling: z.object({
     exam_duration_minutes: z.number(),
     buffer_minutes: z.number(),
@@ -74,42 +80,52 @@ const ConfigSchema = z.object({
   }),
   admin_users: z.array(z.string()),
   authorized_google_users: z.array(z.string()).optional(),
-  weekly_forms: z.array(z.object({
-    week: z.number(),
-    google_form_url: z.string(),
-    description: z.string().optional(),
-  })),
-  slack_channels: z.object({
-    prefix: z.string().optional(),
-    suffix: z.string().optional(),
-  }).optional(),
-  test_mode: z.object({
-    enabled: z.boolean(),
-    redirect_to_slack_id: z.string(),
-    fake_student_prefix: z.string().optional(),
-    number_of_fake_students: z.number().optional(),
-    test_email: z.string().email().optional(),
-  }).optional(),
-  web_ui: z.object({
-    navbar_title: z.string().optional(),
-    server_base_url: z.string().optional(),
-  }).optional(),
-  google_sheets: z.object({
-    spreadsheet_url: z.string().optional(),
-    tab_mappings: z.record(z.string()).optional(), // { "section_01": "Sheet Tab Name" }
-    auto_refresh_minutes: z.number().optional(),
-  }).optional(),
+  weekly_forms: z.array(
+    z.object({
+      week: z.number(),
+      google_form_url: z.string(),
+      description: z.string().optional(),
+    })
+  ),
+  slack_channels: z
+    .object({
+      prefix: z.string().optional(),
+      suffix: z.string().optional(),
+    })
+    .optional(),
+  test_mode: z
+    .object({
+      enabled: z.boolean(),
+      redirect_to_slack_id: z.string(),
+      fake_student_prefix: z.string().optional(),
+      number_of_fake_students: z.number().optional(),
+      test_email: z.string().email().optional(),
+    })
+    .optional(),
+  web_ui: z
+    .object({
+      navbar_title: z.string().optional(),
+      server_base_url: z.string().optional(),
+    })
+    .optional(),
+  google_sheets: z
+    .object({
+      spreadsheet_url: z.string().optional(),
+      tab_mappings: z.record(z.string()).optional(), // { "section_01": "Sheet Tab Name" }
+      auto_refresh_minutes: z.number().optional(),
+    })
+    .optional(),
 });
 
 // Sync version for backward compatibility (doesn't support Google Sheets)
 export function loadConfigSync(configPath?: string): Config {
-  const filePath = configPath || path.join(process.cwd(), 'config.yml');
+  const filePath = configPath || path.join(process.cwd(), "config.yml");
 
   if (!fs.existsSync(filePath)) {
     throw new Error(`Configuration file not found at: ${filePath}`);
   }
 
-  const fileContents = fs.readFileSync(filePath, 'utf8');
+  const fileContents = fs.readFileSync(filePath, "utf8");
   const rawConfig = yaml.load(fileContents) as any;
 
   // Process sections synchronously (CSV and inline only)
@@ -124,29 +140,41 @@ export function loadConfigSync(configPath?: string): Config {
         let csvStudents: any[] = [];
 
         // Try Cloud Storage first if enabled
-        if (process.env.USE_CLOUD_STORAGE === 'true') {
-          console.log(`🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`);
+        if (process.env.USE_CLOUD_STORAGE === "true") {
+          console.log(
+            `🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`
+          );
           try {
-            // Use gsutil command for immediate sync access
-            const bucketName = process.env.STORAGE_BUCKET;
+            // Use the cloud storage service directly instead of gsutil
+            const { cloudStorage } = require("./cloud-storage");
+            const buffer = cloudStorage.readFileSync(section.students_csv);
             const tempPath = `/tmp/${section.id}_students.csv`;
 
-            execSync(`gsutil cp "gs://${bucketName}/${section.students_csv}" "${tempPath}"`, {
-              stdio: 'pipe',
-              timeout: 10000
-            });
+            // Ensure temp directory exists
+            const tempDir = path.dirname(tempPath);
+            if (!fs.existsSync(tempDir)) {
+              fs.mkdirSync(tempDir, { recursive: true });
+            }
 
+            // Write to temp file and load
+            fs.writeFileSync(tempPath, buffer);
             csvStudents = loadStudentsFromCSV(tempPath);
-            console.log(`✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`);
+            console.log(
+              `✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`
+            );
           } catch (cloudError) {
-            console.warn(`⚠️  Cloud Storage CSV load failed, trying local: ${cloudError}`);
+            console.warn(
+              `⚠️  Cloud Storage CSV load failed, trying local: ${cloudError}`
+            );
             csvStudents = loadStudentsFromCSV(csvPath);
           }
         } else {
           csvStudents = loadStudentsFromCSV(csvPath);
         }
 
-        console.log(`Loaded ${csvStudents.length} students from ${section.students_csv} for section ${section.id}`);
+        console.log(
+          `Loaded ${csvStudents.length} students from ${section.students_csv} for section ${section.id}`
+        );
 
         // If both CSV and inline students exist, merge them (CSV takes priority)
         if (section.students && Array.isArray(section.students)) {
@@ -154,7 +182,7 @@ export function loadConfigSync(configPath?: string): Config {
             section.students.map((s: any) => [s.email.toLowerCase(), s])
           );
 
-          csvStudents.forEach(csvStudent => {
+          csvStudents.forEach((csvStudent) => {
             existingStudentsMap.set(csvStudent.email.toLowerCase(), csvStudent);
           });
 
@@ -183,15 +211,23 @@ export function loadConfigSync(configPath?: string): Config {
             }
           }
         } catch (e) {
-          console.error('Failed to parse FACILITATOR_MAPPING JSON:', e);
+          console.error("Failed to parse FACILITATOR_MAPPING JSON:", e);
         }
       }
 
-      if (!section.ta_slack_id && process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`]) {
-        section.ta_slack_id = process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`];
+      if (
+        !section.ta_slack_id &&
+        process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`]
+      ) {
+        section.ta_slack_id =
+          process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`];
       }
-      if (!section.google_email && process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`]) {
-        section.google_email = process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`];
+      if (
+        !section.google_email &&
+        process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`]
+      ) {
+        section.google_email =
+          process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`];
       }
 
       return section;
@@ -202,8 +238,8 @@ export function loadConfigSync(configPath?: string): Config {
     return ConfigSchema.parse(rawConfig) as Config;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('Configuration validation failed:', error.errors);
-      throw new Error('Invalid configuration file');
+      console.error("Configuration validation failed:", error.errors);
+      throw new Error("Invalid configuration file");
     }
     throw error;
   }
@@ -211,141 +247,176 @@ export function loadConfigSync(configPath?: string): Config {
 
 // Async version with Google Sheets support
 export async function loadConfig(configPath?: string): Promise<Config> {
-  const filePath = configPath || path.join(process.cwd(), 'config.yml');
+  const filePath = configPath || path.join(process.cwd(), "config.yml");
 
   if (!fs.existsSync(filePath)) {
     throw new Error(`Configuration file not found at: ${filePath}`);
   }
 
-  const fileContents = fs.readFileSync(filePath, 'utf8');
+  const fileContents = fs.readFileSync(filePath, "utf8");
   const rawConfig = yaml.load(fileContents) as any;
 
   // Process sections to load students from CSV or Google Sheets
   if (rawConfig.sections && Array.isArray(rawConfig.sections)) {
-    rawConfig.sections = await Promise.all(rawConfig.sections.map(async (section: any) => {
-      // Priority: Google Sheets > CSV > inline students
+    rawConfig.sections = await Promise.all(
+      rawConfig.sections.map(async (section: any) => {
+        // Priority: Google Sheets > CSV > inline students
 
-      // Try Google Sheets first
-      if (rawConfig.google_sheets?.spreadsheet_url &&
-          (section.google_sheet_tab || rawConfig.google_sheets?.tab_mappings?.[section.id])) {
+        // Try Google Sheets first
+        if (
+          rawConfig.google_sheets?.spreadsheet_url &&
+          (section.google_sheet_tab ||
+            rawConfig.google_sheets?.tab_mappings?.[section.id])
+        ) {
+          const tabName =
+            section.google_sheet_tab ||
+            rawConfig.google_sheets.tab_mappings[section.id];
 
-        const tabName = section.google_sheet_tab || rawConfig.google_sheets.tab_mappings[section.id];
-
-        try {
-          console.log(`📊 Loading students from Google Sheets tab: ${tabName} for section ${section.id}`);
-          const sheetStudents = await googleSheetsService.readStudentsFromTab(
-            rawConfig.google_sheets.spreadsheet_url,
-            tabName
-          );
-
-          console.log(`✅ Loaded ${sheetStudents.length} students from Google Sheets for section ${section.id}`);
-          section.students = sheetStudents;
-
-          // Remove CSV path since we're using Google Sheets
-          delete section.students_csv;
-          delete section.google_sheet_tab;
-
-        } catch (error) {
-          console.error(`❌ Failed to load Google Sheets data for section ${section.id}:`, error);
-          console.log('⚠️ Falling back to CSV or inline students');
-        }
-      }
-
-      // Fallback to CSV if Google Sheets failed or not configured
-      else if (section.students_csv) {
-        // Load students from CSV file
-        const csvPath = path.isAbsolute(section.students_csv)
-          ? section.students_csv
-          : path.join(path.dirname(filePath), section.students_csv);
-
-        let csvStudents: any[] = [];
-
-        // Try Cloud Storage first if enabled
-        if (process.env.USE_CLOUD_STORAGE === 'true') {
-          console.log(`🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`);
           try {
-            // Use gsutil command for immediate sync access
-            const bucketName = process.env.STORAGE_BUCKET;
-            const tempPath = `/tmp/${section.id}_students.csv`;
+            console.log(
+              `📊 Loading students from Google Sheets tab: ${tabName} for section ${section.id}`
+            );
+            const sheetStudents = await googleSheetsService.readStudentsFromTab(
+              rawConfig.google_sheets.spreadsheet_url,
+              tabName
+            );
 
-            execSync(`gsutil cp "gs://${bucketName}/${section.students_csv}" "${tempPath}"`, {
-              stdio: 'pipe',
-              timeout: 10000
-            });
+            console.log(
+              `✅ Loaded ${sheetStudents.length} students from Google Sheets for section ${section.id}`
+            );
+            section.students = sheetStudents;
 
-            csvStudents = loadStudentsFromCSV(tempPath);
-            console.log(`✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`);
-          } catch (cloudError) {
-            console.warn(`⚠️  Cloud Storage CSV load failed, trying local: ${cloudError}`);
+            // Remove CSV path since we're using Google Sheets
+            delete section.students_csv;
+            delete section.google_sheet_tab;
+          } catch (error) {
+            console.error(
+              `❌ Failed to load Google Sheets data for section ${section.id}:`,
+              error
+            );
+            console.log("⚠️ Falling back to CSV or inline students");
+          }
+        }
+
+        // Fallback to CSV if Google Sheets failed or not configured
+        else if (section.students_csv) {
+          // Load students from CSV file
+          const csvPath = path.isAbsolute(section.students_csv)
+            ? section.students_csv
+            : path.join(path.dirname(filePath), section.students_csv);
+
+          let csvStudents: any[] = [];
+
+          // Try Cloud Storage first if enabled
+          if (process.env.USE_CLOUD_STORAGE === "true") {
+            console.log(
+              `🔍 Attempting to load CSV from Cloud Storage: ${section.students_csv}`
+            );
+            try {
+              // Use the cloud storage service directly instead of gsutil
+              const { cloudStorage } = require("./cloud-storage");
+              const buffer = cloudStorage.readFileSync(section.students_csv);
+              const tempPath = `/tmp/${section.id}_students.csv`;
+
+              // Ensure temp directory exists
+              const tempDir = path.dirname(tempPath);
+              if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+              }
+
+              // Write to temp file and load
+              fs.writeFileSync(tempPath, buffer);
+              csvStudents = loadStudentsFromCSV(tempPath);
+              console.log(
+                `✅ Loaded ${csvStudents.length} students from Cloud Storage CSV`
+              );
+            } catch (cloudError) {
+              console.warn(
+                `⚠️  Cloud Storage CSV load failed, trying local: ${cloudError}`
+              );
+              csvStudents = loadStudentsFromCSV(csvPath);
+            }
+          } else {
             csvStudents = loadStudentsFromCSV(csvPath);
           }
-        } else {
-          csvStudents = loadStudentsFromCSV(csvPath);
-        }
 
-        console.log(`Loaded ${csvStudents.length} students from ${section.students_csv} for section ${section.id}`);
-
-        // If both CSV and inline students exist, merge them (CSV takes priority)
-        if (section.students && Array.isArray(section.students)) {
-          // Create a map of existing students by email
-          const existingStudentsMap = new Map(
-            section.students.map((s: any) => [s.email.toLowerCase(), s])
+          console.log(
+            `Loaded ${csvStudents.length} students from ${section.students_csv} for section ${section.id}`
           );
 
-          // Merge CSV students, preferring CSV data
-          csvStudents.forEach(csvStudent => {
-            existingStudentsMap.set(csvStudent.email.toLowerCase(), csvStudent);
-          });
+          // If both CSV and inline students exist, merge them (CSV takes priority)
+          if (section.students && Array.isArray(section.students)) {
+            // Create a map of existing students by email
+            const existingStudentsMap = new Map(
+              section.students.map((s: any) => [s.email.toLowerCase(), s])
+            );
 
-          section.students = Array.from(existingStudentsMap.values());
-        } else {
-          section.students = csvStudents;
-        }
+            // Merge CSV students, preferring CSV data
+            csvStudents.forEach((csvStudent) => {
+              existingStudentsMap.set(
+                csvStudent.email.toLowerCase(),
+                csvStudent
+              );
+            });
 
-        // Remove the CSV path from the config as it's no longer needed
-        delete section.students_csv;
-      }
-
-      // Ensure students array exists
-      if (!section.students) {
-        section.students = [];
-      }
-
-      // Fill in optional fields from FACILITATOR_MAPPING environment variable
-      if (process.env.FACILITATOR_MAPPING) {
-        try {
-          const mapping = JSON.parse(process.env.FACILITATOR_MAPPING);
-          if (mapping[section.id]) {
-            if (!section.ta_slack_id && mapping[section.id].slack_id) {
-              section.ta_slack_id = mapping[section.id].slack_id;
-            }
-            if (!section.google_email && mapping[section.id].google_email) {
-              section.google_email = mapping[section.id].google_email;
-            }
+            section.students = Array.from(existingStudentsMap.values());
+          } else {
+            section.students = csvStudents;
           }
-        } catch (e) {
-          console.error('Failed to parse FACILITATOR_MAPPING JSON:', e);
+
+          // Remove the CSV path from the config as it's no longer needed
+          delete section.students_csv;
         }
-      }
 
-      // Fallback to old individual env vars for backward compatibility
-      if (!section.ta_slack_id && process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`]) {
-        section.ta_slack_id = process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`];
-      }
-      if (!section.google_email && process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`]) {
-        section.google_email = process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`];
-      }
+        // Ensure students array exists
+        if (!section.students) {
+          section.students = [];
+        }
 
-      return section;
-    }));
+        // Fill in optional fields from FACILITATOR_MAPPING environment variable
+        if (process.env.FACILITATOR_MAPPING) {
+          try {
+            const mapping = JSON.parse(process.env.FACILITATOR_MAPPING);
+            if (mapping[section.id]) {
+              if (!section.ta_slack_id && mapping[section.id].slack_id) {
+                section.ta_slack_id = mapping[section.id].slack_id;
+              }
+              if (!section.google_email && mapping[section.id].google_email) {
+                section.google_email = mapping[section.id].google_email;
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse FACILITATOR_MAPPING JSON:", e);
+          }
+        }
+
+        // Fallback to old individual env vars for backward compatibility
+        if (
+          !section.ta_slack_id &&
+          process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`]
+        ) {
+          section.ta_slack_id =
+            process.env[`TA_SLACK_ID_${section.id.toUpperCase()}`];
+        }
+        if (
+          !section.google_email &&
+          process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`]
+        ) {
+          section.google_email =
+            process.env[`TA_GOOGLE_EMAIL_${section.id.toUpperCase()}`];
+        }
+
+        return section;
+      })
+    );
   }
 
   try {
     return ConfigSchema.parse(rawConfig) as Config;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('Configuration validation failed:', error.errors);
-      throw new Error('Invalid configuration file');
+      console.error("Configuration validation failed:", error.errors);
+      throw new Error("Invalid configuration file");
     }
     throw error;
   }
