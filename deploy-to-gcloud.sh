@@ -1,6 +1,6 @@
 #!/bin/bash
-# 🍊 ClemenTime - Docker Hub Deployment Script
-# Deploys ClemenTime container from Docker Hub to Google Cloud Run
+# 🍊 ClemenTime - Complete Build and Deploy Script
+# Builds Docker image with correct architecture, pushes to Docker Hub, and deploys to Google Cloud Run
 
 set -e
 
@@ -17,16 +17,19 @@ NC='\033[0m' # No Color
 PROJECT_ID="${PROJECT_ID:-psych-10-admin-bots}"
 SERVICE_NAME="${SERVICE_NAME:-clementime}"
 REGION="${REGION:-us-west1}"
-DOCKER_IMAGE="${DOCKER_IMAGE:-shawnschwartz/clementime:v1.0.0-gcloud}"
+DOCKER_USERNAME="${DOCKER_USERNAME:-shawnschwartz}"
+DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-clementime}"
+DOCKER_TAG="${DOCKER_TAG:-v1.1.3-gcloud}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-$DOCKER_USERNAME/$DOCKER_IMAGE_NAME:$DOCKER_TAG}"
 BUCKET_NAME="${BUCKET_NAME:-${SERVICE_NAME}-data-${PROJECT_ID}}"
-MIN_INSTANCES="${MIN_INSTANCES:-1}" # Keep at least 1 instance for data persistence
+MIN_INSTANCES="${MIN_INSTANCES:-1}"
 MAX_INSTANCES="${MAX_INSTANCES:-10}"
 CPU="${CPU:-1}"
 MEMORY="${MEMORY:-1Gi}"
 
 # Print banner
 echo -e "${PURPLE}════════════════════════════════════════════════════════════════════${NC}"
-echo -e "${PURPLE}🍊 ClemenTime - Docker Hub Deployment${NC}"
+echo -e "${PURPLE}🍊 ClemenTime - Complete Build and Deploy Pipeline${NC}"
 echo -e "${PURPLE}════════════════════════════════════════════════════════════════════${NC}"
 echo ""
 
@@ -58,13 +61,13 @@ command_exists() {
 # Check prerequisites
 print_step "📋 Checking prerequisites..."
 
-if ! command_exists gcloud; then
-  print_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
+if ! command_exists docker; then
+  print_error "Docker is not installed. Please install it from https://docs.docker.com/get-docker/"
   exit 1
 fi
 
-if ! command_exists docker; then
-  print_error "Docker is not installed. Please install it from https://docs.docker.com/get-docker/"
+if ! command_exists gcloud; then
+  print_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
   exit 1
 fi
 
@@ -86,6 +89,99 @@ print_success "Authenticated as: $ACTIVE_ACCOUNT"
 print_step "📋 Setting project to: $PROJECT_ID"
 gcloud config set project "$PROJECT_ID" >/dev/null 2>&1
 print_success "Project set to $PROJECT_ID"
+
+# Check required files
+print_step "📦 Checking required files..."
+
+if [ ! -f "Dockerfile.gcloud" ]; then
+  print_error "Dockerfile.gcloud not found in current directory"
+  exit 1
+fi
+
+if [ ! -f "gcloud-startup.sh" ]; then
+  print_error "gcloud-startup.sh not found in current directory"
+  exit 1
+fi
+
+if [ ! -f "package.json" ]; then
+  print_error "package.json not found in current directory"
+  exit 1
+fi
+
+print_success "All required files found"
+
+# Check for config files
+print_step "📋 Checking configuration files..."
+
+if [ ! -f "config.yml" ]; then
+  print_warning "config.yml not found - will use default configuration"
+  if [ -f "config.example.yml" ]; then
+    print_step "Copying config.example.yml to config.yml..."
+    cp config.example.yml config.yml
+    print_success "config.yml created from example"
+  fi
+fi
+
+if [ ! -f ".env" ]; then
+  print_warning ".env file not found - will use environment defaults"
+  print_warning "For production deployment, you'll need a proper .env file"
+fi
+
+# Build the Docker image with correct architecture
+print_step "🔨 Building Docker image with amd64/linux architecture..."
+
+echo "Building image: $DOCKER_IMAGE"
+echo "Using Dockerfile: Dockerfile.gcloud"
+echo "Platform: linux/amd64 (required for Google Cloud Run)"
+echo ""
+
+# Ensure buildx is available and create builder if needed
+if ! docker buildx ls | grep -q "linux/amd64"; then
+  print_step "Setting up Docker buildx for multi-platform builds..."
+  docker buildx create --name mybuilder --use || docker buildx use mybuilder
+  docker buildx inspect --bootstrap
+fi
+
+# Build with buildx for single platform (amd64/linux only)
+print_step "Building Docker image (this may take a few minutes)..."
+docker buildx build \
+  --platform linux/amd64 \
+  --load \
+  -f Dockerfile.gcloud \
+  -t "$DOCKER_IMAGE" \
+  . \
+  --progress=plain
+
+print_success "Docker image built successfully"
+
+# Verify architecture
+print_step "📊 Verifying image architecture..."
+ARCHITECTURE=$(docker inspect "$DOCKER_IMAGE" | grep -o '"Architecture": "[^"]*"' | cut -d'"' -f4)
+if [ "$ARCHITECTURE" = "amd64" ]; then
+  print_success "Image architecture verified: $ARCHITECTURE"
+else
+  print_error "Image architecture is $ARCHITECTURE, expected amd64"
+  exit 1
+fi
+
+# Show image info
+print_step "📊 Image information..."
+docker images "$DOCKER_IMAGE"
+
+# Login to Docker Hub
+print_step "🐳 Logging into Docker Hub..."
+if ! docker info | grep -q "Username:"; then
+  echo "Please log in to Docker Hub:"
+  docker login
+else
+  print_success "Already logged into Docker Hub"
+fi
+
+# Push to Docker Hub
+print_step "⬆️  Pushing image to Docker Hub..."
+docker push "$DOCKER_IMAGE"
+
+print_success "Image pushed to Docker Hub successfully!"
 
 # Enable required APIs
 print_step "🔧 Enabling required Google Cloud APIs..."
@@ -111,83 +207,6 @@ gsutil -m mkdir -p "gs://$BUCKET_NAME/data" 2>/dev/null || true
 gsutil -m mkdir -p "gs://$BUCKET_NAME/students" 2>/dev/null || true
 gsutil -m mkdir -p "gs://$BUCKET_NAME/uploads" 2>/dev/null || true
 print_success "Storage directories initialized"
-
-# Check if config files exist
-print_step "📦 Checking configuration files..."
-
-if [ ! -f "config.yml" ]; then
-  print_warning "config.yml not found in current directory"
-  echo "Creating sample config.yml file..."
-  cat >config.yml <<'EOF'
-# Sample ClemenTime Configuration
-course:
-  name: "Psychology 10"
-  term: "Fall 2024"
-  department: "Psychology"
-
-sections:
-  - id: "section1"
-    name: "Section 1"
-    capacity: 20
-    ta_email: "ta1@example.com"
-  - id: "section2"
-    name: "Section 2"
-    capacity: 20
-    ta_email: "ta2@example.com"
-
-schedule:
-  duration_minutes: 20
-  buffer_minutes: 5
-  start_time: "09:00"
-  end_time: "17:00"
-  days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-
-# Uncomment and configure for production:
-# authorized_google_users:
-#   - "admin@example.com"
-#   - "ta1@example.com"
-#   - "ta2@example.com"
-EOF
-  print_warning "Please edit config.yml with your actual configuration before proceeding"
-fi
-
-if [ ! -f ".env" ]; then
-  print_warning ".env file not found in current directory"
-  echo "Creating sample .env file..."
-  cat >.env <<'EOF'
-# ClemenTime Environment Variables
-# Copy this file and fill in your actual values
-
-# Google OAuth Configuration (required)
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_AUTH_CALLBACK_URL=https://your-domain.com/auth/google/callback
-
-# Session Configuration (important for production)
-SESSION_SECRET=your_secure_session_secret_here
-SESSION_STORE=sqlite  # Use 'sqlite' for persistent sessions (recommended)
-
-# Database Configuration
-DATABASE_PATH=/tmp/data/clementime.db
-SCHEDULER_DATABASE_PATH=/tmp/data/clementime.db
-
-# Optional: Slack Integration
-# SLACK_BOT_TOKEN=xoxb-your-slack-bot-token
-# SLACK_APP_TOKEN=xapp-your-slack-app-token
-# SLACK_SIGNING_SECRET=your-slack-signing-secret
-
-# Optional: Google Drive Integration
-# GOOGLE_DRIVE_FOLDER_ID=your-google-drive-folder-id
-# GOOGLE_MEET_CLIENT_ID=your-google-meet-client-id
-# GOOGLE_MEET_CLIENT_SECRET=your-google-meet-client-secret
-# GOOGLE_REFRESH_TOKEN=your-google-refresh-token
-
-# Optional: Service Account (for Google APIs)
-# GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
-EOF
-  print_warning "Please edit .env with your actual configuration before deploying"
-  print_warning "Make sure to set proper OAuth callback URL for your domain"
-fi
 
 # Prepare environment variables for Cloud Run
 print_step "🔒 Preparing environment variables..."
@@ -221,21 +240,6 @@ if [ -d "./data" ]; then
   print_success "Local data synchronized to Cloud Storage"
 fi
 
-# Deploy to Cloud Run
-print_step "🚀 Deploying ClemenTime to Google Cloud Run..."
-
-echo "📦 Configuration:"
-echo "  - Docker Image: $DOCKER_IMAGE"
-echo "  - Service Name: $SERVICE_NAME"
-echo "  - Region: $REGION"
-echo "  - Project: $PROJECT_ID"
-echo "  - Storage Bucket: gs://$BUCKET_NAME"
-echo "  - Min Instances: $MIN_INSTANCES"
-echo "  - Max Instances: $MAX_INSTANCES"
-echo "  - CPU: $CPU"
-echo "  - Memory: $MEMORY"
-echo ""
-
 # Create service account for Cloud Storage access
 SERVICE_ACCOUNT_NAME="${SERVICE_NAME}-storage-sa"
 SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -253,6 +257,21 @@ fi
 # Grant storage permissions to service account
 gsutil iam ch "serviceAccount:${SERVICE_ACCOUNT_EMAIL}:objectAdmin" "gs://$BUCKET_NAME"
 print_success "Storage permissions configured"
+
+# Deploy to Cloud Run
+print_step "🚀 Deploying ClemenTime to Google Cloud Run..."
+
+echo "📦 Configuration:"
+echo "  - Docker Image: $DOCKER_IMAGE"
+echo "  - Service Name: $SERVICE_NAME"
+echo "  - Region: $REGION"
+echo "  - Project: $PROJECT_ID"
+echo "  - Storage Bucket: gs://$BUCKET_NAME"
+echo "  - Min Instances: $MIN_INSTANCES"
+echo "  - Max Instances: $MAX_INSTANCES"
+echo "  - CPU: $CPU"
+echo "  - Memory: $MEMORY"
+echo ""
 
 # Deploy with Cloud Storage configuration (first deployment)
 print_step "🚀 Deploying initial service..."
@@ -338,11 +357,12 @@ print_success "ClemenTime deployed successfully!"
 
 echo ""
 echo -e "${PURPLE}════════════════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}🎉 Deployment Complete!${NC}"
+echo -e "${GREEN}🎉 Complete Build and Deploy Pipeline Complete!${NC}"
 echo -e "${PURPLE}════════════════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${CYAN}📍 Service URL: ${GREEN}$SERVICE_URL${NC}"
 echo -e "${CYAN}📦 Storage Bucket: ${GREEN}gs://$BUCKET_NAME${NC}"
+echo -e "${CYAN}🐳 Docker Image: ${GREEN}$DOCKER_IMAGE${NC}"
 echo ""
 echo -e "${YELLOW}⚠️  IMPORTANT: Configure Google OAuth${NC}"
 echo "1. Go to: https://console.cloud.google.com/apis/credentials"
