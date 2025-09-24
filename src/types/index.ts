@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'ta';
+export type UserRole = "admin" | "ta";
 
 export interface Student {
   name: string;
@@ -23,11 +23,12 @@ export interface Section {
   location: string;
   preferred_days: string[];
   students: Student[];
-  students_csv?: string;  // Optional path to CSV file
+  students_csv?: string; // Optional path to CSV file
+  google_sheet_url?: string; // Optional Google Sheets URL
   student_split?: {
-    enabled: boolean;  // Whether to split students across multiple weeks
-    split_percentage: number;  // Percentage of students for first week (0-100, default: 50)
-    weeks_between_splits: number;  // Number of weeks between each split (default: 2)
+    enabled: boolean; // Whether to split students across multiple weeks
+    split_percentage: number; // Percentage of students for first week (0-100, default: 50)
+    weeks_between_splits: number; // Number of weeks between each split (default: 2)
   };
 }
 

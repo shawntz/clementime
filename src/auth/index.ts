@@ -97,9 +97,9 @@ export class AuthService {
       process.env.GOOGLE_MEET_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
     const clientSecret =
       process.env.GOOGLE_MEET_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
-    const callbackUrl =
-      process.env.GOOGLE_AUTH_CALLBACK_URL ||
-      "http://localhost:3000/auth/google/callback";
+
+    // Determine callback URL based on environment
+    const callbackUrl = this.getCallbackUrl();
 
     if (!clientId || !clientSecret) {
       console.warn(
@@ -107,6 +107,12 @@ export class AuthService {
       );
       return;
     }
+
+    console.log(`🔐 OAuth Configuration:`);
+    console.log(`  - Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`  - Callback URL: ${callbackUrl}`);
+    console.log(`  - Client ID: ${clientId ? "Present" : "Missing"}`);
+    console.log(`  - Client Secret: ${clientSecret ? "Present" : "Missing"}`);
 
     passport.use(
       new GoogleStrategy(
@@ -177,7 +183,9 @@ export class AuthService {
 
         if (user) {
           // Determine user role and sections
-          const { role, sections } = this.getUserRoleAndSections(user.google_email);
+          const { role, sections } = this.getUserRoleAndSections(
+            user.google_email
+          );
 
           const authUser: AuthUser = {
             email: user.google_email,
@@ -197,6 +205,27 @@ export class AuthService {
         done(error);
       }
     });
+  }
+
+  private getCallbackUrl(): string {
+    // Check for explicit callback URL first
+    if (process.env.GOOGLE_AUTH_CALLBACK_URL) {
+      return process.env.GOOGLE_AUTH_CALLBACK_URL;
+    }
+
+    // Determine based on environment
+    const isProduction = process.env.NODE_ENV === "production";
+    const port = process.env.PORT || "3000";
+
+    if (isProduction) {
+      // For production, you should set GOOGLE_AUTH_CALLBACK_URL explicitly
+      // This is a fallback that assumes HTTPS
+      const domain = process.env.DOMAIN || "your-domain.com";
+      return `https://${domain}/auth/google/callback`;
+    } else {
+      // For development
+      return `http://localhost:${port}/auth/google/callback`;
+    }
   }
 
   isAuthorizedUser(email: string): boolean {
@@ -222,24 +251,27 @@ export class AuthService {
     return Array.from(this.authorizedEmails);
   }
 
-  getUserRoleAndSections(email: string): { role: UserRole; sections?: string[] } {
+  getUserRoleAndSections(email: string): {
+    role: UserRole;
+    sections?: string[];
+  } {
     const normalizedEmail = email.toLowerCase();
 
     // Check if user is a TA (appears in any section's ta_email)
     const userSections = this.config.sections
-      .filter(section => section.ta_email?.toLowerCase() === normalizedEmail)
-      .map(section => section.id);
+      .filter((section) => section.ta_email?.toLowerCase() === normalizedEmail)
+      .map((section) => section.id);
 
     if (userSections.length > 0) {
       return {
-        role: 'ta',
-        sections: userSections
+        role: "ta",
+        sections: userSections,
       };
     }
 
     // Default to admin role for authorized users who aren't TAs
     return {
-      role: 'admin'
+      role: "admin",
     };
   }
 
@@ -248,13 +280,13 @@ export class AuthService {
   }
 
   hasAdminAccess(user: AuthUser | null): boolean {
-    return user?.role === 'admin';
+    return user?.role === "admin";
   }
 
   hasAccessToSection(user: AuthUser | null, sectionId: string): boolean {
     if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (user.role === 'ta') return user.sections?.includes(sectionId) || false;
+    if (user.role === "admin") return true;
+    if (user.role === "ta") return user.sections?.includes(sectionId) || false;
     return false;
   }
 
@@ -270,7 +302,7 @@ export class AuthService {
     console.log(`🔒 Auth Check for ${req.url}:`);
     console.log(`  - Session ID: ${req.session?.id}`);
     console.log(`  - Is Authenticated: ${req.isAuthenticated()}`);
-    console.log(`  - User: ${req.user ? JSON.stringify(req.user) : 'null'}`);
+    console.log(`  - User: ${req.user ? JSON.stringify(req.user) : "null"}`);
 
     if (!req.isAuthenticated()) {
       console.log(`❌ Auth failed for ${req.url} - redirecting to login`);
@@ -322,7 +354,7 @@ export class AuthService {
         res.status(403).json({ error: "Admin access required" });
       } else {
         res.status(403).render("error", {
-          message: "Access denied. Admin privileges required."
+          message: "Access denied. Admin privileges required.",
         });
       }
       return;
@@ -345,7 +377,8 @@ export class AuthService {
       }
 
       const user = req.user as AuthUser;
-      const targetSection = sectionId || req.params.sectionId || req.body.sectionId;
+      const targetSection =
+        sectionId || req.params.sectionId || req.body.sectionId;
 
       if (targetSection && !this.hasAccessToSection(user, targetSection)) {
         const acceptHeader = req.headers.accept || "";
@@ -353,7 +386,8 @@ export class AuthService {
           res.status(403).json({ error: "Access denied to this section" });
         } else {
           res.status(403).render("error", {
-            message: "Access denied. You don't have permission to access this section."
+            message:
+              "Access denied. You don't have permission to access this section.",
           });
         }
         return;

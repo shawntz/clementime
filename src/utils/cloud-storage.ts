@@ -1,8 +1,8 @@
-import { Storage, Bucket, File } from '@google-cloud/storage';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { execSync } from 'child_process';
+import { Storage, Bucket, File } from "@google-cloud/storage";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import { execSync } from "child_process";
 
 export class CloudStorageService {
   private storage: Storage | null = null;
@@ -12,7 +12,7 @@ export class CloudStorageService {
   private localCache: Map<string, string> = new Map();
 
   constructor() {
-    this.isEnabled = process.env.USE_CLOUD_STORAGE === 'true';
+    this.isEnabled = process.env.USE_CLOUD_STORAGE === "true";
     this.bucketName = process.env.STORAGE_BUCKET || null;
 
     if (this.isEnabled && this.bucketName) {
@@ -22,13 +22,15 @@ export class CloudStorageService {
         this.storage = new Storage();
         this.bucket = this.storage.bucket(this.bucketName);
 
-        console.log(`☁️  Cloud Storage initialized with bucket: ${this.bucketName}`);
+        console.log(
+          `☁️  Cloud Storage initialized with bucket: ${this.bucketName}`
+        );
       } catch (error) {
-        console.error('❌ Failed to initialize Cloud Storage:', error);
+        console.error("❌ Failed to initialize Cloud Storage:", error);
         this.isEnabled = false;
       }
     } else {
-      console.log('📁 Using local file system (Cloud Storage disabled)');
+      console.log("📁 Using local file system (Cloud Storage disabled)");
     }
   }
 
@@ -83,7 +85,7 @@ export class CloudStorageService {
 
       // Try to download to temp and cache it
       try {
-        const tempPath = path.join(os.tmpdir(), 'clementime-cache', cloudPath);
+        const tempPath = path.join(os.tmpdir(), "clementime-cache", cloudPath);
         const tempDir = path.dirname(tempPath);
 
         // Ensure temp directory exists
@@ -96,10 +98,13 @@ export class CloudStorageService {
 
         try {
           // Use gsutil for sync download if available in container
-          execSync(`gsutil cp "gs://${bucketName}/${cloudPath}" "${tempPath}"`, {
-            stdio: 'pipe',
-            timeout: 30000
-          });
+          execSync(
+            `gsutil cp "gs://${bucketName}/${cloudPath}" "${tempPath}"`,
+            {
+              stdio: "pipe",
+              timeout: 30000,
+            }
+          );
 
           this.localCache.set(cacheKey, tempPath);
           console.log(`☁️  Downloaded and cached: ${cloudPath} → ${tempPath}`);
@@ -109,7 +114,10 @@ export class CloudStorageService {
           throw new Error(`Could not download ${cloudPath} synchronously`);
         }
       } catch (error) {
-        console.error(`❌ Sync Cloud Storage read failed for ${filePath}:`, error);
+        console.error(
+          `❌ Sync Cloud Storage read failed for ${filePath}:`,
+          error
+        );
         throw error;
       }
     } else {
@@ -128,19 +136,20 @@ export class CloudStorageService {
         console.log(`☁️  Writing to Cloud Storage: ${cloudPath}`);
 
         const file = this.bucket.file(cloudPath);
-        const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
+        const buffer = Buffer.isBuffer(content)
+          ? content
+          : Buffer.from(content);
 
         await file.save(buffer, {
           metadata: {
-            contentType: this.getContentType(filePath)
-          }
+            contentType: this.getContentType(filePath),
+          },
         });
 
         // Also write to local /tmp for immediate access
         const tempPath = this.toTempPath(filePath);
         await this.ensureDirectoryExists(path.dirname(tempPath));
         await fs.promises.writeFile(tempPath, buffer);
-
       } catch (error) {
         console.error(`❌ Cloud Storage write failed for ${filePath}:`, error);
         throw error;
@@ -163,7 +172,10 @@ export class CloudStorageService {
         const [exists] = await file.exists();
         return exists;
       } catch (error) {
-        console.error(`❌ Cloud Storage exists check failed for ${filePath}:`, error);
+        console.error(
+          `❌ Cloud Storage exists check failed for ${filePath}:`,
+          error
+        );
         return false;
       }
     } else {
@@ -180,12 +192,15 @@ export class CloudStorageService {
         const cloudPrefix = this.toCloudPath(directoryPath);
         const [files] = await this.bucket.getFiles({
           prefix: cloudPrefix,
-          delimiter: '/'
+          delimiter: "/",
         });
 
-        return files.map(file => file.name);
+        return files.map((file) => file.name);
       } catch (error) {
-        console.error(`❌ Cloud Storage list failed for ${directoryPath}:`, error);
+        console.error(
+          `❌ Cloud Storage list failed for ${directoryPath}:`,
+          error
+        );
         return [];
       }
     } else {
@@ -237,10 +252,10 @@ export class CloudStorageService {
    */
   async downloadToTemp(cloudPath: string): Promise<string> {
     if (!this.isCloudStorageEnabled() || !this.bucket) {
-      throw new Error('Cloud Storage is not enabled');
+      throw new Error("Cloud Storage is not enabled");
     }
 
-    const tempPath = path.join(os.tmpdir(), 'clementime', cloudPath);
+    const tempPath = path.join(os.tmpdir(), "clementime", cloudPath);
     await this.ensureDirectoryExists(path.dirname(tempPath));
 
     try {
@@ -259,19 +274,21 @@ export class CloudStorageService {
    */
   async syncFromCloud(localDir: string, cloudPrefix: string): Promise<void> {
     if (!this.isCloudStorageEnabled() || !this.bucket) {
-      console.log('📁 Cloud sync skipped (using local filesystem)');
+      console.log("📁 Cloud sync skipped (using local filesystem)");
       return;
     }
 
     try {
-      console.log(`☁️  Syncing from Cloud Storage: ${cloudPrefix} → ${localDir}`);
+      console.log(
+        `☁️  Syncing from Cloud Storage: ${cloudPrefix} → ${localDir}`
+      );
 
       const [files] = await this.bucket.getFiles({
-        prefix: cloudPrefix
+        prefix: cloudPrefix,
       });
 
       for (const file of files) {
-        const relativePath = file.name.replace(cloudPrefix, '');
+        const relativePath = file.name.replace(cloudPrefix, "");
         const localPath = path.join(localDir, relativePath);
 
         await this.ensureDirectoryExists(path.dirname(localPath));
@@ -280,7 +297,7 @@ export class CloudStorageService {
 
       console.log(`✅ Synced ${files.length} files from Cloud Storage`);
     } catch (error) {
-      console.error('❌ Cloud sync failed:', error);
+      console.error("❌ Cloud sync failed:", error);
       throw error;
     }
   }
@@ -290,7 +307,7 @@ export class CloudStorageService {
    */
   async syncToCloud(localDir: string, cloudPrefix: string): Promise<void> {
     if (!this.isCloudStorageEnabled() || !this.bucket) {
-      console.log('📁 Cloud sync skipped (using local filesystem)');
+      console.log("📁 Cloud sync skipped (using local filesystem)");
       return;
     }
 
@@ -301,19 +318,21 @@ export class CloudStorageService {
 
       for (const filePath of files) {
         const relativePath = path.relative(localDir, filePath);
-        const cloudPath = path.join(cloudPrefix, relativePath).replace(/\\/g, '/');
+        const cloudPath = path
+          .join(cloudPrefix, relativePath)
+          .replace(/\\/g, "/");
 
         const file = this.bucket.file(cloudPath);
         await file.save(await fs.promises.readFile(filePath), {
           metadata: {
-            contentType: this.getContentType(filePath)
-          }
+            contentType: this.getContentType(filePath),
+          },
         });
       }
 
       console.log(`✅ Synced ${files.length} files to Cloud Storage`);
     } catch (error) {
-      console.error('❌ Cloud sync failed:', error);
+      console.error("❌ Cloud sync failed:", error);
       throw error;
     }
   }
@@ -324,7 +343,7 @@ export class CloudStorageService {
   getDatabasePath(): string {
     if (this.isCloudStorageEnabled()) {
       // In Cloud Run, use /tmp for SQLite database
-      const tempDbPath = '/tmp/clementime.db';
+      const tempDbPath = "/tmp/clementime.db";
 
       // Ensure directory exists
       const dbDir = path.dirname(tempDbPath);
@@ -335,7 +354,10 @@ export class CloudStorageService {
       return tempDbPath;
     } else {
       // Local development or non-cloud deployment
-      return process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'clementime.db');
+      return (
+        process.env.DATABASE_PATH ||
+        path.join(process.cwd(), "data", "clementime.db")
+      );
     }
   }
 
@@ -343,21 +365,25 @@ export class CloudStorageService {
 
   private toCloudPath(localPath: string): string {
     // Convert local file path to cloud storage path
-    if (localPath.startsWith('/app/')) {
-      return localPath.substring(5).replace(/\\/g, '/');
+    if (localPath.startsWith("/app/")) {
+      return localPath.substring(5).replace(/\\/g, "/");
     }
-    if (localPath.startsWith('/tmp/')) {
-      return localPath.substring(5).replace(/\\/g, '/');
+    if (localPath.startsWith("/tmp/")) {
+      return localPath.substring(5).replace(/\\/g, "/");
+    }
+    // Handle relative paths - they should be used as-is for cloud storage
+    if (!path.isAbsolute(localPath)) {
+      return localPath.replace(/\\/g, "/");
     }
     // Remove any absolute path prefix and use relative path
-    const relativePath = localPath.replace(process.cwd() + '/', '');
-    return relativePath.replace(/\\/g, '/');
+    const relativePath = localPath.replace(process.cwd() + "/", "");
+    return relativePath.replace(/\\/g, "/");
   }
 
   private toTempPath(filePath: string): string {
     // Convert to a path in /tmp for local caching
     const relativePath = this.toCloudPath(filePath);
-    return path.join('/tmp', relativePath);
+    return path.join("/tmp", relativePath);
   }
 
   private async ensureDirectoryExists(dir: string): Promise<void> {
@@ -369,20 +395,23 @@ export class CloudStorageService {
   private getContentType(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
     const contentTypes: Record<string, string> = {
-      '.json': 'application/json',
-      '.csv': 'text/csv',
-      '.txt': 'text/plain',
-      '.yml': 'text/yaml',
-      '.yaml': 'text/yaml',
-      '.db': 'application/x-sqlite3',
-      '.html': 'text/html',
-      '.js': 'application/javascript',
-      '.css': 'text/css'
+      ".json": "application/json",
+      ".csv": "text/csv",
+      ".txt": "text/plain",
+      ".yml": "text/yaml",
+      ".yaml": "text/yaml",
+      ".db": "application/x-sqlite3",
+      ".html": "text/html",
+      ".js": "application/javascript",
+      ".css": "text/css",
     };
-    return contentTypes[ext] || 'application/octet-stream';
+    return contentTypes[ext] || "application/octet-stream";
   }
 
-  private async getAllFiles(dir: string, files: string[] = []): Promise<string[]> {
+  private async getAllFiles(
+    dir: string,
+    files: string[] = []
+  ): Promise<string[]> {
     const items = await fs.promises.readdir(dir, { withFileTypes: true });
 
     for (const item of items) {

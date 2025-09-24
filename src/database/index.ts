@@ -203,6 +203,24 @@ export class DatabaseService {
       BEGIN
         UPDATE section_mappings SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
       END;
+
+      -- Table for Google Sheets URLs per section
+      CREATE TABLE IF NOT EXISTS section_google_sheets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        section_id TEXT UNIQUE NOT NULL,
+        google_sheets_url TEXT NOT NULL,
+        saved_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_section_google_sheets_section ON section_google_sheets(section_id);
+
+      CREATE TRIGGER IF NOT EXISTS update_section_google_sheets_timestamp
+      AFTER UPDATE ON section_google_sheets
+      BEGIN
+        UPDATE section_google_sheets SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+      END;
     `);
 
     // Add columns for Google OAuth tokens if they don't exist (migration)
@@ -564,6 +582,46 @@ export class DatabaseService {
 
   deleteSectionMapping(mappingId: number): void {
     this.db.prepare('DELETE FROM section_mappings WHERE id = ?').run(mappingId);
+  }
+
+  // Google Sheets URL methods
+  saveGoogleSheetsUrl(sectionId: string, googleSheetsUrl: string, savedBy: string): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO section_google_sheets (section_id, google_sheets_url, saved_by)
+      VALUES (?, ?, ?)
+      ON CONFLICT(section_id) DO UPDATE SET
+        google_sheets_url = excluded.google_sheets_url,
+        saved_by = excluded.saved_by,
+        updated_at = CURRENT_TIMESTAMP
+    `);
+
+    stmt.run(sectionId, googleSheetsUrl, savedBy);
+  }
+
+  getGoogleSheetsUrl(sectionId: string): string | null {
+    const row = this.db.prepare(`
+      SELECT google_sheets_url FROM section_google_sheets
+      WHERE section_id = ?
+    `).get(sectionId) as any;
+
+    return row ? row.google_sheets_url : null;
+  }
+
+  getAllGoogleSheetsUrls(): Map<string, string> {
+    const urls = new Map<string, string>();
+    const rows = this.db.prepare(`
+      SELECT section_id, google_sheets_url FROM section_google_sheets
+    `).all() as any[];
+
+    for (const row of rows) {
+      urls.set(row.section_id, row.google_sheets_url);
+    }
+
+    return urls;
+  }
+
+  deleteGoogleSheetsUrl(sectionId: string): void {
+    this.db.prepare('DELETE FROM section_google_sheets WHERE section_id = ?').run(sectionId);
   }
 
   // Clean up old sessions
