@@ -92,15 +92,17 @@ export class WebServer {
     this.app.use(express.urlencoded({ extended: true }));
 
     // In production, static files are copied to /app/src/web/public by Dockerfile
-    const publicPath = process.env.NODE_ENV === "production"
-      ? path.join(process.cwd(), "src", "web", "public")
-      : path.join(__dirname, "..", "..", "src", "web", "public");
+    const publicPath =
+      process.env.NODE_ENV === "production"
+        ? path.join(process.cwd(), "src", "web", "public")
+        : path.join(__dirname, "..", "..", "src", "web", "public");
     this.app.use(express.static(publicPath));
     this.app.set("view engine", "ejs");
     // In production, views are copied to /app/src/web/views by Dockerfile
-    const viewsPath = process.env.NODE_ENV === "production"
-      ? path.join(process.cwd(), "src", "web", "views")
-      : path.join(__dirname, "views");
+    const viewsPath =
+      process.env.NODE_ENV === "production"
+        ? path.join(process.cwd(), "src", "web", "views")
+        : path.join(__dirname, "views");
     this.app.set("views", viewsPath);
 
     console.log(`📁 Views directory: ${viewsPath}`);
@@ -112,9 +114,11 @@ export class WebServer {
 
       if (viewsDirExists) {
         const viewFiles = fs.readdirSync(viewsPath);
-        console.log(`📁 View files found: ${viewFiles.join(', ')}`);
+        console.log(`📁 View files found: ${viewFiles.join(", ")}`);
 
-        const configViewExists = fs.existsSync(path.join(viewsPath, 'config.ejs'));
+        const configViewExists = fs.existsSync(
+          path.join(viewsPath, "config.ejs")
+        );
         console.log(`📁 Config view exists: ${configViewExists}`);
       }
     } catch (error) {
@@ -128,7 +132,9 @@ export class WebServer {
 
     // Create SQLite session store (using separate database file to avoid schema conflicts)
     const SQLiteStore = connectSqlite3(session);
-    const mainDbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'clementime.db');
+    const mainDbPath =
+      process.env.DATABASE_PATH ||
+      path.join(process.cwd(), "data", "clementime.db");
     const sessionDir = path.dirname(mainDbPath);
     const sessionDbName = "sessions.db";
     const sessionStore = new SQLiteStore({
@@ -137,7 +143,7 @@ export class WebServer {
       dir: sessionDir,
     });
 
-    console.log('🔐 Session store configuration:');
+    console.log("🔐 Session store configuration:");
     console.log(`  - Session database: ${sessionDbName}`);
     console.log(`  - Session directory: ${sessionDir}`);
     console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`);
@@ -149,18 +155,21 @@ export class WebServer {
     // TEMPORARILY disable secure cookies to test if HTTPS is causing issues
     const cookieSecure = false; // process.env.COOKIE_SECURE === "true" || process.env.NODE_ENV === "production";
 
-    console.log('🍪 Session cookie configuration:');
+    console.log("🍪 Session cookie configuration:");
     console.log(`  - secure: ${cookieSecure}`);
     console.log(`  - httpOnly: true`);
     console.log(`  - sameSite: "lax"`);
     console.log(`  - maxAge: ${24 * 60 * 60 * 1000}ms (24 hours)`);
-    console.log(`  - using store: ${useMemoryStore ? 'MemoryStore' : 'SQLite'}`);
+    console.log(
+      `  - using store: ${useMemoryStore ? "MemoryStore" : "SQLite"}`
+    );
 
     this.app.use(
       session({
         secret: sessionSecret,
         resave: false,
-        saveUninitialized: process.env.SESSION_SAVE_UNINITIALIZED === "true" ? true : false,
+        saveUninitialized:
+          process.env.SESSION_SAVE_UNINITIALIZED === "true" ? true : false,
         store: useMemoryStore ? undefined : (sessionStore as any),
         cookie: {
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -174,8 +183,10 @@ export class WebServer {
     // Add cookie debugging middleware
     this.app.use((req, res, next) => {
       console.log(`🍪 Request to ${req.url}:`);
-      console.log(`  - Cookies: ${JSON.stringify(req.headers.cookie || 'none')}`);
-      console.log(`  - Session ID: ${req.session?.id || 'no session'}`);
+      console.log(
+        `  - Cookies: ${JSON.stringify(req.headers.cookie || "none")}`
+      );
+      console.log(`  - Session ID: ${req.session?.id || "no session"}`);
       next();
     });
 
@@ -232,15 +243,24 @@ export class WebServer {
         if (user && user.email) {
           try {
             const userRecord = this.db.getUserByEmail(user.email);
-            if (userRecord && userRecord.access_token && userRecord.refresh_token) {
+            if (
+              userRecord &&
+              userRecord.access_token &&
+              userRecord.refresh_token
+            ) {
               (req.session as any).googleAccessToken = userRecord.access_token;
-              (req.session as any).googleRefreshToken = userRecord.refresh_token;
-              console.log(`🔑 Stored Google tokens in session for ${user.email}`);
+              (req.session as any).googleRefreshToken =
+                userRecord.refresh_token;
+              console.log(
+                `🔑 Stored Google tokens in session for ${user.email}`
+              );
             } else {
-              console.log(`⚠️ No tokens found for user ${user.email} in database`);
+              console.log(
+                `⚠️ No tokens found for user ${user.email} in database`
+              );
             }
           } catch (error) {
-            console.error('Failed to store Google tokens in session:', error);
+            console.error("Failed to store Google tokens in session:", error);
           }
         }
 
@@ -323,6 +343,11 @@ export class WebServer {
       "/config",
       this.auth.requireAuth.bind(this.auth),
       this.renderConfig.bind(this)
+    );
+    this.app.get(
+      "/students",
+      this.auth.requireAuth.bind(this.auth),
+      this.renderStudents.bind(this)
     );
     this.app.post(
       "/config/save",
@@ -481,6 +506,36 @@ export class WebServer {
       this.auth.requireAuth.bind(this.auth),
       this.syncGoogleSheets.bind(this)
     );
+
+    // Students CSV management endpoints
+    this.app.get(
+      "/api/students/files",
+      this.auth.requireAuth.bind(this.auth),
+      this.getStudentFiles.bind(this)
+    );
+    this.app.post(
+      "/api/students/upload",
+      this.auth.requireAdmin.bind(this.auth),
+      this.upload.single("csvFile"),
+      this.uploadStudentFile.bind(this)
+    );
+    this.app.post(
+      "/api/students/reload",
+      this.auth.requireAdmin.bind(this.auth),
+      this.reloadStudentData.bind(this)
+    );
+
+    // Google Sheets integration endpoints
+    this.app.post(
+      "/api/students/google-sheets/save",
+      this.auth.requireAdmin.bind(this.auth),
+      this.saveGoogleSheetsUrl.bind(this)
+    );
+    this.app.post(
+      "/api/students/google-sheets/sync",
+      this.auth.requireAdmin.bind(this.auth),
+      this.syncGoogleSheetsForSection.bind(this)
+    );
   }
 
   private async renderAdminUsers(
@@ -591,9 +646,12 @@ export class WebServer {
       const missingEnvVars = this.checkEnvironmentVariables();
 
       // Calculate actual total students from all sections (like config page)
-      const actualTotalStudents = this.config.sections.reduce((total, section) => {
-        return total + section.students.length;
-      }, 0);
+      const actualTotalStudents = this.config.sections.reduce(
+        (total, section) => {
+          return total + section.students.length;
+        },
+        0
+      );
 
       res.render("dashboard", {
         config: this.config,
@@ -623,13 +681,15 @@ export class WebServer {
       let formattedSchedules = this.formatSchedulesForView(schedules);
 
       // Filter schedules for TAs - only show their sections
-      if (user?.role === 'ta' && user?.sections) {
-        formattedSchedules = formattedSchedules.map(weekData => ({
-          ...weekData,
-          sections: weekData.sections.filter((section: any) =>
-            user.sections.includes(section.id)
-          )
-        })).filter((weekData: any) => weekData.sections.length > 0);
+      if (user?.role === "ta" && user?.sections) {
+        formattedSchedules = formattedSchedules
+          .map((weekData) => ({
+            ...weekData,
+            sections: weekData.sections.filter((section: any) =>
+              user.sections.includes(section.id)
+            ),
+          }))
+          .filter((weekData: any) => weekData.sections.length > 0);
       }
 
       res.render("schedules", {
@@ -639,7 +699,8 @@ export class WebServer {
         facilitatorLabel: this.getFacilitatorLabel(),
         participantLabel: this.getParticipantLabel(),
         currentPage: "schedules",
-        calendarInvitesEnabled: this.config.google_meet.calendar_invites_enabled === true,
+        calendarInvitesEnabled:
+          this.config.google_meet.calendar_invites_enabled === true,
         user: user,
         weeklyForms: this.config.weekly_forms || [],
       });
@@ -739,47 +800,56 @@ export class WebServer {
 
       res.json({
         success: true,
-        message: "All schedules have been cleared from the database"
+        message: "All schedules have been cleared from the database",
       });
     } catch (error) {
       console.error("Clear schedules error:", error);
       res.status(500).json({
         success: false,
         error: "Failed to clear schedules",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
 
   private renderConfig(_req: express.Request, res: express.Response): void {
     try {
-      console.log('🔍 Config debug - instructor field:', this.config?.course?.instructor);
-      console.log('🔍 Config debug - sections count:', this.config?.sections?.length);
-      console.log('🔍 Config debug - config exists:', !!this.config);
+      console.log(
+        "🔍 Config debug - instructor field:",
+        this.config?.course?.instructor
+      );
+      console.log(
+        "🔍 Config debug - sections count:",
+        this.config?.sections?.length
+      );
+      console.log("🔍 Config debug - config exists:", !!this.config);
 
       // Safely handle config that might be missing or malformed
       if (!this.config) {
-        console.error('❌ Config is null or undefined');
+        console.error("❌ Config is null or undefined");
         res.status(500).render("error", {
-          message: "Configuration not loaded"
+          message: "Configuration not loaded",
         });
         return;
       }
 
       if (!this.config.sections) {
-        console.error('❌ Config sections is null or undefined');
+        console.error("❌ Config sections is null or undefined");
         res.status(500).render("error", {
-          message: "Configuration sections not found"
+          message: "Configuration sections not found",
         });
         return;
       }
 
       // Calculate actual total students from all sections
-      const actualTotalStudents = this.config.sections.reduce((total, section) => {
-        return total + (section?.students?.length || 0);
-      }, 0);
+      const actualTotalStudents = this.config.sections.reduce(
+        (total, section) => {
+          return total + (section?.students?.length || 0);
+        },
+        0
+      );
 
-      console.log('✅ Config render - total students:', actualTotalStudents);
+      console.log("✅ Config render - total students:", actualTotalStudents);
 
       res.render("config", {
         config: this.config,
@@ -789,17 +859,50 @@ export class WebServer {
         currentPage: "config",
       });
     } catch (error) {
-      console.error('❌ Config render error:', error);
-      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error("❌ Config render error:", error);
+      console.error(
+        "❌ Error stack:",
+        error instanceof Error ? error.stack : "No stack trace"
+      );
       res.status(500).render("error", {
         message: "Failed to load configuration page",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
 
   private saveConfig(_req: express.Request, res: express.Response): void {
     res.json({ success: false, error: "Config editing not implemented yet" });
+  }
+
+  private async renderStudents(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+    try {
+      // Calculate actual total students from all sections
+      const actualTotalStudents = this.config.sections.reduce(
+        (total, section) => {
+          return total + (section?.students?.length || 0);
+        },
+        0
+      );
+
+      res.render("students", {
+        config: this.config,
+        actualTotalStudents,
+        facilitatorLabel: this.getFacilitatorLabel(),
+        participantLabel: this.getParticipantLabel(),
+        currentPage: "students",
+        user: req.user,
+      });
+    } catch (error) {
+      console.error("Students page render error:", error);
+      res.status(500).render("error", {
+        message: "Failed to load students page",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   }
 
   private getStats(_req: express.Request, res: express.Response): void {
@@ -1105,35 +1208,51 @@ export class WebServer {
 
   async initialize(): Promise<void> {
     // Debug Cloud Storage configuration
-    console.log('🔍 Checking Cloud Storage configuration...');
+    console.log("🔍 Checking Cloud Storage configuration...");
     console.log(`  - USE_CLOUD_STORAGE: ${process.env.USE_CLOUD_STORAGE}`);
-    console.log(`  - STORAGE_BUCKET: ${process.env.STORAGE_BUCKET || 'not set'}`);
-    console.log(`  - Cloud Storage enabled: ${cloudStorage.isCloudStorageEnabled()}`);
+    console.log(
+      `  - STORAGE_BUCKET: ${process.env.STORAGE_BUCKET || "not set"}`
+    );
+    console.log(
+      `  - Cloud Storage enabled: ${cloudStorage.isCloudStorageEnabled()}`
+    );
 
     // Always try to reload config to handle Cloud Storage CSV files
     try {
-      console.log('🔄 Reloading configuration with Cloud Storage support...');
-      const originalStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
+      console.log("🔄 Reloading configuration with Cloud Storage support...");
+      const originalStudentCount = this.config.sections.reduce(
+        (sum, section) => sum + section.students.length,
+        0
+      );
       console.log(`📊 Original student count: ${originalStudentCount}`);
 
       // Use configLoader which handles both local and cloud storage
       this.config = await this.configLoader.loadConfig();
-      const newStudentCount = this.config.sections.reduce((sum, section) => sum + section.students.length, 0);
+      const newStudentCount = this.config.sections.reduce(
+        (sum, section) => sum + section.students.length,
+        0
+      );
       console.log(`📊 New student count after reload: ${newStudentCount}`);
 
       // Log section details for debugging
       this.config.sections.forEach((section, index) => {
-        console.log(`📚 Section ${index + 1}: ${section.id} (${section.ta_name}) - ${section.students.length} students`);
+        console.log(
+          `📚 Section ${index + 1}: ${section.id} (${section.ta_name}) - ${
+            section.students.length
+          } students`
+        );
       });
 
       // Reinitialize services with updated config
       this.auth = new AuthService(this.config, this.db);
       this.orchestration = new OrchestrationService(this.config, this.db);
 
-      console.log('✅ Configuration reload complete (with Cloud Storage support)');
+      console.log(
+        "✅ Configuration reload complete (with Cloud Storage support)"
+      );
     } catch (error) {
-      console.error('❌ Failed to reload configuration:', error);
-      console.error('❌ Error details:', error);
+      console.error("❌ Failed to reload configuration:", error);
+      console.error("❌ Error details:", error);
     }
   }
 
@@ -1243,16 +1362,16 @@ export class WebServer {
 
       // Convert URL slug back to TA name (john-doe -> John Doe)
       const displayTaName = taName
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 
       const schedules = this.orchestration.getSchedules();
       const weekSchedule = schedules.get(weekNum);
 
       if (!weekSchedule) {
         res.status(404).render("error", {
-          message: `No schedule found for week ${weekNumber}`
+          message: `No schedule found for week ${weekNumber}`,
         });
         return;
       }
@@ -1263,26 +1382,32 @@ export class WebServer {
 
       for (const [sectionId, slots] of weekSchedule) {
         if (slots.length > 0) {
-          const sectionTaName = slots[0].ta.name.toLowerCase().replace(/\s+/g, '-');
+          const sectionTaName = slots[0].ta.name
+            .toLowerCase()
+            .replace(/\s+/g, "-");
           if (sectionTaName === taName.toLowerCase()) {
-            const section = this.config.sections.find(s => s.id === sectionId);
+            const section = this.config.sections.find(
+              (s) => s.id === sectionId
+            );
             sectionInfo = {
               id: sectionId,
               name: section?.ta_name || displayTaName,
-              email: section?.ta_email || '',
-              location: section?.location || '',
+              email: section?.ta_email || "",
+              location: section?.location || "",
             };
 
             // Format slots for display
-            taSlots = slots.map(slot => ({
-              studentName: slot.student.name,
-              studentEmail: slot.student.email,
-              startTime: slot.start_time,
-              endTime: slot.end_time,
-              location: slot.location,
-              meetLink: slot.meet_link,
-              recordingUrl: slot.recording_url,
-            })).sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+            taSlots = slots
+              .map((slot) => ({
+                studentName: slot.student.name,
+                studentEmail: slot.student.email,
+                startTime: slot.start_time,
+                endTime: slot.end_time,
+                location: slot.location,
+                meetLink: slot.meet_link,
+                recordingUrl: slot.recording_url,
+              }))
+              .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
             break;
           }
         }
@@ -1290,13 +1415,15 @@ export class WebServer {
 
       if (!sectionInfo) {
         res.status(404).render("error", {
-          message: `No sessions found for ${displayTaName} in week ${weekNumber}`
+          message: `No sessions found for ${displayTaName} in week ${weekNumber}`,
         });
         return;
       }
 
       // Get Google Form for this week
-      const weekForm = this.config.weekly_forms?.find(f => f.week === parseInt(weekNumber));
+      const weekForm = this.config.weekly_forms?.find(
+        (f) => f.week === parseInt(weekNumber)
+      );
 
       res.render("ta-page", {
         config: this.config,
@@ -1683,27 +1810,33 @@ export class WebServer {
   }
 
   // File tree endpoint
-  private async getFileTree(_req: express.Request, res: express.Response): Promise<void> {
+  private async getFileTree(
+    _req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       if (cloudStorage.isCloudStorageEnabled()) {
         // Use Cloud Storage
-        const bucketName = process.env.STORAGE_BUCKET || '';
+        const bucketName = process.env.STORAGE_BUCKET || "";
         const tree = await this.buildCloudFileTree();
         res.json({
           success: true,
           path: `gs://${bucketName}`,
           tree,
-          source: 'cloud-storage'
+          source: "cloud-storage",
         });
       } else {
         // Use local filesystem
-        const dataPath = process.env.NODE_ENV === "production" ? "/app/data" : path.join(process.cwd(), "data");
+        const dataPath =
+          process.env.NODE_ENV === "production"
+            ? "/app/data"
+            : path.join(process.cwd(), "data");
         const tree = this.buildFileTree(dataPath);
         res.json({
           success: true,
           path: dataPath,
           tree,
-          source: 'local-filesystem'
+          source: "local-filesystem",
         });
       }
     } catch (error) {
@@ -1711,7 +1844,7 @@ export class WebServer {
       res.status(500).json({
         success: false,
         error: "Failed to retrieve file tree",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -1733,7 +1866,7 @@ export class WebServer {
             name: item,
             type: "directory",
             path: relativePath,
-            children: this.buildFileTree(fullPath, base)
+            children: this.buildFileTree(fullPath, base),
           });
         } else {
           tree.push({
@@ -1741,7 +1874,7 @@ export class WebServer {
             type: "file",
             path: relativePath,
             size: stats.size,
-            modified: stats.mtime
+            modified: stats.mtime,
           });
         }
       }
@@ -1753,12 +1886,12 @@ export class WebServer {
   }
 
   private async buildCloudFileTree(): Promise<any[]> {
-    const { Storage } = await import('@google-cloud/storage');
+    const { Storage } = await import("@google-cloud/storage");
     const storage = new Storage();
     const bucketName = process.env.STORAGE_BUCKET;
 
     if (!bucketName) {
-      throw new Error('STORAGE_BUCKET environment variable not set');
+      throw new Error("STORAGE_BUCKET environment variable not set");
     }
 
     const bucket = storage.bucket(bucketName);
@@ -1769,9 +1902,9 @@ export class WebServer {
 
     // Build directory structure
     for (const file of files) {
-      const parts = file.name.split('/');
+      const parts = file.name.split("/");
       let currentLevel = tree;
-      let currentPath = '';
+      let currentPath = "";
 
       for (let i = 0; i < parts.length - 1; i++) {
         currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
@@ -1780,9 +1913,9 @@ export class WebServer {
         if (!dir) {
           dir = {
             name: parts[i],
-            type: 'directory',
+            type: "directory",
             path: currentPath,
-            children: []
+            children: [],
           };
           directoryMap.set(currentPath, dir);
           currentLevel.push(dir);
@@ -1796,10 +1929,10 @@ export class WebServer {
         if (fileName) {
           currentLevel.push({
             name: fileName,
-            type: 'file',
+            type: "file",
             path: file.name,
             size: file.metadata.size || 0,
-            modified: file.metadata.updated || file.metadata.timeCreated
+            modified: file.metadata.updated || file.metadata.timeCreated,
           });
         }
       }
@@ -1809,7 +1942,10 @@ export class WebServer {
   }
 
   // Section mapping endpoints
-  private async uploadSectionMapping(req: express.Request, res: express.Response): Promise<void> {
+  private async uploadSectionMapping(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       const { sectionId, name } = req.body;
       const file = req.file;
@@ -1818,29 +1954,29 @@ export class WebServer {
       if (!file || !sectionId || !name) {
         res.status(400).json({
           success: false,
-          error: "Missing required fields: file, sectionId, or name"
+          error: "Missing required fields: file, sectionId, or name",
         });
         return;
       }
 
       // Validate section exists
-      const section = this.config.sections.find(s => s.id === sectionId);
+      const section = this.config.sections.find((s) => s.id === sectionId);
       if (!section) {
         res.status(400).json({
           success: false,
-          error: `Section ${sectionId} not found`
+          error: `Section ${sectionId} not found`,
         });
         return;
       }
 
       // Parse CSV to validate format
       const csvContent = file.buffer.toString("utf-8");
-      const lines = csvContent.split("\n").filter(line => line.trim());
+      const lines = csvContent.split("\n").filter((line) => line.trim());
 
       if (lines.length < 2) {
         res.status(400).json({
           success: false,
-          error: "CSV file must contain header and at least one data row"
+          error: "CSV file must contain header and at least one data row",
         });
         return;
       }
@@ -1856,7 +1992,9 @@ export class WebServer {
 
       // Also save CSV to Cloud Storage if enabled
       if (cloudStorage.isCloudStorageEnabled()) {
-        const csvPath = `uploads/section-mappings/${sectionId}/${Date.now()}-${file.originalname}`;
+        const csvPath = `uploads/section-mappings/${sectionId}/${Date.now()}-${
+          file.originalname
+        }`;
         await cloudStorage.writeFile(csvPath, csvContent);
         console.log(`☁️  CSV saved to Cloud Storage: ${csvPath}`);
       }
@@ -1865,59 +2003,65 @@ export class WebServer {
         success: true,
         message: "Section mapping uploaded successfully",
         mappingId,
-        rowCount: lines.length - 1
+        rowCount: lines.length - 1,
       });
     } catch (error) {
       console.error("Upload section mapping error:", error);
       res.status(500).json({
         success: false,
         error: "Failed to upload section mapping",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
 
-  private getSectionMappings(req: express.Request, res: express.Response): void {
+  private getSectionMappings(
+    req: express.Request,
+    res: express.Response
+  ): void {
     try {
       const { sectionId } = req.query;
       const mappings = this.db.getSectionMappings(sectionId as string);
 
       // Parse config.yml mappings
-      const configMappings = this.config.sections.map(section => ({
+      const configMappings = this.config.sections.map((section) => ({
         sectionId: section.id,
         sectionName: section.ta_name,
         studentCount: section.students.length,
         hasConfigMapping: section.students.length > 0,
-        csvPath: (section as any).students_csv || null
+        csvPath: (section as any).students_csv || null,
       }));
 
       res.json({
         success: true,
         mappings,
         configMappings,
-        sections: this.config.sections.map(s => ({
+        sections: this.config.sections.map((s) => ({
           id: s.id,
           name: s.ta_name,
-          location: s.location
-        }))
+          location: s.location,
+        })),
       });
     } catch (error) {
       console.error("Get section mappings error:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to retrieve section mappings"
+        error: "Failed to retrieve section mappings",
       });
     }
   }
 
-  private activateSectionMapping(req: express.Request, res: express.Response): void {
+  private activateSectionMapping(
+    req: express.Request,
+    res: express.Response
+  ): void {
     try {
       const { mappingId, sectionId } = req.body;
 
       if (!mappingId || !sectionId) {
         res.status(400).json({
           success: false,
-          error: "Missing mappingId or sectionId"
+          error: "Missing mappingId or sectionId",
         });
         return;
       }
@@ -1926,25 +2070,28 @@ export class WebServer {
 
       res.json({
         success: true,
-        message: "Section mapping activated successfully"
+        message: "Section mapping activated successfully",
       });
     } catch (error) {
       console.error("Activate section mapping error:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to activate section mapping"
+        error: "Failed to activate section mapping",
       });
     }
   }
 
-  private deleteSectionMapping(req: express.Request, res: express.Response): void {
+  private deleteSectionMapping(
+    req: express.Request,
+    res: express.Response
+  ): void {
     try {
       const { id } = req.params;
 
       if (!id) {
         res.status(400).json({
           success: false,
-          error: "Missing mapping ID"
+          error: "Missing mapping ID",
         });
         return;
       }
@@ -1953,96 +2100,110 @@ export class WebServer {
 
       res.json({
         success: true,
-        message: "Section mapping deleted successfully"
+        message: "Section mapping deleted successfully",
       });
     } catch (error) {
       console.error("Delete section mapping error:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to delete section mapping"
+        error: "Failed to delete section mapping",
       });
     }
   }
 
   // File preview endpoint
-  private async previewFile(req: express.Request, res: express.Response): Promise<void> {
+  private async previewFile(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       // Get the file path from the URL (everything after /api/file-preview/)
-      const filePath = decodeURIComponent(req.params[0] || '');
+      const filePath = decodeURIComponent(req.params[0] || "");
 
       if (cloudStorage.isCloudStorageEnabled()) {
         // Preview from Cloud Storage
         try {
           const content = await cloudStorage.readFile(filePath);
-          const text = content.toString('utf-8');
+          const text = content.toString("utf-8");
 
           // For CSV files, parse and return structured data
-          if (filePath.toLowerCase().endsWith('.csv')) {
-            const lines = text.split('\n');
-            const headers = lines[0]?.split(',').map((h: string) => h.trim()) || [];
-            const rows = lines.slice(1).filter((line: string) => line.trim()).map((line: string) =>
-              line.split(',').map((cell: string) => cell.trim())
-            );
+          if (filePath.toLowerCase().endsWith(".csv")) {
+            const lines = text.split("\n");
+            const headers =
+              lines[0]?.split(",").map((h: string) => h.trim()) || [];
+            const rows = lines
+              .slice(1)
+              .filter((line: string) => line.trim())
+              .map((line: string) =>
+                line.split(",").map((cell: string) => cell.trim())
+              );
 
             res.json({
               success: true,
-              type: 'csv',
+              type: "csv",
               headers,
               rows: rows.slice(0, 50), // Limit to first 50 rows for preview
               totalRows: rows.length,
-              content: text.substring(0, 10000) // First 10KB for text preview
+              content: text.substring(0, 10000), // First 10KB for text preview
             });
           } else {
             // For other files, return text content
             res.json({
               success: true,
-              type: 'text',
-              content: text.substring(0, 10000) // First 10KB
+              type: "text",
+              content: text.substring(0, 10000), // First 10KB
             });
           }
         } catch {
           res.status(404).json({
             success: false,
-            error: `File not found in Cloud Storage: ${filePath}`
+            error: `File not found in Cloud Storage: ${filePath}`,
           });
         }
       } else {
         // Preview from local filesystem
-        const dataPath = process.env.NODE_ENV === "production" ? "/app/data" : path.join(process.cwd(), "data");
+        const dataPath =
+          process.env.NODE_ENV === "production"
+            ? "/app/data"
+            : path.join(process.cwd(), "data");
         const fullPath = path.join(dataPath, filePath);
 
         if (!fs.existsSync(fullPath)) {
           res.status(404).json({
             success: false,
-            error: `File not found: ${filePath}`
+            error: `File not found: ${filePath}`,
           });
           return;
         }
 
-        const content = fs.readFileSync(fullPath, 'utf-8');
+        const content = fs.readFileSync(fullPath, "utf-8");
 
         // For CSV files, parse and return structured data
-        if (filePath.toLowerCase().endsWith('.csv')) {
-          const lines = content.split('\n');
-          const headers = lines[0]?.split(',').map((h: string) => h.trim()) || [];
-          const rows = lines.slice(1).filter((line: string) => line.trim()).map((line: string) =>
-            line.split(',').map((cell: string) => cell.trim())
-          );
+        if (filePath.toLowerCase().endsWith(".csv")) {
+          const lines = content.split("\n");
+          const headers =
+            lines[0]?.split(",").map((h: string) => h.trim()) || [];
+          const rows = lines
+            .slice(1)
+            .filter((line: string) => line.trim())
+            .map((line: string) =>
+              line.split(",").map((cell: string) => cell.trim())
+            );
 
           res.json({
             success: true,
-            type: 'csv',
+            type: "csv",
             headers,
             rows: rows.slice(0, 50), // Limit to first 50 rows for preview
             totalRows: rows.length,
-            content: content.substring(0, 10000) // First 10KB for text preview
+            content: content.substring(0, 10000), // First 10KB for text preview
           });
         } else {
           // For other files, return text content
           res.json({
             success: true,
-            type: 'text',
-            content: content.substring(0, 10000) // First 10KB
+            type: "text",
+            content: content.substring(0, 10000), // First 10KB
           });
         }
       }
@@ -2051,15 +2212,18 @@ export class WebServer {
       res.status(500).json({
         success: false,
         error: "Failed to preview file",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
 
   // Config reload endpoint
-  private async reloadConfig(req: express.Request, res: express.Response): Promise<void> {
+  private async reloadConfig(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
-      console.log('🔄 Admin requested config reload');
+      console.log("🔄 Admin requested config reload");
 
       // Reload config using ConfigLoader (supports Cloud Storage)
       const newConfig = await this.configLoader.loadConfig();
@@ -2071,7 +2235,7 @@ export class WebServer {
       this.auth = new AuthService(this.config, this.db);
       this.orchestration = new OrchestrationService(this.config, this.db);
 
-      console.log('✅ Config reloaded successfully');
+      console.log("✅ Config reloaded successfully");
 
       // Return summary of loaded config
       const summary = await this.configLoader.getConfigSummary();
@@ -2080,60 +2244,78 @@ export class WebServer {
         success: true,
         message: "Configuration reloaded successfully",
         timestamp: new Date().toISOString(),
-        summary
+        summary,
       });
     } catch (error) {
       console.error("Config reload error:", error);
       res.status(500).json({
         success: false,
         error: "Failed to reload configuration",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
 
   // Google Sheets API methods
-  private async getGoogleSheetsStatus(req: express.Request, res: express.Response): Promise<void> {
+  private async getGoogleSheetsStatus(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
+      console.log("📊 Getting Google Sheets status...");
+      console.log("📊 Config google_sheets:", this.config.google_sheets);
+
       const status = {
         configured: !!this.config.google_sheets?.spreadsheet_url,
-        spreadsheetUrl: this.config.google_sheets?.spreadsheet_url || '',
-        tabMappings: this.config.google_sheets?.tab_mappings ?
-          Object.entries(this.config.google_sheets.tab_mappings).map(([sectionId, tabName]) => ({
-            sectionId,
-            tabName
-          })) : [],
-        autoRefreshMinutes: this.config.google_sheets?.auto_refresh_minutes || 15,
-        lastSync: null // TODO: Track this in database
+        spreadsheetUrl: this.config.google_sheets?.spreadsheet_url || "",
+        tabMappings: this.config.google_sheets?.tab_mappings
+          ? Object.entries(this.config.google_sheets.tab_mappings).map(
+              ([sectionId, tabName]) => ({
+                sectionId,
+                tabName,
+              })
+            )
+          : [],
+        autoRefreshMinutes:
+          this.config.google_sheets?.auto_refresh_minutes || 15,
+        lastSync: null, // TODO: Track this in database
       };
+
+      console.log("📊 Returning status:", status);
 
       res.json({
         success: true,
-        status
+        status,
       });
     } catch (error) {
       console.error("Error getting Google Sheets status:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to get Google Sheets status"
+        error: "Failed to get Google Sheets status",
       });
     }
   }
 
-  private async createGoogleSheetsTemplate(req: express.Request, res: express.Response): Promise<void> {
+  private async createGoogleSheetsTemplate(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       const { title } = req.body;
 
-      if (!title || typeof title !== 'string') {
+      if (!title || typeof title !== "string") {
         res.status(400).json({
           success: false,
-          message: "Title is required"
+          message: "Title is required",
         });
         return;
       }
 
-      const sectionIds = this.config.sections.map(s => s.id);
-      const result = await googleSheetsService.createTemplateSheet(title, sectionIds);
+      const sectionIds = this.config.sections.map((s) => s.id);
+      const result = await googleSheetsService.createTemplateSheet(
+        title,
+        sectionIds
+      );
 
       if (result.success) {
         // TODO: Save the spreadsheet URL to config
@@ -2141,31 +2323,34 @@ export class WebServer {
           success: true,
           spreadsheetUrl: result.spreadsheetUrl,
           spreadsheetId: result.spreadsheetId,
-          message: result.message
+          message: result.message,
         });
       } else {
         res.status(500).json({
           success: false,
-          message: result.message
+          message: result.message,
         });
       }
     } catch (error) {
       console.error("Error creating Google Sheets template:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to create template sheet"
+        message: "Failed to create template sheet",
       });
     }
   }
 
-  private async testGoogleSheetsConnection(req: express.Request, res: express.Response): Promise<void> {
+  private async testGoogleSheetsConnection(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       const { spreadsheetUrl } = req.body;
 
-      if (!spreadsheetUrl || typeof spreadsheetUrl !== 'string') {
+      if (!spreadsheetUrl || typeof spreadsheetUrl !== "string") {
         res.status(400).json({
           success: false,
-          message: "Spreadsheet URL is required"
+          message: "Spreadsheet URL is required",
         });
         return;
       }
@@ -2176,53 +2361,62 @@ export class WebServer {
       console.error("Error testing Google Sheets connection:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to test connection"
+        message: "Failed to test connection",
       });
     }
   }
 
-  private async configureGoogleSheets(req: express.Request, res: express.Response): Promise<void> {
+  private async configureGoogleSheets(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       const { spreadsheetUrl } = req.body;
 
-      if (!spreadsheetUrl || typeof spreadsheetUrl !== 'string') {
+      if (!spreadsheetUrl || typeof spreadsheetUrl !== "string") {
         res.status(400).json({
           success: false,
-          message: "Spreadsheet URL is required"
+          message: "Spreadsheet URL is required",
         });
         return;
       }
 
       // TODO: Save configuration to config file or database
       // For now, just test the connection
-      const testResult = await googleSheetsService.testConnection(spreadsheetUrl);
+      const testResult = await googleSheetsService.testConnection(
+        spreadsheetUrl
+      );
 
       if (testResult.success) {
         res.json({
           success: true,
-          message: "Configuration saved successfully (note: restart required for full activation)"
+          message:
+            "Configuration saved successfully (note: restart required for full activation)",
         });
       } else {
         res.status(400).json({
           success: false,
-          message: "Cannot save configuration: " + testResult.message
+          message: "Cannot save configuration: " + testResult.message,
         });
       }
     } catch (error) {
       console.error("Error configuring Google Sheets:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to save configuration"
+        message: "Failed to save configuration",
       });
     }
   }
 
-  private async syncGoogleSheets(req: express.Request, res: express.Response): Promise<void> {
+  private async syncGoogleSheets(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
     try {
       if (!this.config.google_sheets?.spreadsheet_url) {
         res.status(400).json({
           success: false,
-          message: "Google Sheets not configured"
+          message: "Google Sheets not configured",
         });
         return;
       }
@@ -2231,11 +2425,13 @@ export class WebServer {
       const spreadsheetUrl = this.config.google_sheets.spreadsheet_url;
 
       // Read all students from the sheet
-      const sheetTabs = await googleSheetsService.readAllStudents(spreadsheetUrl);
+      const sheetTabs = await googleSheetsService.readAllStudents(
+        spreadsheetUrl
+      );
 
       // Update each section that has a corresponding sheet tab
       for (const tab of sheetTabs) {
-        const section = this.config.sections.find(s => s.id === tab.title);
+        const section = this.config.sections.find((s) => s.id === tab.title);
         if (section && tab.students.length > 0) {
           section.students = tab.students;
           updatedSections++;
@@ -2245,14 +2441,453 @@ export class WebServer {
       res.json({
         success: true,
         message: `Sync completed successfully`,
-        updatedSections
+        updatedSections,
       });
     } catch (error) {
       console.error("Error syncing Google Sheets:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to sync with Google Sheets"
+        message: "Failed to sync with Google Sheets",
       });
     }
+  }
+
+  // Students CSV management methods
+  private async getStudentFiles(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+    try {
+      const dataPath =
+        process.env.NODE_ENV === "production"
+          ? "/app/data"
+          : path.join(process.cwd(), "data");
+      const studentsPath = path.join(dataPath, "students");
+
+      const files: any[] = [];
+
+      if (fs.existsSync(studentsPath)) {
+        const fileList = fs.readdirSync(studentsPath);
+        for (const file of fileList) {
+          if (file.toLowerCase().endsWith(".csv")) {
+            const filePath = path.join(studentsPath, file);
+            const stats = fs.statSync(filePath);
+            files.push({
+              name: file,
+              path: filePath,
+              size: stats.size,
+              modified: stats.mtime,
+              sectionId: file.replace(".csv", ""),
+            });
+          }
+        }
+      }
+
+      // Get Google Sheets URLs from database
+      const googleSheetsUrls = this.db.getAllGoogleSheetsUrls();
+
+      // Also get current section data
+      const sections = this.config.sections.map((section) => {
+        const studentCount = section.students.length;
+        console.log(`📊 Section ${section.id}: ${studentCount} students`);
+        return {
+          id: section.id,
+          name: section.ta_name,
+          studentCount,
+          hasCsvFile: files.some((f) => f.sectionId === section.id),
+          googleSheetsUrl: googleSheetsUrls.get(section.id) || null,
+          savingSheets: false,
+          syncingSheets: false,
+        };
+      });
+
+      res.json({
+        success: true,
+        files,
+        sections,
+      });
+    } catch (error) {
+      console.error("Error getting student files:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to get student files",
+      });
+    }
+  }
+
+  private async uploadStudentFile(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+    try {
+      const { sectionId } = req.body;
+      const file = req.file;
+
+      if (!file || !sectionId) {
+        res.status(400).json({
+          success: false,
+          error: "Missing file or section ID",
+        });
+        return;
+      }
+
+      // Validate section exists
+      const section = this.config.sections.find((s) => s.id === sectionId);
+      if (!section) {
+        res.status(400).json({
+          success: false,
+          error: `Section ${sectionId} not found`,
+        });
+        return;
+      }
+
+      // Save file to data/students directory
+      const dataPath =
+        process.env.NODE_ENV === "production"
+          ? "/app/data"
+          : path.join(process.cwd(), "data");
+      const studentsPath = path.join(dataPath, "students");
+
+      // Ensure students directory exists
+      if (!fs.existsSync(studentsPath)) {
+        fs.mkdirSync(studentsPath, { recursive: true });
+      }
+
+      const fileName = `${sectionId}.csv`;
+      const filePath = path.join(studentsPath, fileName);
+
+      // Write file
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Also save to Cloud Storage if enabled
+      if (cloudStorage.isCloudStorageEnabled()) {
+        const cloudPath = `students/${fileName}`;
+        await cloudStorage.writeFile(cloudPath, file.buffer);
+        console.log(`☁️  CSV saved to Cloud Storage: ${cloudPath}`);
+      }
+
+      // Update config.yml to reference the uploaded CSV file
+      console.log("📝 Updating config.yml to reference uploaded CSV file...");
+      const configPath =
+        process.env.NODE_ENV === "production"
+          ? "/app/config.yml"
+          : path.join(process.cwd(), "config.yml");
+
+      if (fs.existsSync(configPath)) {
+        const configContent = fs.readFileSync(configPath, "utf-8");
+        const yaml = require("js-yaml");
+        const config = yaml.load(configContent);
+
+        // Find the section and update its students_csv field
+        const sectionIndex = config.sections.findIndex(
+          (s: any) => s.id === sectionId
+        );
+        if (sectionIndex !== -1) {
+          config.sections[
+            sectionIndex
+          ].students_csv = `data/students/${fileName}`;
+          // Remove inline students if they exist (CSV takes priority)
+          delete config.sections[sectionIndex].students;
+
+          // Write updated config back to file
+          fs.writeFileSync(configPath, yaml.dump(config));
+          console.log(
+            `✅ Updated config.yml to reference ${fileName} for section ${sectionId}`
+          );
+        }
+      }
+
+      // Also save to database for ConfigLoader integration
+      const csvContent = file.buffer.toString("utf-8");
+      const user = (req.user as any)?.email || "unknown";
+      const mappingName = `CSV Upload - ${
+        new Date().toISOString().split("T")[0]
+      }`;
+
+      console.log("💾 Saving CSV to database for ConfigLoader integration...");
+      const mappingId = this.db.saveSectionMapping(
+        mappingName,
+        fileName,
+        csvContent,
+        sectionId,
+        user
+      );
+
+      // Activate this mapping for the section
+      this.db.setActiveSectionMapping(mappingId, sectionId);
+      console.log(
+        `✅ Saved and activated mapping ${mappingId} for section ${sectionId}`
+      );
+
+      // Reload configuration to parse the new CSV data
+      console.log("🔄 Reloading configuration to parse new CSV data...");
+      const newConfig = await this.configLoader.loadConfig();
+      this.config = newConfig;
+
+      // Reinitialize services with updated config
+      this.auth = new AuthService(this.config, this.db);
+      this.orchestration = new OrchestrationService(this.config, this.db);
+
+      console.log("✅ Configuration reloaded with new student data");
+
+      // Get the updated section from the new config
+      const updatedSection = this.config.sections.find(
+        (s) => s.id === sectionId
+      );
+      const studentCount = updatedSection ? updatedSection.students.length : 0;
+
+      res.json({
+        success: true,
+        message: `Student file uploaded successfully for ${sectionId}`,
+        fileName,
+        filePath,
+        studentCount,
+      });
+    } catch (error) {
+      console.error("Error uploading student file:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to upload student file",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  private async reloadStudentData(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+    try {
+      console.log("🔄 Reloading student data from CSV files...");
+
+      // Reload config using ConfigLoader (supports Cloud Storage)
+      const newConfig = await this.configLoader.loadConfig();
+
+      // Update the server's config
+      this.config = newConfig;
+
+      // Reinitialize services with updated config
+      this.auth = new AuthService(this.config, this.db);
+      this.orchestration = new OrchestrationService(this.config, this.db);
+
+      console.log("✅ Student data reloaded successfully");
+
+      // Return summary
+      const totalStudents = this.config.sections.reduce(
+        (sum, section) => sum + section.students.length,
+        0
+      );
+
+      res.json({
+        success: true,
+        message: "Student data reloaded successfully",
+        timestamp: new Date().toISOString(),
+        totalStudents,
+        sections: this.config.sections.map((s) => ({
+          id: s.id,
+          name: s.ta_name,
+          studentCount: s.students.length,
+        })),
+      });
+    } catch (error) {
+      console.error("Error reloading student data:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to reload student data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  // Google Sheets integration methods
+  private async saveGoogleSheetsUrl(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+    try {
+      const { sectionId, googleSheetsUrl } = req.body;
+
+      if (!sectionId || !googleSheetsUrl) {
+        res.status(400).json({
+          success: false,
+          error: "Missing required fields: sectionId and googleSheetsUrl",
+        });
+        return;
+      }
+
+      // Validate section exists
+      const section = this.config.sections.find((s) => s.id === sectionId);
+      if (!section) {
+        res.status(400).json({
+          success: false,
+          error: `Section ${sectionId} not found`,
+        });
+        return;
+      }
+
+      // Validate Google Sheets URL format
+      if (!googleSheetsUrl.includes("docs.google.com/spreadsheets")) {
+        res.status(400).json({
+          success: false,
+          error: "Invalid Google Sheets URL format",
+        });
+        return;
+      }
+
+      // Save to database instead of config file
+      const user = (req.user as any)?.email || "unknown";
+      this.db.saveGoogleSheetsUrl(sectionId, googleSheetsUrl, user);
+
+      console.log(
+        `✅ Saved Google Sheets URL to database for section ${sectionId}`
+      );
+
+      res.json({
+        success: true,
+        message: `Google Sheets URL saved successfully for ${sectionId}`,
+        sectionId,
+        googleSheetsUrl,
+      });
+    } catch (error) {
+      console.error("Error saving Google Sheets URL:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to save Google Sheets URL",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  private async syncGoogleSheetsForSection(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+    try {
+      const { sectionId, googleSheetsUrl } = req.body;
+
+      if (!sectionId || !googleSheetsUrl) {
+        res.status(400).json({
+          success: false,
+          error: "Missing required fields: sectionId and googleSheetsUrl",
+        });
+        return;
+      }
+
+      // Validate section exists
+      const section = this.config.sections.find((s) => s.id === sectionId);
+      if (!section) {
+        res.status(400).json({
+          success: false,
+          error: `Section ${sectionId} not found`,
+        });
+        return;
+      }
+
+      console.log(`🔄 Syncing Google Sheets for section ${sectionId}...`);
+
+      // Save the URL to database first (in case it wasn't saved yet)
+      const user = (req.user as any)?.email || "unknown";
+      this.db.saveGoogleSheetsUrl(sectionId, googleSheetsUrl, user);
+
+      // Use Google Sheets service to load students from published CSV
+      const { googleSheetsService } = require("../utils/google-sheets");
+
+      console.log(`📥 Using published CSV approach for: ${googleSheetsUrl}`);
+
+      // Load students from published CSV URL
+      const students = await googleSheetsService.readStudentsFromPublishedCSV(
+        googleSheetsUrl
+      );
+
+      console.log(`✅ Loaded ${students.length} students from Google Sheets`);
+
+      // Convert to CSV format and save to database
+      const csvContent = this.convertStudentsToCSV(students);
+      const mappingName = `Google Sheets Sync - ${
+        new Date().toISOString().split("T")[0]
+      }`;
+
+      // Save to database
+      const mappingId = this.db.saveSectionMapping(
+        mappingName,
+        `${sectionId}_google_sheets.csv`,
+        csvContent,
+        sectionId,
+        user
+      );
+
+      // Activate this mapping for the section
+      this.db.setActiveSectionMapping(mappingId, sectionId);
+      console.log(
+        `✅ Saved and activated mapping ${mappingId} for section ${sectionId}`
+      );
+
+      // Reload configuration to parse the new data
+      console.log("🔄 Reloading configuration with synced data...");
+      const newConfig = await this.configLoader.loadConfig();
+      this.config = newConfig;
+
+      // Reinitialize services with updated config
+      this.auth = new AuthService(this.config, this.db);
+      this.orchestration = new OrchestrationService(this.config, this.db);
+
+      console.log("✅ Google Sheets sync completed successfully");
+
+      res.json({
+        success: true,
+        message: `Google Sheets synced successfully for ${sectionId}`,
+        sectionId,
+        studentCount: students.length,
+      });
+    } catch (error) {
+      console.error("Error syncing Google Sheets:", error);
+      console.error(
+        "Error stack:",
+        error instanceof Error ? error.stack : "No stack trace"
+      );
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to sync Google Sheets";
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid Google Sheets URL")) {
+          errorMessage =
+            "Invalid Google Sheets URL format. Please provide a valid Google Sheets link.";
+        } else if (error.message.includes("HTTP 403")) {
+          errorMessage =
+            "Cannot access the Google Sheet. Please make sure it's shared as 'Anyone with the link can view'.";
+        } else if (error.message.includes("HTTP 404")) {
+          errorMessage =
+            "Google Sheet not found. Please check the URL is correct.";
+        } else if (error.message.includes("Required columns")) {
+          errorMessage =
+            "The Google Sheet must have 'name' and 'email' columns.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        error: errorMessage,
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  // Helper method to convert students array to CSV format
+  private convertStudentsToCSV(students: any[]): string {
+    if (students.length === 0) {
+      return "name,email,slack_id\n";
+    }
+
+    const headers = "name,email,slack_id";
+    const rows = students.map(
+      (student) =>
+        `${student.name || ""},${student.email || ""},${student.slack_id || ""}`
+    );
+
+    return [headers, ...rows].join("\n");
   }
 }
