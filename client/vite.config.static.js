@@ -5,7 +5,7 @@ import path from 'path'
 // Configuration for static landing page (GitHub Pages)
 export default defineConfig({
   plugins: [react()],
-  base: '/clementime-repo/',
+  base: '/clementime/',
   build: {
     outDir: 'dist-static',
     emptyOutDir: true,
