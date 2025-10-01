@@ -37,6 +37,13 @@ jobs:
         working-directory: ./client
         run: yarn build:static
 
+      - name: Rename index file for GitHub Pages
+        working-directory: ./client/dist-static
+        run: |
+          if [ -f "index-static.html" ]; then
+            mv index-static.html index.html
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
