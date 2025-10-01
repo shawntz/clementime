@@ -1,0 +1,305 @@
+class ScheduleGenerator
+  attr_reader :errors, :generated_count
+
+  def initialize(options = {})
+    @options = options
+    @errors = []
+    @generated_count = 0
+    load_config
+  end
+
+  def generate_all_schedules
+    ActiveRecord::Base.transaction do
+      sections = Section.active.includes(:students, :ta)
+
+      sections.each do |section|
+        generate_section_schedule(section)
+      end
+    end
+
+    @errors.empty?
+  rescue => e
+    @errors << "Transaction failed: #{e.message}"
+    Rails.logger.error("Schedule generation failed: #{e.class}: #{e.message}")
+    Rails.logger.error(e.backtrace.first(10).join("\n"))
+    false
+  end
+
+  def generate_section_schedule(section)
+    students = section.students.active.includes(:constraints, :exam_slots)
+
+    # Assign week groups if not already assigned
+    assign_week_groups(students, section)
+
+    # Generate slots for each exam
+    (1..@total_exams).each do |exam_number|
+      generate_exam_slots(section, students, exam_number)
+    end
+  end
+
+  def regenerate_student_schedule(student_id)
+    student = Student.find(student_id)
+    section = student.section
+
+    ActiveRecord::Base.transaction do
+      # Mark existing slots as unscheduled but keep them (to maintain gaps)
+      student.exam_slots.update_all(is_scheduled: false)
+
+      # Generate new slots
+      (1..@total_exams).each do |exam_number|
+        generate_single_student_slot(student, section, exam_number)
+      end
+    end
+
+    true
+  rescue => e
+    @errors << "Error regenerating schedule: #{e.message}"
+    false
+  end
+
+  private
+
+  def load_config
+    @exam_day = SystemConfig.get(SystemConfig::EXAM_DAY, 'friday')
+
+    # Parse time strings (format: "HH:MM") into Time objects for today
+    start_time_str = SystemConfig.get(SystemConfig::EXAM_START_TIME, '13:30')
+    end_time_str = SystemConfig.get(SystemConfig::EXAM_END_TIME, '14:50')
+    @exam_start_time = Time.parse("2000-01-01 #{start_time_str}")
+    @exam_end_time = Time.parse("2000-01-01 #{end_time_str}")
+
+    @exam_duration_minutes = SystemConfig.get(SystemConfig::EXAM_DURATION_MINUTES, 7)
+    @exam_buffer_minutes = SystemConfig.get(SystemConfig::EXAM_BUFFER_MINUTES, 1)
+
+    quarter_start = SystemConfig.get(SystemConfig::QUARTER_START_DATE, Date.today.to_s)
+    @quarter_start_date = quarter_start.is_a?(Date) ? quarter_start : Date.parse(quarter_start.to_s)
+
+    @total_exams = SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5)
+  end
+
+  def assign_week_groups(students, section)
+    unassigned = students.select { |s| s.week_group.nil? }
+    return if unassigned.empty?
+
+    # Check for week_preference constraints
+    unassigned.each do |student|
+      week_constraint = student.constraints.active.find_by(constraint_type: 'week_preference')
+      if week_constraint
+        student.update!(week_group: week_constraint.constraint_value)
+        unassigned.delete(student)
+      end
+    end
+
+    # Randomly assign remaining students to odd/even
+    shuffled = unassigned.shuffle
+    shuffled.each_with_index do |student, index|
+      week_group = index.even? ? 'odd' : 'even'
+      student.update!(week_group: week_group)
+    end
+  end
+
+  def generate_exam_slots(section, students, exam_number)
+    # Calculate which weeks this exam falls on
+    base_week = (exam_number - 1) * 2 + 1
+    odd_week = base_week
+    even_week = base_week + 1
+
+    # Separate students by week group
+    odd_students = students.select { |s| s.week_group == 'odd' }
+    even_students = students.select { |s| s.week_group == 'even' }
+
+    # Generate slots for odd week
+    generate_week_slots(section, odd_students, exam_number, odd_week)
+
+    # Generate slots for even week
+    generate_week_slots(section, even_students, exam_number, even_week)
+  end
+
+  def generate_week_slots(section, students, exam_number, week_number)
+    exam_date = calculate_exam_date(week_number)
+    current_time = @exam_start_time.dup
+
+    # Randomize student order for each exam so they don't always have the same time
+    randomized_students = students.shuffle(random: Random.new(exam_number + week_number))
+
+    randomized_students.each do |student|
+      # Check if student already has a slot for this exam
+      existing_slot = student.exam_slots.find_by(exam_number: exam_number)
+
+      # Skip if constraints indicate this slot should remain unscheduled
+      if existing_slot && !existing_slot.is_scheduled
+        next
+      end
+
+      # Check constraints
+      unless can_schedule_student(student, exam_date, current_time)
+        create_unscheduled_slot(student, section, exam_number, week_number)
+        next
+      end
+
+      # Check if we have time remaining
+      slot_end_time = current_time + (@exam_duration_minutes * 60)
+      if slot_end_time > @exam_end_time
+        create_unscheduled_slot(student, section, exam_number, week_number)
+        next
+      end
+
+      # Create or update the slot
+      slot = ExamSlot.find_or_initialize_by(
+        student: student,
+        exam_number: exam_number
+      )
+
+      slot.assign_attributes(
+        section: section,
+        week_number: week_number,
+        date: exam_date,
+        start_time: current_time,
+        end_time: slot_end_time,
+        is_scheduled: true
+      )
+
+      if slot.save
+        @generated_count += 1
+      else
+        @errors << "Error creating slot for #{student.full_name}: #{slot.errors.full_messages.join(', ')}"
+      end
+
+      # Advance time for next student
+      current_time = slot_end_time + (@exam_buffer_minutes * 60)
+    end
+  end
+
+  def generate_single_student_slot(student, section, exam_number)
+    # Determine which week based on week_group
+    base_week = (exam_number - 1) * 2 + 1
+    week_number = student.week_group == 'odd' ? base_week : base_week + 1
+
+    exam_date = calculate_exam_date(week_number)
+
+    # Find available time slot
+    existing_slots = ExamSlot.where(
+      section: section,
+      exam_number: exam_number,
+      week_number: week_number,
+      is_scheduled: true
+    ).order(:start_time)
+
+    # Try to find a gap or append to end
+    current_time = @exam_start_time.dup
+
+    existing_slots.each do |slot|
+      gap_start = current_time
+      gap_end = slot.start_time
+
+      if (gap_end - gap_start) >= (@exam_duration_minutes + @exam_buffer_minutes) * 60
+        # Found a gap, use it
+        slot_end_time = gap_start + (@exam_duration_minutes * 60)
+
+        if can_schedule_student(student, exam_date, gap_start)
+          create_slot(student, section, exam_number, week_number, exam_date, gap_start, slot_end_time)
+          return true
+        end
+      end
+
+      current_time = slot.end_time + (@exam_buffer_minutes * 60)
+    end
+
+    # No gap found, try to append at end
+    slot_end_time = current_time + (@exam_duration_minutes * 60)
+    if slot_end_time <= @exam_end_time && can_schedule_student(student, exam_date, current_time)
+      create_slot(student, section, exam_number, week_number, exam_date, current_time, slot_end_time)
+      return true
+    end
+
+    # Cannot schedule, create unscheduled slot
+    create_unscheduled_slot(student, section, exam_number, week_number)
+    false
+  end
+
+  def calculate_exam_date(week_number)
+    # Find the Nth occurrence of exam_day after quarter start
+    target_day = day_name_to_wday(@exam_day)
+    current_date = @quarter_start_date
+
+    # Advance to first occurrence of exam_day
+    until current_date.wday == target_day
+      current_date += 1
+    end
+
+    # Advance to target week
+    current_date + ((week_number - 1) * 7)
+  end
+
+  def day_name_to_wday(day_name)
+    {
+      'sunday' => 0,
+      'monday' => 1,
+      'tuesday' => 2,
+      'wednesday' => 3,
+      'thursday' => 4,
+      'friday' => 5,
+      'saturday' => 6
+    }[day_name.downcase] || 5
+  end
+
+  def can_schedule_student(student, date, time)
+    constraints = student.constraints.active
+
+    constraints.each do |constraint|
+      case constraint.constraint_type
+      when 'time_before'
+        max_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
+        return false if time > max_time
+      when 'time_after'
+        min_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
+        return false if time < min_time
+      when 'specific_date'
+        required_date = Date.parse(constraint.constraint_value)
+        return false if date != required_date
+      when 'exclude_date'
+        excluded_date = Date.parse(constraint.constraint_value)
+        return false if date == excluded_date
+      end
+    end
+
+    true
+  rescue => e
+    Rails.logger.error("Error checking constraints for student #{student.id}: #{e.message}")
+    true # Default to allowing if error
+  end
+
+  def create_slot(student, section, exam_number, week_number, date, start_time, end_time)
+    slot = ExamSlot.find_or_initialize_by(
+      student: student,
+      exam_number: exam_number
+    )
+
+    slot.assign_attributes(
+      section: section,
+      week_number: week_number,
+      date: date,
+      start_time: start_time,
+      end_time: end_time,
+      is_scheduled: true
+    )
+
+    slot.save!
+    @generated_count += 1
+  end
+
+  def create_unscheduled_slot(student, section, exam_number, week_number)
+    slot = ExamSlot.find_or_initialize_by(
+      student: student,
+      exam_number: exam_number
+    )
+
+    slot.assign_attributes(
+      section: section,
+      week_number: week_number,
+      is_scheduled: false
+    )
+
+    slot.save
+  end
+end
