@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Clementime Frontend Setup Script
+echo "🍊 Setting up Clementime frontend..."
+
+cd client
+
+# Create directory structure
+echo "Creating directory structure..."
+mkdir -p src/pages/admin src/pages/ta src/components/admin src/components/ta src/components/shared
+
+# Create complete frontend files - Due to size, see FRONTEND_GUIDE.md for manual setup
+
+echo "✅ Frontend structure created!"
+echo ""
+echo "The frontend files need to be created manually due to their size."
+echo "See client/FRONTEND_GUIDE.md for the complete file contents."
+echo ""
+echo "Quick start:"
+echo "  1. cd client"
+echo "  2. yarn"
+echo "  3. yarn dev"
+echo ""
