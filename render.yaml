@@ -1,0 +1,46 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: clementime-db
+    env: docker
+    plan: starter
+    region: oregon
+    databases:
+      - name: clementime
+        plan: starter
+
+  # Redis Cache
+  - type: redis
+    name: clementime-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
+  # Web Application
+  - type: web
+    name: clementime
+    env: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /up
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clementime-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: clementime-redis
+          type: redis
+          property: connectionString
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_SERVE_STATIC_FILES
+        value: true
+      - key: RAILS_LOG_TO_STDOUT
+        value: true
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: RAILS_MASTER_KEY
+        sync: false  # You'll need to add this manually in Render dashboard
