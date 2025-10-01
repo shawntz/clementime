@@ -1,0 +1,126 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+# Clementime Setup Script
+puts "🍊 Setting up Clementime..."
+puts ""
+
+# Check prerequisites
+def check_command(cmd)
+  system("which #{cmd} > /dev/null 2>&1")
+end
+
+puts "Checking prerequisites..."
+required_commands = {
+  'ruby' => 'Ruby',
+  'bundle' => 'Bundler',
+  'docker' => 'Docker',
+  'docker-compose' => 'Docker Compose'
+}
+
+missing = []
+required_commands.each do |cmd, name|
+  if check_command(cmd)
+    puts "  ✅ #{name}"
+  else
+    puts "  ❌ #{name} - NOT FOUND"
+    missing << name
+  end
+end
+
+if missing.any?
+  puts ""
+  puts "Please install: #{missing.join(', ')}"
+  exit 1
+end
+
+puts ""
+puts "Creating environment file..."
+
+unless File.exist?('.env')
+  File.write('.env', <<~ENV)
+    DATABASE_URL=postgres://clementime:clementime@db:5432/clementime_development
+    REDIS_URL=redis://redis:6379/0
+    RAILS_ENV=development
+    # Add your Google Service Account JSON (base64 encoded)
+    GOOGLE_SERVICE_ACCOUNT_JSON=
+  ENV
+  puts "  ✅ Created .env file"
+  puts "  ⚠️  Please edit .env and add your GOOGLE_SERVICE_ACCOUNT_JSON"
+else
+  puts "  ⏭️  .env already exists"
+end
+
+puts ""
+puts "Installing Ruby dependencies..."
+system("bundle install")
+
+puts ""
+puts "Starting database..."
+system("docker-compose up -d db")
+sleep 3
+
+puts ""
+puts "Creating and migrating database..."
+system("bundle exec rails db:create db:migrate")
+
+puts ""
+puts "Creating initial admin user..."
+system("bundle exec rails runner \"
+unless User.exists?(username: 'admin')
+  User.create!(
+    username: 'admin',
+    email: 'admin@stanford.edu',
+    password: 'changeme123',
+    password_confirmation: 'changeme123',
+    role: 'admin',
+    first_name: 'Admin',
+    last_name: 'User',
+    must_change_password: true,
+    is_active: true
+  )
+  puts '  ✅ Admin user created (username: admin, password: changeme123)'
+else
+  puts '  ⏭️  Admin user already exists'
+end
+\"")
+
+puts ""
+puts "Initializing system configuration..."
+system("bundle exec rails runner \"
+configs = {
+  'exam_day' => ['friday', 'string', 'Day of week for exams'],
+  'exam_start_time' => ['13:30', 'time', 'Exam block start time'],
+  'exam_end_time' => ['14:50', 'time', 'Exam block end time'],
+  'exam_duration_minutes' => ['7', 'integer', 'Minutes per exam'],
+  'exam_buffer_minutes' => ['1', 'integer', 'Buffer between exams'],
+  'total_exams' => ['5', 'integer', 'Total exams per quarter'],
+  'quarter_start_date' => ['2025-09-20', 'date', 'Quarter start date'],
+  'google_drive_folder_id' => ['', 'string', 'Google Drive folder for recordings'],
+  'slack_bot_token' => ['', 'string', 'Slack bot token'],
+  'slack_app_id' => ['', 'string', 'Slack app ID'],
+  'notification_time' => ['08:00', 'time', 'Weekly notification time']
+}
+
+configs.each do |key, (value, type, description)|
+  unless SystemConfig.exists?(key: key)
+    SystemConfig.set(key, value, config_type: type, description: description)
+  end
+end
+
+puts '  ✅ System configuration initialized'
+\"")
+
+puts ""
+puts "🍊 Setup complete!"
+puts ""
+puts "Next steps:"
+puts "  1. Edit .env and add your Google Service Account JSON"
+puts "  2. Start the application: docker-compose up"
+puts "  3. Access at http://localhost:3000"
+puts "  4. Login with username: admin, password: changeme123"
+puts ""
+puts "To import data:"
+puts "  • Use Rails console: rails console"
+puts "  • See README.md for import examples"
+puts ""
