@@ -1,43 +1,45 @@
-node_modules
-npm-debug.log
-.git
-.gitignore
-README.md
-.env
-.env.*
-.DS_Store
-*.log
-coverage
-.nyc_output
+# See https://docs.docker.com/engine/reference/builder/#dockerignore-file for more about ignoring files.
 
-# Sensitive files that should never be in container
-google-credentials.json
-psych-10-admin-bots-*.json
-*.pem
-*.key
-*.p12
+# Ignore git directory.
+/.git/
+/.gitignore
 
-# Development files
-.vscode
-.idea
-*.swp
-*.swo
+# Ignore bundler config.
+/.bundle
 
-# Testing
-test
-tests
-spec
-__tests__
+# Ignore all environment files.
+/.env*
 
-# Documentation
-docs
-wiki
+# Ignore all default key files.
+/config/master.key
+/config/credentials/*.key
 
-# Build artifacts
-dist
-build
-target
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
 
-# Temporary files
-tmp
-temp
+# Ignore pidfiles, but keep the directory.
+/tmp/pids/*
+!/tmp/pids/.keep
+
+# Ignore storage (uploaded files in development and any SQLite databases).
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/.keep
+
+# Ignore CI service files.
+/.github
+
+# Ignore Kamal files.
+/config/deploy*.yml
+/.kamal
+
+# Ignore development files
+/.devcontainer
+
+# Ignore Docker-related files
+/.dockerignore
+/Dockerfile*
