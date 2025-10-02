@@ -4,96 +4,80 @@ class AddSlackMessageTemplates < ActiveRecord::Migration[8.0]
     reversible do |dir|
       dir.up do
         # Student schedule message template
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_student_schedule_template',
-            'Hi {{student_name}}! 👋\n\nHere is your schedule for Oral Exam #{{exam_number}} (Week {{week}}):\n\n📅 Date: {{date}}\n⏰ Time: {{time}}\n📍 Location: {{location}}\n\nYour facilitator: {{facilitator}}\n\nGood luck! 🎓',
-            'text',
-            'Template for student schedule Slack messages',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_student_schedule_template',
+          value: 'Hi {{student_name}}! 👋
+
+Here is your schedule for Oral Exam #{{exam_number}} (Week {{week}}):
+
+📅 Date: {{date}}
+⏰ Time: {{time}}
+📍 Location: {{location}}
+
+Your facilitator: {{facilitator}}
+
+Good luck! 🎓',
+          config_type: 'text',
+          description: 'Template for student schedule Slack messages'
+        ) rescue ActiveRecord::RecordNotUnique
 
         # TA schedule message template
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_ta_schedule_template',
-            'Hi {{ta_name}}! 👋\n\nHere is your schedule for Oral Exam #{{exam_number}} (Week {{week}} - {{week_type}}):\n\nYou have {{student_count}} students scheduled.\n\n📋 View full schedule: {{ta_page_url}}\n📝 Grade form: {{grade_form_url}}\n\nPlease review and prepare accordingly. Let us know if you have any questions!',
-            'text',
-            'Template for TA schedule Slack messages',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_ta_schedule_template',
+          value: 'Hi {{ta_name}}! 👋
+
+Here is your schedule for Oral Exam #{{exam_number}} (Week {{week}} - {{week_type}}):
+
+You have {{student_count}} students scheduled.
+
+📋 View full schedule: {{ta_page_url}}
+📝 Grade form: {{grade_form_url}}
+
+Please review and prepare accordingly. Let us know if you have any questions!',
+          config_type: 'text',
+          description: 'Template for TA schedule Slack messages'
+        ) rescue ActiveRecord::RecordNotUnique
 
         # Slack message configuration variables
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_exam_location',
-            'Jordan Hall, Building 420',
-            'string',
-            'Default exam location for Slack messages',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_exam_location',
+          value: 'Jordan Hall, Building 420',
+          config_type: 'string',
+          description: 'Default exam location for Slack messages'
+        ) rescue ActiveRecord::RecordNotUnique
 
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_course_name',
-            'PSYCH 10 / STATS 60',
-            'string',
-            'Course name for Slack messages',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_course_name',
+          value: 'PSYCH 10 / STATS 60',
+          config_type: 'string',
+          description: 'Course name for Slack messages'
+        ) rescue ActiveRecord::RecordNotUnique
 
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_term',
-            'Fall 2025',
-            'string',
-            'Current term for Slack messages',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_term',
+          value: 'Fall 2025',
+          config_type: 'string',
+          description: 'Current term for Slack messages'
+        ) rescue ActiveRecord::RecordNotUnique
 
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_ta_page_url',
-            'https://psych10.clementime.app/ta',
-            'string',
-            'URL to TA page for schedule viewing',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_ta_page_url',
+          value: 'https://psych10.clementime.app/ta',
+          config_type: 'string',
+          description: 'URL to TA page for schedule viewing'
+        ) rescue ActiveRecord::RecordNotUnique
 
-        execute <<-SQL
-          INSERT INTO system_configs (key, value, config_type, description, created_at, updated_at)
-          VALUES (
-            'slack_grade_form_url',
-            'https://forms.gle/example',
-            'string',
-            'URL to grade submission form',
-            NOW(),
-            NOW()
-          ) ON CONFLICT (key) DO NOTHING;
-        SQL
+        SystemConfig.create!(
+          key: 'slack_grade_form_url',
+          value: 'https://forms.gle/example',
+          config_type: 'string',
+          description: 'URL to grade submission form'
+        ) rescue ActiveRecord::RecordNotUnique
       end
 
       dir.down do
         # Clean up on rollback
-        execute "DELETE FROM system_configs WHERE key LIKE 'slack_%'"
+        SystemConfig.where("key LIKE ?", "slack_%").destroy_all
       end
     end
   end
