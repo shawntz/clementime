@@ -39,7 +39,7 @@ export default function ScheduleGenerator() {
       // Recalculate totals based on filtered sections
       const total_students = filteredOverview.reduce((sum, item) => sum + item.students_count, 0);
       const total_scheduled = filteredOverview.reduce((sum, item) => sum + item.scheduled_slots, 0);
-      const total_unscheduled = filteredOverview.reduce((sum, item) => sum + item.unscheduled_slots, 0);
+      const total_unscheduled = filteredOverview.reduce((sum, item) => sum + item.unscheduled_slots_count, 0);
 
       setOverview({
         ...response.data,
@@ -93,14 +93,30 @@ export default function ScheduleGenerator() {
     }
   };
 
-  const exportToCSV = () => {
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = '/api/admin/schedules/export_csv';
-    link.download = `exam_schedules_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const exportToCSV = async () => {
+    try {
+      const response = await api.get('/admin/schedules/export_csv', {
+        responseType: 'blob'
+      });
+
+      // Create a blob from the response
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `exam_schedules_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export CSV', err);
+      alert('Failed to export CSV: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   // Helper function to generate cross-listed code pills
@@ -253,7 +269,7 @@ export default function ScheduleGenerator() {
                       <span className="badge badge-success">{item.scheduled_slots}</span>
                     </td>
                     <td>
-                      <span className="badge badge-error">{item.unscheduled_slots_count || item.unscheduled_slots}</span>
+                      <span className="badge badge-error">{item.unscheduled_slots_count}</span>
                     </td>
                   </tr>
                 );
@@ -264,7 +280,7 @@ export default function ScheduleGenerator() {
       )}
 
       {/* Unscheduled Slots Selection Modal */}
-      {showUnscheduledModal && !selectedExam && (
+      {showUnscheduledModal && !selectedExam && overview && (
         <div
           onClick={() => setShowUnscheduledModal(false)}
           style={{
@@ -293,31 +309,98 @@ export default function ScheduleGenerator() {
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-              {[1, 2, 3, 4, 5].map(examNum => (
-                <div key={examNum} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Oral Exam #{examNum}</h4>
-                  <button
-                    onClick={() => {
-                      setSelectedExam(examNum);
-                      setSelectedWeek('odd');
-                    }}
-                    className="btn btn-outline"
-                    style={{ width: '100%' }}
-                  >
-                    Odd Week
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedExam(examNum);
-                      setSelectedWeek('even');
-                    }}
-                    className="btn btn-outline"
-                    style={{ width: '100%' }}
-                  >
-                    Even Week
-                  </button>
-                </div>
-              ))}
+              {[1, 2, 3, 4, 5].map(examNum => {
+                // Calculate counts for each exam/week combination
+                const oddCount = overview.overview.reduce((sum, section) => {
+                  const count = section.unscheduled_slots.filter(
+                    slot => slot.exam_number === examNum && slot.week_type === 'odd'
+                  ).length;
+                  return sum + count;
+                }, 0);
+
+                const evenCount = overview.overview.reduce((sum, section) => {
+                  const count = section.unscheduled_slots.filter(
+                    slot => slot.exam_number === examNum && slot.week_type === 'even'
+                  ).length;
+                  return sum + count;
+                }, 0);
+
+                return (
+                  <div key={examNum} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Oral Exam #{examNum}</h4>
+                    <button
+                      onClick={() => {
+                        setSelectedExam(examNum);
+                        setSelectedWeek('odd');
+                      }}
+                      disabled={oddCount === 0}
+                      className="btn btn-outline"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        opacity: oddCount === 0 ? 0.5 : 1,
+                        cursor: oddCount === 0 ? 'not-allowed' : 'pointer',
+                        backgroundColor: oddCount === 0 ? 'var(--background)' : 'transparent'
+                      }}
+                    >
+                      <span>Odd Week</span>
+                      {oddCount > 0 && (
+                        <span style={{
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold'
+                        }}>
+                          {oddCount}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedExam(examNum);
+                        setSelectedWeek('even');
+                      }}
+                      disabled={evenCount === 0}
+                      className="btn btn-outline"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        opacity: evenCount === 0 ? 0.5 : 1,
+                        cursor: evenCount === 0 ? 'not-allowed' : 'pointer',
+                        backgroundColor: evenCount === 0 ? 'var(--background)' : 'transparent'
+                      }}
+                    >
+                      <span>Even Week</span>
+                      {evenCount > 0 && (
+                        <span style={{
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold'
+                        }}>
+                          {evenCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>
