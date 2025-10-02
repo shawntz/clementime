@@ -24,22 +24,27 @@ class SlackNotifier
     # Get TA's Slack ID if this is a student getting credentials from their TA
     ta_slack_id = user.respond_to?(:section) && user.section&.ta&.slack_id
 
+    # Get super admin Slack ID
+    super_admin_slack_id = SystemConfig.get("super_admin_slack_id", "")
+
     # Build list of participants
     if test_mode && test_user_id.present?
       # Test mode: MPDM with TA + selected additional users (NOT the actual student)
       participants = []
       participants << ta_slack_id if ta_slack_id.present?
       participants += additional_slack_ids if additional_slack_ids.any?
+      participants << super_admin_slack_id if super_admin_slack_id.present?
       participants << test_user_id # Include test user
       participants = participants.compact.uniq
 
       # If only test user, send DM to test user
       participants = [ test_user_id ] if participants.empty?
     else
-      # Normal mode: user + selected additional users + TA (if applicable)
+      # Normal mode: user + selected additional users + TA + super admin
       participants = [ slack_id ]
       participants += additional_slack_ids if additional_slack_ids.any?
       participants << ta_slack_id if ta_slack_id.present?
+      participants << super_admin_slack_id if super_admin_slack_id.present?
       participants = participants.compact.uniq
     end
 

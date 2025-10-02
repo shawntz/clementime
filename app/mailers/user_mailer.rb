@@ -6,9 +6,17 @@ class UserMailer < ApplicationMailer
     login_base = "https://#{login_base}" unless login_base.start_with?("http")
     @login_url = "#{login_base}/login?username=#{CGI.escape(user.username)}"
 
-    mail(
+    # Get super admin email for CC
+    super_admin_email = SystemConfig.get("super_admin_email", "")
+
+    mail_options = {
       to: user.email,
       subject: "Welcome to Clementime - Your Account Details"
-    )
+    }
+
+    # Add CC if super admin email is configured
+    mail_options[:cc] = super_admin_email if super_admin_email.present?
+
+    mail(mail_options)
   end
 end

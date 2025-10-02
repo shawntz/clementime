@@ -25,6 +25,8 @@ export default function SystemPreferences() {
     slack_test_mode: false,
     slack_test_user_id: '',
     admin_slack_ids: '',
+    super_admin_slack_id: '',
+    super_admin_email: '',
     slack_exam_location: '',
     slack_course_name: '',
     slack_term: '',
@@ -722,8 +724,44 @@ export default function SystemPreferences() {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
+            <label htmlFor="super_admin_slack_id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: 'var(--text)' }}>
+              Super Admin Slack ID
+            </label>
+            <input
+              id="super_admin_slack_id"
+              type="text"
+              className="form-input"
+              value={config.super_admin_slack_id}
+              onChange={(e) => handleChange('super_admin_slack_id', e.target.value)}
+              placeholder="U01234ABCDE"
+              style={{ width: '100%', fontFamily: 'monospace' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.5rem', display: 'block' }}>
+              Super admin Slack ID to include in all credential MPDMs
+            </small>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label htmlFor="super_admin_email" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: 'var(--text)' }}>
+              Super Admin Email
+            </label>
+            <input
+              id="super_admin_email"
+              type="email"
+              className="form-input"
+              value={config.super_admin_email}
+              onChange={(e) => handleChange('super_admin_email', e.target.value)}
+              placeholder="admin@example.com"
+              style={{ width: '100%' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.5rem', display: 'block' }}>
+              Email to CC on all password/credential emails
+            </small>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
             <label htmlFor="admin_slack_ids" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: 'var(--text)' }}>
-              Admin Slack IDs (for MPDMs)
+              Additional Admin Slack IDs (for MPDMs)
             </label>
             <input
               id="admin_slack_ids"
@@ -735,7 +773,7 @@ export default function SystemPreferences() {
               style={{ width: '100%', fontFamily: 'monospace' }}
             />
             <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.5rem', display: 'block' }}>
-              Comma-separated list of admin Slack IDs to include in credential MPDMs. When students/TAs receive credentials via Slack, a multi-person DM will be created with the recipient, their TA (if applicable), and these admins.
+              Comma-separated list of additional admin Slack IDs to include in credential MPDMs
             </small>
           </div>
 
