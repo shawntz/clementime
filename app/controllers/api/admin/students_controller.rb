@@ -67,6 +67,48 @@ module Api
         render json: { errors: e.message }, status: :internal_server_error
       end
 
+      # Transfer student between odd/even weeks (for athletes, etc.)
+      def transfer_week_group
+        new_week_group = params[:week_group]
+        from_exam = params[:from_exam].to_i
+
+        unless %w[odd even].include?(new_week_group)
+          return render json: { errors: "Invalid week group" }, status: :unprocessable_entity
+        end
+
+        # Check if any slots from this exam onwards are locked
+        locked_slots = @student.exam_slots
+                               .where("exam_number >= ?", from_exam)
+                               .where(is_locked: true)
+
+        if locked_slots.any?
+          return render json: {
+            errors: "Cannot transfer: some exam slots (#{from_exam}+) are locked. Please unlock them first."
+          }, status: :forbidden
+        end
+
+        # Update student's week group
+        @student.update!(week_group: new_week_group)
+
+        # Regenerate schedules for affected exams
+        slots_updated = @student.exam_slots
+                                .where("exam_number >= ?", from_exam)
+                                .update_all(
+                                  is_scheduled: false,
+                                  date: nil,
+                                  start_time: nil,
+                                  end_time: nil
+                                )
+
+        render json: {
+          message: "Student transferred to #{new_week_group} week group",
+          student: student_detail_response(@student),
+          slots_cleared: slots_updated
+        }, status: :ok
+      rescue => e
+        render json: { errors: e.message }, status: :internal_server_error
+      end
+
       private
 
       def set_student
