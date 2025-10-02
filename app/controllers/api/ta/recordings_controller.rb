@@ -73,6 +73,34 @@ module Api
         render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
+      def test
+        unless current_user.ta?
+          return render json: { errors: "Access denied" }, status: :forbidden
+        end
+
+        begin
+          # Create a test audio file (silent audio)
+          test_audio_data = create_test_audio_data
+
+          # Create a temporary test recording object
+          uploader = GoogleDriveUploader.new
+
+          # Test the upload without saving to database
+          test_result = uploader.test_upload(test_audio_data, current_user)
+
+          render json: {
+            message: "Recording test completed successfully",
+            test_result: test_result,
+            status: "success"
+          }, status: :ok
+        rescue => e
+          render json: {
+            message: "Recording test failed",
+            error: e.message
+          }, status: :internal_server_error
+        end
+      end
+
       private
 
       def set_exam_slot
