@@ -53,10 +53,7 @@ COPY client/package.json client/yarn.lock ./client/
 RUN cd client && yarn install --frozen-lockfile
 
 COPY client ./client
-RUN cd client && yarn build
-
-# Copy built React app to Rails public directory
-RUN cp -r client/dist/* public/
+RUN cd client && yarn build && ls -la ../public
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
