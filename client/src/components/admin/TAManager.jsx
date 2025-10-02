@@ -190,7 +190,8 @@ function CreateTAModal({ onClose }) {
     password: generatePassword(),
     first_name: '',
     last_name: '',
-    location: ''
+    location: '',
+    slack_id: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -236,6 +237,8 @@ function CreateTAModal({ onClose }) {
           password_confirmation: formData.password,
           first_name: formData.first_name,
           last_name: formData.last_name,
+          location: formData.location,
+          slack_id: formData.slack_id,
           role: 'ta',
           is_active: true
         }
@@ -295,8 +298,7 @@ function CreateTAModal({ onClose }) {
               type="text"
               className="form-input"
               value={formData.username}
-              readOnly
-              style={{ backgroundColor: 'var(--background)', cursor: 'not-allowed' }}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             />
           </div>
 
@@ -320,6 +322,20 @@ function CreateTAModal({ onClose }) {
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label className="form-label">Slack ID</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g., U01234ABCDE"
+              value={formData.slack_id}
+              onChange={(e) => setFormData({ ...formData, slack_id: e.target.value })}
+            />
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+              Used for Slack notifications and channel assignments
+            </div>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
