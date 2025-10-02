@@ -25,6 +25,9 @@ module Api
           slack_test_mode: SystemConfig.get("slack_test_mode", false),
           slack_test_user_id: SystemConfig.get("slack_test_user_id", ""),
           admin_slack_ids: SystemConfig.get("admin_slack_ids", ""),
+          slack_exam_location: SystemConfig.get("slack_exam_location", ""),
+          slack_course_name: SystemConfig.get("slack_course_name", ""),
+          slack_term: SystemConfig.get("slack_term", ""),
           grade_form_urls: SystemConfig.get("grade_form_urls", {}),
           exam_dates: SystemConfig.get("exam_dates", {})
         }
@@ -35,6 +38,7 @@ module Api
       def update
         config_params = params[:config] || {}
         errors = []
+        google_drive_updated = false
 
         config_params.each do |key, value|
           begin
@@ -55,8 +59,10 @@ module Api
               SystemConfig.set(SystemConfig::TOTAL_EXAMS, value.to_i, config_type: "integer")
             when "google_drive_folder_id"
               SystemConfig.set(SystemConfig::GOOGLE_DRIVE_FOLDER_ID, value, config_type: "string")
+              google_drive_updated = true
             when "google_service_account_json"
               SystemConfig.set("google_service_account_json", value, config_type: "string")
+              google_drive_updated = true
             when "slack_bot_token"
               SystemConfig.set(SystemConfig::SLACK_BOT_TOKEN, value, config_type: "string")
             when "slack_app_token"
@@ -79,6 +85,12 @@ module Api
               SystemConfig.set("slack_test_user_id", value, config_type: "string")
             when "admin_slack_ids"
               SystemConfig.set("admin_slack_ids", value, config_type: "string")
+            when "slack_exam_location"
+              SystemConfig.set("slack_exam_location", value, config_type: "text")
+            when "slack_course_name"
+              SystemConfig.set("slack_course_name", value, config_type: "text")
+            when "slack_term"
+              SystemConfig.set("slack_term", value, config_type: "text")
             when "grade_form_urls"
               SystemConfig.set("grade_form_urls", value, config_type: "json")
             when "exam_dates"
@@ -89,10 +101,59 @@ module Api
           end
         end
 
+        # Validate Google Drive credentials if they were updated
+        google_drive_status = nil
+        if google_drive_updated && errors.empty?
+          google_drive_status = validate_google_drive_credentials
+        end
+
         if errors.empty?
-          render json: { message: "Configuration updated successfully" }, status: :ok
+          response_data = { message: "Configuration updated successfully" }
+          response_data[:google_drive_status] = google_drive_status if google_drive_status
+          render json: response_data, status: :ok
         else
           render json: { errors: errors }, status: :unprocessable_entity
+        end
+      end
+
+      private
+
+      def validate_google_drive_credentials
+        uploader = GoogleDriveUploader.new
+
+        if uploader.errors.any?
+          {
+            valid: false,
+            message: "❌ Google Drive validation failed",
+            error: uploader.errors.join(", ")
+          }
+        else
+          # Try to access the root folder
+          begin
+            folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)
+            if folder_id.present?
+              # Attempt to get folder metadata to verify access
+              uploader.instance_variable_get(:@drive_service).get_file(folder_id, fields: "id, name")
+              {
+                valid: true,
+                message: "✅ Google Drive credentials verified successfully",
+                details: "Successfully authenticated and can access the configured folder"
+              }
+            else
+              {
+                valid: true,
+                message: "✅ Google Drive credentials verified",
+                details: "Authenticated successfully. Set folder ID to complete setup."
+              }
+            end
+          rescue => e
+            {
+              valid: false,
+              message: "❌ Google Drive credentials valid but folder access failed",
+              error: e.message,
+              details: "Credentials are valid but cannot access the specified folder. Check folder ID and permissions."
+            }
+          end
         end
       end
     end

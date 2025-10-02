@@ -81,6 +81,7 @@ Rails.application.routes.draw do
       post "slack_messages/send_ta_schedules", to: "slack_messages#send_ta_schedules"
       post "slack_messages/send_student_schedules", to: "slack_messages#send_student_schedules"
       post "slack_messages/test_recording", to: "slack_messages#test_recording"
+      post "slack_messages/test_message", to: "slack_messages#test_message"
     end
 
     # TA routes

@@ -154,7 +154,97 @@ module Api
         end
       end
 
+      def test_message
+        message_type = params[:message_type]
+        test_user_id = params[:test_user_id]
+        admin_slack_ids = SystemConfig.get("admin_slack_ids", "").split(",").map(&:strip).reject(&:blank?)
+
+        unless test_user_id.present?
+          return render json: { error: "Test user ID is required" }, status: :unprocessable_entity
+        end
+
+        begin
+          slack_api = SlackApiService.new
+
+          # Build test message with dummy data
+          message = case message_type
+          when "student"
+            build_test_student_message
+          when "ta"
+            build_test_ta_message
+          when "channel_name"
+            # For channel name, just send it as a message
+            channel_name = build_test_channel_name
+            "🧪 Test Channel Name:\n`#{channel_name}`"
+          else
+            return render json: { error: "Invalid message type" }, status: :unprocessable_entity
+          end
+
+          # Send to MPDM if admin IDs are configured, otherwise DM
+          if admin_slack_ids.any?
+            # Create MPDM with test user and admins
+            all_user_ids = ([ test_user_id ] + admin_slack_ids).uniq
+            slack_api.send_mpdm_message(all_user_ids, message)
+          else
+            # Send DM to test user only
+            slack_api.send_direct_message(test_user_id, message)
+          end
+
+          render json: {
+            message: "Test message sent successfully",
+            sent_to: admin_slack_ids.any? ? "MPDM" : "DM",
+            recipients: admin_slack_ids.any? ? ([ test_user_id ] + admin_slack_ids) : [ test_user_id ]
+          }, status: :ok
+        rescue => e
+          Rails.logger.error("Test message error: #{e.message}")
+          render json: { error: e.message }, status: :internal_server_error
+        end
+      end
+
       private
+
+      def build_test_student_message
+        template = SystemConfig.get("slack_student_message_template", "📝 TEST: Oral Exam Session for {{student_name}}")
+
+        template.gsub("{{student_name}}", "Jane Doe (TEST)")
+                .gsub("{{exam_number}}", "1")
+                .gsub("{{week}}", "1")
+                .gsub("{{date}}", "Friday, October 10, 2025")
+                .gsub("{{time}}", "1:30 PM - 1:37 PM")
+                .gsub("{{location}}", SystemConfig.get("slack_exam_location", "Jordan Hall 420"))
+                .gsub("{{facilitator}}", "John Smith")
+                .gsub("{{course}}", SystemConfig.get("slack_course_name", "PSYCH 10 / STATS 60"))
+                .gsub("{{term}}", SystemConfig.get("slack_term", "Fall 2025"))
+      end
+
+      def build_test_ta_message
+        template = SystemConfig.get("slack_ta_message_template", "📋 {{ta_name}} - Oral Exam Session Schedule")
+
+        schedule_list = "• 1:30 PM - 1:37 PM: Jane Doe\n• 1:38 PM - 1:45 PM: John Smith\n• 1:46 PM - 1:53 PM: Sarah Johnson"
+
+        template.gsub("{{ta_name}}", "Test TA")
+                .gsub("{{exam_number}}", "1")
+                .gsub("{{week}}", "1")
+                .gsub("{{date}}", "Friday, October 10, 2025")
+                .gsub("{{location}}", SystemConfig.get("slack_exam_location", "Jordan Hall 420"))
+                .gsub("{{student_count}}", "3")
+                .gsub("{{schedule_list}}", schedule_list)
+                .gsub("{{ta_page_url}}", SystemConfig.get("base_url", "") + "/ta")
+                .gsub("{{grade_form_url}}", "https://forms.gle/example")
+                .gsub("{{course}}", SystemConfig.get("slack_course_name", "PSYCH 10 / STATS 60"))
+                .gsub("{{term}}", SystemConfig.get("slack_term", "Fall 2025"))
+      end
+
+      def build_test_channel_name
+        template = SystemConfig.get("slack_channel_name_template", "{{course}}-oral-exam-session-ta-{{ta_name}}-week{{week}}-{{term}}")
+
+        template.gsub("{{course}}", "psych10")
+                .gsub("{{ta_name}}", "john-smith")
+                .gsub("{{week}}", "1")
+                .gsub("{{term}}", "fall-2025")
+                .downcase
+                .gsub(/[^a-z0-9\-]/, "-")
+      end
 
       def build_ta_message(ta, section, exam_number, week_type, student_count)
         template = SystemConfig.get("slack_ta_schedule_template", "")
