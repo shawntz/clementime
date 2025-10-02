@@ -50,23 +50,27 @@ module Api
               "#{index}. *#{slot.student.full_name}*\n🕐 #{slot.formatted_time_range}"
             end.join("\n\n")
 
-            # Send message to TA with admins in MPDM
+            # Send message to TA in private channel
             message = build_ta_message_with_schedule(ta, section, exam_number, week_type, students.count, schedule_list)
 
             begin
-              # Create MPDM with TA and admins
-              channel = if admin_slack_ids.any?
-                all_user_ids = ([ ta.slack_id ] + admin_slack_ids).uniq
-                SlackNotifier.create_mpdm(bot_token, all_user_ids)
-              else
-                ta.slack_id
-              end
+              # Generate channel name from template
+              channel_name = build_channel_name(ta, section, exam_number, week_type)
 
-              if channel
-                send_slack_message_to_channel(bot_token, channel, message)
-                results << { ta: ta.full_name, section: section.name, student_count: students.count }
+              # Create private channel with TA and admins
+              user_ids_to_invite = ([ ta.slack_id ] + admin_slack_ids).compact.uniq
+              channel_id = create_private_channel(bot_token, channel_name, user_ids_to_invite)
+
+              if channel_id
+                send_slack_message_to_channel(bot_token, channel_id, message)
+                results << {
+                  ta: ta.full_name,
+                  section: section.name,
+                  student_count: students.count,
+                  channel_name: channel_name
+                }
               else
-                errors << "#{ta.full_name} (#{section.name}): Failed to create conversation"
+                errors << "#{ta.full_name} (#{section.name}): Failed to create channel"
               end
             rescue => e
               errors << "#{ta.full_name} (#{section.name}): #{e.message}"
@@ -297,6 +301,30 @@ module Api
                 .gsub("{{term}}", SystemConfig.get("slack_term", "Fall 2025"))
       end
 
+      def build_channel_name(ta, section, exam_number, week_type)
+        template = SystemConfig.get("slack_channel_name_template", "{{course}}-oralexam-{{ta_name}}-week{{week}}-{{term}}")
+
+        # Calculate week number (exam 1 = week 1-2, exam 2 = week 3-4, etc.)
+        week_number = (exam_number - 1) * 2 + (week_type == "odd" ? 1 : 2)
+
+        # Get actual config values and sanitize for Slack channel names
+        course = SystemConfig.get("slack_course_name", "PSYCH 10").downcase.gsub(/\s+/, "").gsub(/[^a-z0-9\-]/, "-")
+        term = SystemConfig.get("slack_term", "Fall 2025").downcase.gsub(/\s+/, "").gsub(/[^a-z0-9\-]/, "-")
+        ta_name = ta.full_name.downcase.gsub(/\s+/, "-").gsub(/[^a-z0-9\-]/, "-")
+
+        channel_name = template.gsub("{{course}}", course)
+                               .gsub("{{ta_name}}", ta_name)
+                               .gsub("{{week}}", week_number.to_s)
+                               .gsub("{{term}}", term)
+                               .downcase
+                               .gsub(/[^a-z0-9\-]/, "-")
+                               .gsub(/\-+/, "-")  # Replace multiple hyphens with single hyphen
+                               .gsub(/^\-|\-$/, "")  # Remove leading/trailing hyphens
+
+        # Slack channel names must be <= 80 characters
+        channel_name[0...80]
+      end
+
       def build_test_channel_name
         template = SystemConfig.get("slack_channel_name_template", "{{course}}-oral-exam-session-ta-{{ta_name}}-week{{week}}-{{term}}")
 
@@ -310,6 +338,63 @@ module Api
                 .gsub("{{term}}", term)
                 .downcase
                 .gsub(/[^a-z0-9\-]/, "-")
+      end
+
+      def create_private_channel(bot_token, channel_name, user_ids_to_invite)
+        require "net/http"
+        require "uri"
+        require "json"
+
+        # Step 1: Create private channel
+        uri = URI.parse("https://slack.com/api/conversations.create")
+        request = Net::HTTP::Post.new(uri)
+        request["Authorization"] = "Bearer #{bot_token}"
+        request["Content-Type"] = "application/json"
+        request.body = {
+          name: channel_name,
+          is_private: true
+        }.to_json
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(request)
+        end
+
+        result = JSON.parse(response.body)
+
+        unless result["ok"]
+          Rails.logger.error "Failed to create channel: #{result["error"]}"
+          return nil
+        end
+
+        channel_id = result["channel"]["id"]
+
+        # Step 2: Invite users to the channel
+        if user_ids_to_invite.any?
+          invite_uri = URI.parse("https://slack.com/api/conversations.invite")
+          invite_request = Net::HTTP::Post.new(invite_uri)
+          invite_request["Authorization"] = "Bearer #{bot_token}"
+          invite_request["Content-Type"] = "application/json"
+          invite_request.body = {
+            channel: channel_id,
+            users: user_ids_to_invite.join(",")
+          }.to_json
+
+          invite_response = Net::HTTP.start(invite_uri.hostname, invite_uri.port, use_ssl: true) do |http|
+            http.request(invite_request)
+          end
+
+          invite_result = JSON.parse(invite_response.body)
+
+          unless invite_result["ok"]
+            Rails.logger.error "Failed to invite users to channel: #{invite_result["error"]}"
+            # Channel was created but invite failed - still return channel_id
+          end
+        end
+
+        channel_id
+      rescue => e
+        Rails.logger.error "Failed to create private channel: #{e.message}"
+        nil
       end
 
       def send_slack_test_message(bot_token, channel, message_text)
