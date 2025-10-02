@@ -8,6 +8,8 @@ export default function TimeSlotManager() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingSlot, setEditingSlot] = useState(null);
+  const [draggedSlot, setDraggedSlot] = useState(null);
+  const [dragOverSlot, setDragOverSlot] = useState(null);
 
   useEffect(() => {
     loadSections();
@@ -61,6 +63,69 @@ export default function TimeSlotManager() {
     } catch (err) {
       alert('Failed to update time slot: ' + (err.response?.data?.errors?.join(', ') || err.message));
     }
+  };
+
+  const swapSlots = async (slot1Id, slot2Id) => {
+    try {
+      await api.post('/admin/exam_slots/swap', {
+        slot1_id: slot1Id,
+        slot2_id: slot2Id
+      });
+      loadSlots();
+    } catch (err) {
+      alert('Failed to swap slots: ' + (err.response?.data?.errors?.join(', ') || err.message));
+    }
+  };
+
+  const handleDragStart = (e, slot) => {
+    setDraggedSlot(slot);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget);
+    // Make the drag image slightly transparent
+    e.currentTarget.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e) => {
+    e.currentTarget.style.opacity = '1';
+    setDraggedSlot(null);
+    setDragOverSlot(null);
+  };
+
+  const handleDragOver = (e, slot) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedSlot && slot.id !== draggedSlot.id && slot.week_group === draggedSlot.week_group) {
+      setDragOverSlot(slot);
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    // Only clear if we're actually leaving the card (not entering a child)
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDragOverSlot(null);
+    }
+  };
+
+  const handleDrop = async (e, targetSlot) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedSlot || draggedSlot.id === targetSlot.id) {
+      setDragOverSlot(null);
+      return;
+    }
+
+    // Only allow swapping within the same week group
+    if (draggedSlot.week_group !== targetSlot.week_group) {
+      alert('Can only swap students within the same week group');
+      setDragOverSlot(null);
+      return;
+    }
+
+    // Perform the swap
+    await swapSlots(draggedSlot.id, targetSlot.id);
+    setDragOverSlot(null);
   };
 
   const getAvailableTimeSlots = (currentSlot) => {
@@ -177,6 +242,18 @@ export default function TimeSlotManager() {
           Time Slot Manager
         </h3>
 
+        <div style={{
+          padding: '0.75rem',
+          backgroundColor: '#eff6ff',
+          border: '1px solid #3b82f6',
+          borderRadius: '0.5rem',
+          marginBottom: '1rem',
+          fontSize: '0.875rem',
+          color: '#1e40af'
+        }}>
+          💡 <strong>Drag & Drop:</strong> Drag student cards to swap their time slots. You can only swap students within the same week group (odd with odd, even with even).
+        </div>
+
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
@@ -228,13 +305,29 @@ export default function TimeSlotManager() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {oddWeekSlots.map(slot => (
-                  <div key={slot.id} style={{
-                    padding: '1rem',
-                    backgroundColor: 'var(--background)',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border)'
-                  }}>
-                    <div style={{ marginBottom: '0.5rem' }}>
+                  <div
+                    key={slot.id}
+                    draggable={slot.is_scheduled}
+                    onDragStart={(e) => handleDragStart(e, slot)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, slot)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, slot)}
+                    style={{
+                      padding: '1rem',
+                      backgroundColor: dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)',
+                      borderRadius: '0.5rem',
+                      border: dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)',
+                      cursor: slot.is_scheduled ? 'grab' : 'default',
+                      transition: 'all 0.2s ease',
+                      transform: dragOverSlot?.id === slot.id ? 'scale(1.02)' : 'scale(1)',
+                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'
+                    }}
+                  >
+                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {slot.is_scheduled && (
+                        <span style={{ fontSize: '1rem', color: 'var(--text-light)' }}>⋮⋮</span>
+                      )}
                       <strong>{slot.student.full_name}</strong>
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
@@ -263,13 +356,29 @@ export default function TimeSlotManager() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {evenWeekSlots.map(slot => (
-                  <div key={slot.id} style={{
-                    padding: '1rem',
-                    backgroundColor: 'var(--background)',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border)'
-                  }}>
-                    <div style={{ marginBottom: '0.5rem' }}>
+                  <div
+                    key={slot.id}
+                    draggable={slot.is_scheduled}
+                    onDragStart={(e) => handleDragStart(e, slot)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, slot)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, slot)}
+                    style={{
+                      padding: '1rem',
+                      backgroundColor: dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)',
+                      borderRadius: '0.5rem',
+                      border: dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)',
+                      cursor: slot.is_scheduled ? 'grab' : 'default',
+                      transition: 'all 0.2s ease',
+                      transform: dragOverSlot?.id === slot.id ? 'scale(1.02)' : 'scale(1)',
+                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'
+                    }}
+                  >
+                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {slot.is_scheduled && (
+                        <span style={{ fontSize: '1rem', color: 'var(--text-light)' }}>⋮⋮</span>
+                      )}
                       <strong>{slot.student.full_name}</strong>
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
