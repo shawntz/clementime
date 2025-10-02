@@ -66,17 +66,24 @@ module Api
         end
 
         begin
-          slack_users = Rails.cache.read("slack_users_#{current_user.id}") || []
-          Rails.logger.info "Found #{slack_users.count} cached slack users"
+          slack_users = Rails.cache.read("slack_users_#{current_user.id}")
+          if slack_users.nil?
+            Rails.logger.info "No cached slack users found for user #{current_user.id}"
+            slack_users = []
+          else
+            Rails.logger.info "Found #{slack_users.count} cached slack users"
+          end
 
           searchable_users = slack_users.map do |user|
+            next if user.nil? || user[:userid].nil?
+
             {
               value: user[:userid],
-              label: "#{user[:fullname] || user[:displayname]} (#{user[:email]})",
+              label: "#{user[:fullname] || user[:displayname]} (#{user[:email] || 'no-email'})",
               email: user[:email],
               username: user[:username]
             }
-          end.sort_by { |u| u[:label] }
+          end.compact.sort_by { |u| u[:label] }
         rescue => e
           Rails.logger.error "Error processing slack users cache: #{e.class} - #{e.message}\n#{e.backtrace.first(10).join("\n")}"
           raise
