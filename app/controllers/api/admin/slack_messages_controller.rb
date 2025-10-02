@@ -108,7 +108,7 @@ module Api
       def test_recording
         begin
           # Get test configuration from system config
-          test_audio_url = SystemConfig.get_value("test_recording_url", "https://example.com/test-audio.mp3")
+          test_audio_url = SystemConfig.get("test_recording_url", "https://example.com/test-audio.mp3")
 
           # Trigger Google Drive upload test
           # This would actually upload a test file
@@ -129,7 +129,7 @@ module Api
       private
 
       def build_ta_message(ta, section, exam_number, week_type, student_count)
-        template = SystemConfig.get_value("slack_ta_schedule_template", "")
+        template = SystemConfig.get("slack_ta_schedule_template", "")
 
         week_number = calculate_week_number(exam_number, week_type)
 
@@ -138,14 +138,14 @@ module Api
                 .gsub("{{week}}", week_number.to_s)
                 .gsub("{{week_type}}", week_type.capitalize)
                 .gsub("{{student_count}}", student_count.to_s)
-                .gsub("{{ta_page_url}}", SystemConfig.get_value("slack_ta_page_url", ""))
-                .gsub("{{grade_form_url}}", SystemConfig.get_value("slack_grade_form_url", ""))
-                .gsub("{{course}}", SystemConfig.get_value("slack_course_name", ""))
-                .gsub("{{term}}", SystemConfig.get_value("slack_term", ""))
+                .gsub("{{ta_page_url}}", SystemConfig.get("slack_ta_page_url", ""))
+                .gsub("{{grade_form_url}}", SystemConfig.get("slack_grade_form_url", ""))
+                .gsub("{{course}}", SystemConfig.get("slack_course_name", ""))
+                .gsub("{{term}}", SystemConfig.get("slack_term", ""))
       end
 
       def build_student_message(exam_slot)
-        template = SystemConfig.get_value("slack_student_schedule_template", "")
+        template = SystemConfig.get("slack_student_schedule_template", "")
 
         # Get TA for this section
         ta = exam_slot.section.tas.first
@@ -156,10 +156,10 @@ module Api
                 .gsub("{{week}}", exam_slot.week_number.to_s)
                 .gsub("{{date}}", exam_slot.date ? exam_slot.date.strftime("%A, %B %d, %Y") : "TBA")
                 .gsub("{{time}}", exam_slot.formatted_time_range)
-                .gsub("{{location}}", SystemConfig.get_value("slack_exam_location", ""))
+                .gsub("{{location}}", SystemConfig.get("slack_exam_location", ""))
                 .gsub("{{facilitator}}", facilitator)
-                .gsub("{{course}}", SystemConfig.get_value("slack_course_name", ""))
-                .gsub("{{term}}", SystemConfig.get_value("slack_term", ""))
+                .gsub("{{course}}", SystemConfig.get("slack_course_name", ""))
+                .gsub("{{term}}", SystemConfig.get("slack_term", ""))
       end
 
       def send_slack_message(slack_user_id, message)

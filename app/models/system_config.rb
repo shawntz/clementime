@@ -1,7 +1,7 @@
 class SystemConfig < ApplicationRecord
   # Validations
   validates :key, presence: true, uniqueness: true
-  validates :config_type, inclusion: { in: %w[string integer boolean json time date] }
+  validates :config_type, inclusion: { in: %w[string integer boolean json time date text] }
 
   # Class methods for easy config access
   class << self
@@ -26,7 +26,7 @@ class SystemConfig < ApplicationRecord
       return nil if value.nil?
 
       case type
-      when "string"
+      when "string", "text"
         value
       when "integer"
         value.to_i
