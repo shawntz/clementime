@@ -49,6 +49,9 @@ class CanvasRosterImporter
     student_data = extract_student_data(row)
     return if student_data[:sis_user_id].blank?
 
+    # Skip students with blank or invalid SU ID (not actively enrolled)
+    return if student_data[:su_id].blank? || !student_data[:su_id].match?(/^\d+$/)
+
     # Parse section codes
     section_codes = parse_section_codes(student_data[:section_raw])
     return if section_codes.empty?
@@ -87,6 +90,7 @@ class CanvasRosterImporter
       sis_user_id: row[2].to_s.strip,
       sis_login_id: row[3].to_s.strip,
       section_raw: row[4].to_s.strip,
+      su_id: row[5].to_s.strip,
       email: "#{row[3].to_s.strip}@stanford.edu" # Construct email from SIS login
     }
   end

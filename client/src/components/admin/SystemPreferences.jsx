@@ -287,21 +287,41 @@ export default function SystemPreferences() {
               Exam Session Dates
             </label>
             <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginBottom: '0.75rem', display: 'block' }}>
-              Specify the exact date for each oral exam session
+              Specify the exact date for each oral exam session (odd and even sections have different dates)
             </small>
             {Array.from({ length: config.total_exams }, (_, i) => i + 1).map((examNum) => (
-              <div key={examNum} style={{ marginBottom: '0.75rem' }}>
-                <label htmlFor={`exam_date_${examNum}`} style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Oral Exam #{examNum} Date
-                </label>
-                <input
-                  id={`exam_date_${examNum}`}
-                  type="date"
-                  className="form-input"
-                  value={config.exam_dates?.[examNum] || ''}
-                  onChange={(e) => handleChange('exam_dates', { ...config.exam_dates, [examNum]: e.target.value })}
-                  style={{ width: '100%' }}
-                />
+              <div key={examNum} style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: 'var(--primary)' }}>
+                  Oral Exam #{examNum}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label htmlFor={`exam_date_${examNum}_odd`} style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                      Odd Sections Date
+                    </label>
+                    <input
+                      id={`exam_date_${examNum}_odd`}
+                      type="date"
+                      className="form-input"
+                      value={config.exam_dates?.[`${examNum}_odd`] || ''}
+                      onChange={(e) => handleChange('exam_dates', { ...config.exam_dates, [`${examNum}_odd`]: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor={`exam_date_${examNum}_even`} style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                      Even Sections Date
+                    </label>
+                    <input
+                      id={`exam_date_${examNum}_even`}
+                      type="date"
+                      className="form-input"
+                      value={config.exam_dates?.[`${examNum}_even`] || ''}
+                      onChange={(e) => handleChange('exam_dates', { ...config.exam_dates, [`${examNum}_even`]: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
