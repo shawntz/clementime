@@ -170,6 +170,18 @@ class GoogleDriveUploader
         credentials_json = Base64.decode64(credentials_json)
       end
 
+      # Validate JSON structure
+      begin
+        json_data = JSON.parse(credentials_json)
+        unless json_data["private_key"] && json_data["client_email"]
+          @errors << "Invalid service account JSON: missing private_key or client_email"
+          return
+        end
+      rescue JSON::ParserError => e
+        @errors << "Invalid service account JSON format: #{e.message}"
+        return
+      end
+
       credentials = Google::Auth::ServiceAccountCredentials.make_creds(
         json_key_io: StringIO.new(credentials_json),
         scope: Google::Apis::DriveV3::AUTH_DRIVE_FILE
@@ -181,9 +193,17 @@ class GoogleDriveUploader
       # Test connection
       @drive_service.get_file("root", fields: "id")
 
+    rescue Signet::AuthorizationError => e
+      error_msg = "Authorization failed: #{e.message}. "
+      if e.message.include?("invalid_grant")
+        error_msg += "The service account credentials are invalid or the account no longer exists. Please re-create and re-upload the service account JSON file."
+      end
+      @errors << error_msg
+      Rails.logger.error("Google Drive auth error: #{e.message}")
+      @drive_service = nil
     rescue => e
       @errors << "Failed to initialize Google Drive service: #{e.message}"
-      Rails.logger.error("Google Drive setup error: #{e.message}")
+      Rails.logger.error("Google Drive setup error: #{e.class}: #{e.message}")
       @drive_service = nil
     end
   end
