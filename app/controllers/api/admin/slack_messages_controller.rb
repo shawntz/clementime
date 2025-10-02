@@ -113,6 +113,15 @@ module Api
           # Create uploader instance
           uploader = GoogleDriveUploader.new
 
+          # Check if uploader has errors during initialization
+          if uploader.errors.any?
+            return render json: {
+              message: "❌ Google Drive not configured",
+              error: uploader.errors.join(", "),
+              help: "Please configure Google Drive credentials in System Config:\n- google_service_account_json (base64 encoded JSON)\n- google_drive_folder_id (root folder ID)"
+            }, status: :ok
+          end
+
           # Test the full workflow: upload and download
           test_result = uploader.test_upload(test_audio_data, current_user)
 
@@ -132,8 +141,9 @@ module Api
             render json: {
               message: "❌ Recording test failed",
               error: test_result[:error],
-              details: test_result[:backtrace]
-            }, status: :internal_server_error
+              details: test_result[:backtrace],
+              help: "Check that Google Drive folder ID is configured correctly"
+            }, status: :ok
           end
         rescue => e
           render json: {
