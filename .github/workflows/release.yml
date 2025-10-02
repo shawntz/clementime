@@ -33,8 +33,12 @@ jobs:
       - name: Get latest tag
         id: get_tag
         run: |
-          # Get the latest tag, default to v0.0.0 if no tags exist
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          # Get all tags matching semantic versioning pattern (vX.Y.Z)
+          # Sort them and get the latest one, default to v0.0.0 if no tags exist
+          LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.0.0"
+          fi
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "Latest tag: $LATEST_TAG"
 
@@ -93,6 +97,11 @@ jobs:
             docker pull shawnschwartz/clementime:${{ steps.calc_version.outputs.new_version }}
             docker pull shawnschwartz/clementime:latest
             ```
+
+            🐳 **Docker Hub**: https://hub.docker.com/r/shawnschwartz/clementime
+
+            ---
+            Made with ❤️ by [@shawntz](https://github.com/shawntz)
           draft: false
           prerelease: false
 

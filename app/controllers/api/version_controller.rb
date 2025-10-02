@@ -1,6 +1,6 @@
 module Api
   class VersionController < ApplicationController
-    skip_before_action :authenticate_user!, only: [ :show ]
+    skip_before_action :authenticate_request, only: [ :show ], raise: false
 
     def show
       version = nil
