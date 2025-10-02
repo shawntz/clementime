@@ -7,6 +7,7 @@ import RosterManager from '../../components/admin/RosterManager';
 import UserManagement from '../../components/admin/UserManagement';
 import SystemPreferences from '../../components/admin/SystemPreferences';
 import AdminProfile from '../../components/admin/AdminProfile';
+import SlackControlCenter from '../../components/admin/SlackControlCenter';
 
 export default function AdminDashboard() {
   return (
@@ -18,6 +19,7 @@ export default function AdminDashboard() {
         <Route path="roster" element={<RosterManager />} />
         <Route path="tas" element={<TAManagement />} />
         <Route path="sessions" element={<SessionManager />} />
+        <Route path="slack" element={<SlackControlCenter />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="preferences" element={<SystemPreferences />} />
         <Route path="profile" element={<AdminProfile />} />

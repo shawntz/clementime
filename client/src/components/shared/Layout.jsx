@@ -130,6 +130,16 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                 Session Manager
               </Link>
               <Link
+                to="/admin/slack"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  isActive('/admin/slack')
+                    ? 'bg-white text-orange-600'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                🚀 Slack Control
+              </Link>
+              <Link
                 to="/admin/users"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive('/admin/users')
