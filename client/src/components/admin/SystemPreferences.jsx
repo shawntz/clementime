@@ -38,11 +38,25 @@ export default function SystemPreferences() {
     setLoading(true);
     try {
       const response = await api.get('/admin/config');
+      const examDates = response.data.exam_dates || {};
+
+      // Migrate old format to new format if needed
+      const migratedDates = {};
+      Object.keys(examDates).forEach(key => {
+        // If key is a number (old format like "1", "2"), migrate it
+        if (/^\d+$/.test(key)) {
+          // Skip migration - let user set odd/even dates manually
+        } else {
+          // Already in new format (like "1_odd", "1_even")
+          migratedDates[key] = examDates[key];
+        }
+      });
+
       // Ensure objects are always initialized
       const loadedConfig = {
         ...response.data,
         grade_form_urls: response.data.grade_form_urls || {},
-        exam_dates: response.data.exam_dates || {}
+        exam_dates: migratedDates
       };
       setConfig(loadedConfig);
     } catch (err) {
