@@ -55,20 +55,15 @@ export default function UserManagement() {
     }
   };
 
+  const [slackModalUser, setSlackModalUser] = useState(null);
+
   const sendSlackCredentials = async (userId, userName, slackId) => {
     if (!slackId) {
       alert('This user has no Slack ID configured. Please add one first.');
       return;
     }
 
-    if (!confirm(`Send login credentials via Slack to ${userName}?`)) return;
-
-    try {
-      await api.post(`/admin/users/${userId}/send_slack_credentials`);
-      alert('Credentials sent via Slack successfully!');
-    } catch (err) {
-      alert(err.response?.data?.errors || 'Failed to send Slack message');
-    }
+    setSlackModalUser({ id: userId, name: userName, slackId });
   };
 
   if (loading) {
@@ -200,6 +195,169 @@ export default function UserManagement() {
           }}
         />
       )}
+
+      {slackModalUser && (
+        <SlackCredentialsModal
+          user={slackModalUser}
+          onClose={() => setSlackModalUser(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SlackCredentialsModal({ user, onClose }) {
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    loadAllUsers();
+  }, []);
+
+  const loadAllUsers = async () => {
+    try {
+      const [adminsRes, tasRes] = await Promise.all([
+        api.get('/admin/users?role=admin'),
+        api.get('/admin/users?role=ta')
+      ]);
+
+      const usersWithSlack = [
+        ...adminsRes.data.users.map(u => ({ ...u, type: 'Admin' })),
+        ...tasRes.data.users.map(u => ({ ...u, type: 'TA' }))
+      ].filter(u => u.slack_id && u.id !== user.id);
+
+      setAllUsers(usersWithSlack);
+    } catch (err) {
+      console.error('Failed to load users', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleUser = (userId) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSend = async () => {
+    if (!confirm(`Send login credentials via Slack to ${user.name}?`)) return;
+
+    setSending(true);
+    try {
+      await api.post(`/admin/users/${user.id}/send_slack_credentials`, {
+        include_user_ids: selectedUserIds
+      });
+      alert('Credentials sent via Slack successfully!');
+      onClose();
+    } catch (err) {
+      alert(err.response?.data?.errors || 'Failed to send Slack message');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+      <div
+        className="card"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+          Send Credentials to {user.name}
+        </h3>
+
+        <p style={{ marginBottom: '1rem', color: 'var(--text-light)' }}>
+          Select additional admins/TAs to include in the multi-person DM:
+        </p>
+
+        {loading ? (
+          <div className="spinner" />
+        ) : (
+          <>
+            {allUsers.length === 0 ? (
+              <p style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>
+                No other users with Slack IDs configured
+              </p>
+            ) : (
+              <div style={{ maxHeight: '300px', overflow: 'auto', marginBottom: '1rem' }}>
+                {allUsers.map(u => (
+                  <label
+                    key={u.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0.75rem',
+                      border: '1px solid var(--border)',
+                      borderRadius: '6px',
+                      marginBottom: '0.5rem',
+                      cursor: 'pointer',
+                      backgroundColor: selectedUserIds.includes(u.id) ? 'var(--primary-light)' : 'transparent'
+                    }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.includes(u.id)}
+                      onChange={() => toggleUser(u.id)}
+                      style={{ marginRight: '0.75rem' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '500' }}>{u.full_name}</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                        {u.type} • <code>{u.slack_id}</code>
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: 'var(--info-light)',
+              borderRadius: '6px',
+              marginBottom: '1rem',
+              fontSize: '0.875rem'
+            }}>
+              <strong>Recipients:</strong> {user.name}
+              {selectedUserIds.length > 0 && ` + ${selectedUserIds.length} other${selectedUserIds.length > 1 ? 's' : ''}`}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={handleSend}
+                className="btn btn-primary"
+                disabled={sending}
+              >
+                {sending ? 'Sending...' : 'Send Credentials'}
+              </button>
+              <button
+                onClick={onClose}
+                className="btn btn-outline"
+                disabled={sending}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

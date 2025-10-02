@@ -81,8 +81,9 @@ module Api
         @user.must_change_password = true
 
         if @user.save
-          # Send Slack message
-          result = SlackNotifier.send_credentials(@user, temp_password)
+          # Send Slack message with optional additional user IDs
+          additional_user_ids = params[:include_user_ids] || []
+          result = SlackNotifier.send_credentials(@user, temp_password, additional_user_ids)
 
           if result[:success]
             render json: { message: result[:message] }, status: :ok

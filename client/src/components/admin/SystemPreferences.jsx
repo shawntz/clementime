@@ -24,6 +24,7 @@ export default function SystemPreferences() {
     slack_ta_message_template: '',
     slack_test_mode: false,
     slack_test_user_id: '',
+    admin_slack_ids: '',
     grade_form_urls: {},
     exam_dates: {}  // New: flexible exam dates { 1: '2025-01-15', 2: '2025-01-22', ... }
   });
@@ -649,6 +650,24 @@ export default function SystemPreferences() {
                 Test mode is currently disabled. Messages will be sent to actual recipients.
               </p>
             )}
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label htmlFor="admin_slack_ids" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: 'var(--text)' }}>
+              Admin Slack IDs (for MPDMs)
+            </label>
+            <input
+              id="admin_slack_ids"
+              type="text"
+              className="form-input"
+              value={config.admin_slack_ids}
+              onChange={(e) => handleChange('admin_slack_ids', e.target.value)}
+              placeholder="U01234ABCDE, U56789FGHIJ"
+              style={{ width: '100%', fontFamily: 'monospace' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.5rem', display: 'block' }}>
+              Comma-separated list of admin Slack IDs to include in credential MPDMs. When students/TAs receive credentials via Slack, a multi-person DM will be created with the recipient, their TA (if applicable), and these admins.
+            </small>
           </div>
 
           <div style={{ background: '#e0f2fe', border: '1px solid #0ea5e9', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>

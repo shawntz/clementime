@@ -24,6 +24,7 @@ module Api
           slack_ta_message_template: SystemConfig.get("slack_ta_message_template", ""),
           slack_test_mode: SystemConfig.get("slack_test_mode", false),
           slack_test_user_id: SystemConfig.get("slack_test_user_id", ""),
+          admin_slack_ids: SystemConfig.get("admin_slack_ids", ""),
           grade_form_urls: SystemConfig.get("grade_form_urls", {}),
           exam_dates: SystemConfig.get("exam_dates", {})
         }
@@ -76,6 +77,8 @@ module Api
               SystemConfig.set("slack_test_mode", value, config_type: "boolean")
             when "slack_test_user_id"
               SystemConfig.set("slack_test_user_id", value, config_type: "string")
+            when "admin_slack_ids"
+              SystemConfig.set("admin_slack_ids", value, config_type: "string")
             when "grade_form_urls"
               SystemConfig.set("grade_form_urls", value, config_type: "json")
             when "exam_dates"

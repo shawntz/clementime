@@ -3,19 +3,61 @@ require "uri"
 require "json"
 
 class SlackNotifier
-  def self.send_credentials(user, temporary_password)
+  def self.send_credentials(user, temporary_password, additional_user_ids = [])
     slack_id = user.slack_id
     return { success: false, error: "User has no Slack ID configured" } unless slack_id.present?
 
     bot_token = SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN)
     return { success: false, error: "Slack bot token not configured" } unless bot_token.present?
 
+    # Check if test mode is enabled
+    test_mode = SystemConfig.get("slack_test_mode", false)
+    test_user_id = SystemConfig.get("slack_test_user_id", "")
+
+    # Get Slack IDs for additional users
+    additional_slack_ids = []
+    if additional_user_ids.any?
+      additional_users = User.where(id: additional_user_ids).where.not(slack_id: nil)
+      additional_slack_ids = additional_users.pluck(:slack_id)
+    end
+
+    # Get TA's Slack ID if this is a student getting credentials from their TA
+    ta_slack_id = user.respond_to?(:section) && user.section&.ta&.slack_id
+
+    # Build list of participants
+    if test_mode && test_user_id.present?
+      # Test mode: MPDM with TA + selected additional users (NOT the actual student)
+      participants = []
+      participants << ta_slack_id if ta_slack_id.present?
+      participants += additional_slack_ids if additional_slack_ids.any?
+      participants << test_user_id # Include test user
+      participants = participants.compact.uniq
+
+      # If only test user, send DM to test user
+      participants = [ test_user_id ] if participants.empty?
+    else
+      # Normal mode: user + selected additional users + TA (if applicable)
+      participants = [ slack_id ]
+      participants += additional_slack_ids if additional_slack_ids.any?
+      participants << ta_slack_id if ta_slack_id.present?
+      participants = participants.compact.uniq
+    end
+
+    # If we have multiple participants, create an MPDM, otherwise use DM
+    channel = if participants.length > 1
+      create_mpdm(bot_token, participants)
+    else
+      slack_id
+    end
+
+    return { success: false, error: "Failed to create conversation" } unless channel
+
     login_base = ENV["APP_HOST"] || "http://localhost:5173"
     login_base = "https://#{login_base}" unless login_base.start_with?("http")
     login_url = "#{login_base}/login?username=#{CGI.escape(user.username)}"
 
     message = {
-      channel: slack_id,
+      channel: channel,
       text: "🍊 Welcome to Clementime!",
       blocks: [
         {
@@ -89,5 +131,26 @@ class SlackNotifier
     end
   rescue => e
     { success: false, error: e.message }
+  end
+
+  private
+
+  def self.create_mpdm(bot_token, user_ids)
+    # Use conversations.open to create an MPDM
+    uri = URI.parse("https://slack.com/api/conversations.open")
+    request = Net::HTTP::Post.new(uri)
+    request["Authorization"] = "Bearer #{bot_token}"
+    request["Content-Type"] = "application/json"
+    request.body = { users: user_ids.join(",") }.to_json
+
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      http.request(request)
+    end
+
+    result = JSON.parse(response.body)
+    result["ok"] ? result["channel"]["id"] : nil
+  rescue => e
+    Rails.logger.error "Failed to create MPDM: #{e.message}"
+    nil
   end
 end
