@@ -11,7 +11,14 @@ class User < ApplicationRecord
             format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :role, presence: true, inclusion: { in: %w[admin ta] }
   validates :first_name, :last_name, presence: true
-  validates :slack_id, uniqueness: { case_sensitive: false }, allow_blank: true
+  validate :slack_id_uniqueness_if_present
+
+  def slack_id_uniqueness_if_present
+    return if slack_id.blank?
+
+    existing = User.where.not(id: id).where("LOWER(slack_id) = ?", slack_id.downcase).first
+    errors.add(:slack_id, "has already been taken") if existing
+  end
 
   # Scopes
   scope :active, -> { where(is_active: true) }
