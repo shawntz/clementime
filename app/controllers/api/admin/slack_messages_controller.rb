@@ -107,21 +107,39 @@ module Api
       # Test recording functionality
       def test_recording
         begin
-          # Get test configuration from system config
-          test_audio_url = SystemConfig.get("test_recording_url", "https://example.com/test-audio.mp3")
+          # Create a test audio file (1 second of silence)
+          test_audio_data = create_test_audio_data
 
-          # Trigger Google Drive upload test
-          # This would actually upload a test file
+          # Create uploader instance
+          uploader = GoogleDriveUploader.new
 
-          render json: {
-            message: "Recording test completed successfully",
-            test_url: test_audio_url,
-            status: "success"
-          }, status: :ok
+          # Test the full workflow: upload and download
+          test_result = uploader.test_upload(test_audio_data, current_user)
+
+          if test_result[:success]
+            render json: {
+              message: "✅ Recording test completed successfully",
+              details: {
+                file_name: test_result[:file_name],
+                file_url: test_result[:file_url],
+                uploaded_size: "#{test_result[:uploaded_size]} bytes",
+                downloaded_size: "#{test_result[:downloaded_size]} bytes",
+                verification: test_result[:verification]
+              },
+              status: "success"
+            }, status: :ok
+          else
+            render json: {
+              message: "❌ Recording test failed",
+              error: test_result[:error],
+              details: test_result[:backtrace]
+            }, status: :internal_server_error
+          end
         rescue => e
           render json: {
             message: "Recording test failed",
-            error: e.message
+            error: e.message,
+            backtrace: e.backtrace.first(5)
           }, status: :internal_server_error
         end
       end
@@ -174,6 +192,39 @@ module Api
         # Even weeks: 2, 4, 6, 8, 10
         base = (exam_number - 1) * 2
         week_type == "odd" ? base + 1 : base + 2
+      end
+
+      def create_test_audio_data
+        # Create a minimal valid WAV file header (1 second of silence at 44.1kHz, 16-bit, mono)
+        sample_rate = 44100
+        bits_per_sample = 16
+        num_channels = 1
+        duration = 1 # seconds
+        num_samples = sample_rate * duration
+
+        data_size = num_samples * num_channels * (bits_per_sample / 8)
+        file_size = 36 + data_size
+
+        wav_header = [
+          "RIFF",
+          [ file_size ].pack("V"),
+          "WAVE",
+          "fmt ",
+          [ 16 ].pack("V"),  # fmt chunk size
+          [ 1 ].pack("v"),   # audio format (PCM)
+          [ num_channels ].pack("v"),
+          [ sample_rate ].pack("V"),
+          [ sample_rate * num_channels * bits_per_sample / 8 ].pack("V"), # byte rate
+          [ num_channels * bits_per_sample / 8 ].pack("v"), # block align
+          [ bits_per_sample ].pack("v"),
+          "data",
+          [ data_size ].pack("V")
+        ].join
+
+        # Silent audio data (all zeros)
+        audio_data = "\x00" * data_size
+
+        wav_header + audio_data
       end
     end
   end

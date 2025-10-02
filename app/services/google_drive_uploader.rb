@@ -93,6 +93,66 @@ class GoogleDriveUploader
     end
   end
 
+  def test_upload(audio_data, user)
+    return { success: false, error: "Drive service not initialized" } unless @drive_service
+
+    begin
+      root_folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)
+      unless root_folder_id
+        return { success: false, error: "Google Drive folder ID not configured" }
+      end
+
+      # Create test folder
+      test_folder_name = "Test_Recordings"
+      test_folder_id = find_or_create_folder(test_folder_name, root_folder_id)
+      unless test_folder_id
+        return { success: false, error: "Failed to create test folder" }
+      end
+
+      # Generate test filename
+      timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+      filename = "test_recording_#{user.username}_#{timestamp}.wav"
+
+      # Create temp file
+      temp_file = Tempfile.new([ "test_recording", ".wav" ])
+      temp_file.binmode
+      temp_file.write(audio_data)
+      temp_file.rewind
+
+      # Upload to Google Drive
+      file_metadata = {
+        name: filename,
+        parents: [ test_folder_id ]
+      }
+
+      file = @drive_service.create_file(
+        file_metadata,
+        fields: "id, name, webViewLink, size",
+        upload_source: temp_file.path,
+        content_type: "audio/wav"
+      )
+
+      # Download the file back to verify
+      downloaded_content = @drive_service.get_file(file.id, download_dest: StringIO.new)
+
+      temp_file.close
+      temp_file.unlink
+
+      {
+        success: true,
+        file_id: file.id,
+        file_name: file.name,
+        file_url: file.web_view_link,
+        file_size: file.size,
+        uploaded_size: audio_data.bytesize,
+        downloaded_size: downloaded_content.string.bytesize,
+        verification: audio_data.bytesize == downloaded_content.string.bytesize ? "✅ Match" : "❌ Size mismatch"
+      }
+    rescue => e
+      { success: false, error: e.message, backtrace: e.backtrace.first(5) }
+    end
+  end
+
   private
 
   def setup_service
