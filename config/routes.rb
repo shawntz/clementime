@@ -46,6 +46,9 @@ Rails.application.routes.draw do
 
       # Students
       resources :students, only: [ :index, :show, :update ] do
+        collection do
+          delete "clear_all", to: "students#clear_all"
+        end
         member do
           put "deactivate", to: "students#deactivate"
         end

@@ -7,6 +7,7 @@ export default function CanvasUpload() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [lastUpload, setLastUpload] = useState(null);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     // Load last upload info from localStorage
@@ -65,6 +66,26 @@ export default function CanvasUpload() {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleClearRoster = async () => {
+    if (!confirm('⚠️ WARNING: This will permanently delete ALL students from the database. This action cannot be undone. Are you sure you want to continue?')) {
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+
+    try {
+      await api.delete('/admin/students/clear_all');
+      setResult({ message: 'All students cleared successfully' });
+      setLastUpload(null);
+      localStorage.removeItem('canvas_last_upload');
+    } catch (err) {
+      setError(err.response?.data?.errors || 'Failed to clear students');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Last Upload Preview */}
@@ -107,10 +128,20 @@ export default function CanvasUpload() {
 
       {/* Upload Form */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-2xl font-extrabold text-orange-600 mb-4 flex items-center gap-2">
-          <span>📤</span>
-          Upload Canvas Roster
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-2xl font-extrabold text-orange-600 flex items-center gap-2">
+            <span>📤</span>
+            Upload Canvas Roster
+          </h3>
+          <button
+            onClick={handleClearRoster}
+            disabled={clearing}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <span>🗑️</span>
+            {clearing ? 'Clearing...' : 'Clear All Students'}
+          </button>
+        </div>
 
         <form onSubmit={handleUpload}>
           <div className="mb-4">

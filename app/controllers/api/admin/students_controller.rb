@@ -39,6 +39,13 @@ module Api
         render json: { message: "Student deactivated successfully" }, status: :ok
       end
 
+      def clear_all
+        Student.destroy_all
+        render json: { message: "All students deleted successfully" }, status: :ok
+      rescue => e
+        render json: { errors: e.message }, status: :internal_server_error
+      end
+
       private
 
       def set_student
