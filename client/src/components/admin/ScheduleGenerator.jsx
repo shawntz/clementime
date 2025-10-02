@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
+import UnscheduledSlotsModal from './UnscheduledSlotsModal';
 
 export default function ScheduleGenerator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [overview, setOverview] = useState(null);
+  const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
+  const [selectedExam, setSelectedExam] = useState(null);
+  const [selectedWeek, setSelectedWeek] = useState(null);
 
   useEffect(() => {
     loadOverview();
@@ -169,8 +173,34 @@ export default function ScheduleGenerator() {
                   {overview.total_scheduled}
                 </div>
               </div>
-              <div style={{ padding: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Unscheduled Slots</div>
+              <div
+                style={{
+                  padding: '1rem',
+                  backgroundColor: 'var(--background)',
+                  borderRadius: '0.5rem',
+                  cursor: overview.total_unscheduled > 0 ? 'pointer' : 'default',
+                  transition: 'all 0.2s',
+                  border: '2px solid transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (overview.total_unscheduled > 0) {
+                    e.currentTarget.style.borderColor = 'var(--error)';
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'transparent';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+                onClick={() => {
+                  if (overview.total_unscheduled > 0) {
+                    setShowUnscheduledModal(true);
+                  }
+                }}
+              >
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                  Unscheduled Slots {overview.total_unscheduled > 0 && '(click to manage)'}
+                </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--error)' }}>
                   {overview.total_unscheduled}
                 </div>
@@ -214,6 +244,92 @@ export default function ScheduleGenerator() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Unscheduled Slots Selection Modal */}
+      {showUnscheduledModal && !selectedExam && (
+        <div
+          onClick={() => setShowUnscheduledModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            className="card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '600px', width: '90%' }}
+          >
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+              Select Exam & Week to Manage
+            </h3>
+            <p style={{ marginBottom: '1.5rem', color: 'var(--text-light)' }}>
+              Choose which oral exam and week type to view unscheduled students for:
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+              {[1, 2, 3, 4, 5].map(examNum => (
+                <div key={examNum} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Oral Exam #{examNum}</h4>
+                  <button
+                    onClick={() => {
+                      setSelectedExam(examNum);
+                      setSelectedWeek('odd');
+                    }}
+                    className="btn btn-outline"
+                    style={{ width: '100%' }}
+                  >
+                    Odd Week
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedExam(examNum);
+                      setSelectedWeek('even');
+                    }}
+                    className="btn btn-outline"
+                    style={{ width: '100%' }}
+                  >
+                    Even Week
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '1.5rem' }}>
+              <button
+                onClick={() => setShowUnscheduledModal(false)}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Actual Unscheduled Slots Modal */}
+      {selectedExam && selectedWeek && (
+        <UnscheduledSlotsModal
+          examNumber={selectedExam}
+          weekType={selectedWeek}
+          onClose={() => {
+            setSelectedExam(null);
+            setSelectedWeek(null);
+            setShowUnscheduledModal(false);
+            loadOverview();
+          }}
+          onScheduled={() => {
+            loadOverview();
+          }}
+        />
       )}
     </div>
   );
