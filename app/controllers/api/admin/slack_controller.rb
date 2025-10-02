@@ -37,7 +37,7 @@ module Api
             id: student.id,
             full_name: student.full_name,
             email: student.email,
-            section: student.section.code,
+            section: student.section&.code || "N/A",
             slack_user_id: student.slack_user_id,
             slack_username: student.slack_username
           }
@@ -57,6 +57,9 @@ module Api
           unmatched_students: students,
           slack_users: searchable_users
         }, status: :ok
+      rescue => e
+        Rails.logger.error "Unmatched students error: #{e.message}\n#{e.backtrace.join("\n")}"
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       def match
