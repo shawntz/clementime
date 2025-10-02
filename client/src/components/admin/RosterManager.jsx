@@ -16,7 +16,10 @@ export default function RosterManager() {
   const [showConstraintModal, setShowConstraintModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
   const [selectedExamNumber, setSelectedExamNumber] = useState(1);
+  const [transferFromExam, setTransferFromExam] = useState(1);
+  const [transferToWeek, setTransferToWeek] = useState('odd');
 
   useEffect(() => {
     loadData();
@@ -75,6 +78,28 @@ export default function RosterManager() {
   const openNotifyModal = (student) => {
     setSelectedStudent(student);
     setShowNotifyModal(true);
+  };
+
+  const openTransferModal = (student) => {
+    setSelectedStudent(student);
+    setTransferToWeek(student.week_group === 'odd' ? 'even' : 'odd');
+    setShowTransferModal(true);
+  };
+
+  const transferWeekGroup = async () => {
+    if (!selectedStudent) return;
+
+    try {
+      await api.post(`/admin/students/${selectedStudent.id}/transfer_week_group`, {
+        week_group: transferToWeek,
+        from_exam: transferFromExam
+      });
+      alert(`Student transferred to ${transferToWeek} week group from Exam #${transferFromExam} onwards`);
+      setShowTransferModal(false);
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.errors || 'Failed to transfer student');
+    }
   };
 
   const notifySlack = async () => {
@@ -275,6 +300,15 @@ export default function RosterManager() {
                       History
                     </button>
                     <button
+                      onClick={() => openTransferModal(student)}
+                      className="btn btn-primary"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                      disabled={!student.week_group}
+                      title={student.week_group ? `Transfer from ${student.week_group} week` : 'No week group assigned'}
+                    >
+                      ↔️ Transfer Week
+                    </button>
+                    <button
                       onClick={() => openNotifyModal(student)}
                       className="px-3 py-1.5 text-xs font-medium border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!student.slack_matched}
@@ -357,6 +391,96 @@ export default function RosterManager() {
                   setSelectedStudent(null);
                 }}
                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Week Group Modal */}
+      {showTransferModal && selectedStudent && (
+        <div
+          onClick={() => {
+            setShowTransferModal(false);
+            setSelectedStudent(null);
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            className="card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '500px', width: '90%' }}
+          >
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+              Transfer Week Group
+            </h3>
+            <p style={{ marginBottom: '1rem' }}>
+              <strong>{selectedStudent.full_name}</strong>
+            </p>
+            <p style={{ marginBottom: '1rem', color: 'var(--text-light)', fontSize: '0.875rem' }}>
+              Current week group: <span className="badge badge-primary">{selectedStudent.week_group}</span>
+            </p>
+
+            <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'rgba(255, 152, 0, 0.1)', borderRadius: '8px' }}>
+              <p style={{ fontSize: '0.875rem', margin: 0 }}>
+                ⚠️ This will clear all exam schedules from the selected exam number onwards. Locked schedules cannot be transferred.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label className="form-label">Transfer to week group</label>
+              <select
+                className="form-input"
+                value={transferToWeek}
+                onChange={(e) => setTransferToWeek(e.target.value)}
+              >
+                <option value="odd">Odd Week</option>
+                <option value="even">Even Week</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Starting from Oral Exam #</label>
+              <select
+                className="form-input"
+                value={transferFromExam}
+                onChange={(e) => setTransferFromExam(parseInt(e.target.value))}
+              >
+                {[1, 2, 3, 4, 5].map(num => (
+                  <option key={num} value={num}>Oral Exam #{num}</option>
+                ))}
+              </select>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                All exam slots from this exam onwards will be cleared and unscheduled.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={transferWeekGroup}
+                className="btn btn-primary"
+              >
+                ✅ Confirm Transfer
+              </button>
+              <button
+                onClick={() => {
+                  setShowTransferModal(false);
+                  setSelectedStudent(null);
+                }}
+                className="btn btn-outline"
               >
                 Cancel
               </button>
