@@ -63,6 +63,8 @@ module Api
         )
         # Only admins can set role, and it must be explicitly allowed
         permitted[:role] = params[:user][:role] if params[:user][:role].present? && params[:user][:role].in?([ "admin", "ta" ])
+        # Convert empty slack_id to nil to avoid unique constraint issues
+        permitted[:slack_id] = nil if permitted[:slack_id].blank?
         permitted
       end
 
