@@ -5,7 +5,7 @@ class ApplicationController < ActionController::API
 
     if File.exist?(index_path)
       Rails.logger.info "Serving index.html from #{index_path}"
-      render file: index_path, layout: false
+      render file: index_path, layout: false, content_type: "text/html"
     else
       error_info = {
         error: "index.html not found",
