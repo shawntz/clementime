@@ -117,20 +117,46 @@ module Api
         # Check if test mode is enabled
         test_mode = SystemConfig.get("slack_test_mode", false)
         test_user_id = SystemConfig.get("slack_test_user_id", "")
+        super_admin_slack_id = SystemConfig.get("super_admin_slack_id", "")
 
         exam_slots.each do |slot|
           # Build message for student
           message = build_student_message(slot)
 
           begin
-            # Determine which Slack user to send to
-            slack_user_id = if test_mode && test_user_id.present?
-              test_user_id
+            # Build list of participants for MPDM
+            participants = []
+
+            if test_mode && test_user_id.present?
+              # Test mode: send to test user instead of actual student
+              participants << test_user_id
             else
-              slot.student.slack_user_id
+              # Normal mode: send to actual student
+              participants << slot.student.slack_user_id
             end
 
-            send_slack_message_to_channel(bot_token, slack_user_id, message)
+            # Add TA if they have a Slack ID
+            ta = slot.section.ta
+            participants << ta.slack_id if ta && ta.slack_id.present?
+
+            # Add super admin if configured
+            participants << super_admin_slack_id if super_admin_slack_id.present?
+
+            # Remove duplicates and nils
+            participants = participants.compact.uniq
+
+            # Create MPDM if multiple participants, otherwise send DM
+            channel = if participants.length > 1
+              SlackNotifier.create_mpdm(bot_token, participants)
+            else
+              participants.first
+            end
+
+            unless channel
+              raise "Failed to create conversation for #{slot.student.full_name}"
+            end
+
+            send_slack_message_to_channel(bot_token, channel, message)
 
             # Lock the slot after sending
             slot.update!(is_locked: true)
@@ -139,7 +165,8 @@ module Api
             results << {
               student: slot.student.full_name,
               time: slot.formatted_time_range,
-              locked: true
+              locked: true,
+              conversation_type: participants.length > 1 ? "MPDM" : "DM"
             }
           rescue => e
             errors << "#{slot.student.full_name}: #{e.message}"
