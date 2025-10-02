@@ -59,7 +59,7 @@ module Api
       def user_params
         permitted = params.require(:user).permit(
           :username, :email, :password, :password_confirmation,
-          :first_name, :last_name, :is_active, :location
+          :first_name, :last_name, :is_active, :location, :slack_id
         )
         # Only admins can set role, and it must be explicitly allowed
         permitted[:role] = params[:user][:role] if params[:user][:role].present? && params[:user][:role].in?([ "admin", "ta" ])
@@ -76,6 +76,7 @@ module Api
           last_name: user.last_name,
           full_name: user.full_name,
           location: user.location,
+          slack_id: user.slack_id,
           is_active: user.is_active,
           must_change_password: user.must_change_password,
           sections_count: user.sections.count

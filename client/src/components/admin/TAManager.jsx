@@ -78,6 +78,7 @@ export default function TAManager() {
               <th>Username</th>
               <th>Email</th>
               <th>Location</th>
+              <th>Slack ID</th>
               <th>Status</th>
               <th>Assigned Sections</th>
               <th>Actions</th>
@@ -92,6 +93,7 @@ export default function TAManager() {
                   <td><code>{ta.username}</code></td>
                   <td>{ta.email}</td>
                   <td>{ta.location || <span style={{ color: 'var(--text-light)' }}>Not set</span>}</td>
+                  <td>{ta.slack_id ? <code>{ta.slack_id}</code> : <span style={{ color: 'var(--text-light)' }}>Not set</span>}</td>
                   <td>
                     <span className={`badge ${ta.is_active ? 'badge-success' : 'badge-error'}`}>
                       {ta.is_active ? 'Active' : 'Inactive'}
@@ -140,7 +142,7 @@ export default function TAManager() {
             })}
             {tas.length === 0 && (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-light)' }}>
+                <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-light)' }}>
                   No TAs created yet
                 </td>
               </tr>
@@ -369,7 +371,8 @@ function EditTAModal({ ta, onClose }) {
     first_name: ta.first_name,
     last_name: ta.last_name,
     email: ta.email,
-    location: ta.location || ''
+    location: ta.location || '',
+    slack_id: ta.slack_id || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -385,7 +388,8 @@ function EditTAModal({ ta, onClose }) {
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email,
-          location: formData.location
+          location: formData.location,
+          slack_id: formData.slack_id
         }
       });
       onClose();
@@ -462,6 +466,20 @@ function EditTAModal({ ta, onClose }) {
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label className="form-label">Slack ID</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g., U01234ABCDE"
+              value={formData.slack_id}
+              onChange={(e) => setFormData({ ...formData, slack_id: e.target.value })}
+            />
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+              Used for Slack notifications and channel assignments
+            </div>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
