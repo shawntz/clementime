@@ -26,7 +26,11 @@ Rails.application.routes.draw do
       put "slack/match/:student_id", to: "slack#match"
 
       # Users (TAs)
-      resources :users, only: [ :index, :show, :create, :update, :destroy ]
+      resources :users, only: [ :index, :show, :create, :update, :destroy ] do
+        member do
+          post "send_welcome_email", to: "users#send_welcome_email"
+        end
+      end
 
       # Sections
       resources :sections, only: [ :index, :show, :create, :update ] do

@@ -52,6 +52,17 @@ export default function TAManager() {
     }
   };
 
+  const sendWelcomeEmail = async (taId, taName) => {
+    if (!confirm(`Send welcome email with new password to ${taName}?`)) return;
+
+    try {
+      await api.post(`/admin/users/${taId}/send_welcome_email`);
+      alert('Welcome email sent successfully!');
+    } catch (err) {
+      alert(err.response?.data?.errors?.join(', ') || 'Failed to send email');
+    }
+  };
+
   if (loading) {
     return <div className="spinner" />;
   }
@@ -120,6 +131,14 @@ export default function TAManager() {
                         style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => sendWelcomeEmail(ta.id, ta.full_name)}
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                        title="Send welcome email with new temporary password"
+                      >
+                        📧 Email
                       </button>
                       <button
                         onClick={() => toggleTAStatus(ta.id, ta.is_active)}

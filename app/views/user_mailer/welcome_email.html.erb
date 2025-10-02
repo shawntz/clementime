@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background-color: #ff6b35;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-radius: 5px 5px 0 0;
+      }
+      .content {
+        background-color: #f9f9f9;
+        padding: 30px;
+        border-radius: 0 0 5px 5px;
+      }
+      .credentials {
+        background-color: #fff;
+        border-left: 4px solid #ff6b35;
+        padding: 15px;
+        margin: 20px 0;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #ff6b35;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+      code {
+        background-color: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🍊 Welcome to Clementime</h1>
+      </div>
+      <div class="content">
+        <p>Hi <%= @user.first_name %>,</p>
+
+        <p>Your account has been created for the Clementime Oral Exam Management system.</p>
+
+        <div class="credentials">
+          <h3>Your Login Credentials</h3>
+          <p><strong>Username:</strong> <code><%= @user.username %></code></p>
+          <p><strong>Temporary Password:</strong> <code><%= @temporary_password %></code></p>
+        </div>
+
+        <p><strong>⚠️ Important:</strong> You will be required to change your password on first login.</p>
+
+        <a href="<%= @login_url %>" class="button">Login to Clementime</a>
+
+        <p style="margin-top: 30px; font-size: 14px; color: #666;">
+          If you have any questions, please contact your system administrator.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

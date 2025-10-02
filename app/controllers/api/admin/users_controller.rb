@@ -2,7 +2,7 @@ module Api
   module Admin
     class UsersController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_user, only: [ :show, :update, :destroy ]
+      before_action :set_user, only: [ :show, :update, :destroy, :send_welcome_email ]
 
       def index
         users = User.where(role: params[:role] || "ta")
@@ -48,7 +48,32 @@ module Api
         render json: { message: "User deactivated successfully" }, status: :ok
       end
 
+      def send_welcome_email
+        # Generate a new temporary password
+        temp_password = generate_password
+
+        # Update user with new password
+        @user.password = temp_password
+        @user.password_confirmation = temp_password
+        @user.must_change_password = true
+
+        if @user.save
+          # Send email
+          UserMailer.welcome_email(@user, temp_password).deliver_later
+          render json: { message: "Welcome email sent successfully" }, status: :ok
+        else
+          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
+
+      def generate_password
+        chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
+        password = ""
+        12.times { password += chars[rand(chars.length)] }
+        password
+      end
 
       def set_user
         @user = User.find(params[:id])
