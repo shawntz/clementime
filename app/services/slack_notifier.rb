@@ -10,8 +10,9 @@ class SlackNotifier
     bot_token = SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN)
     return { success: false, error: "Slack bot token not configured" } unless bot_token.present?
 
-    login_url = "#{ENV['APP_HOST'] || 'http://localhost:5173'}/login"
-    login_url = "https://#{login_url}" unless login_url.start_with?("http")
+    login_base = ENV["APP_HOST"] || "http://localhost:5173"
+    login_base = "https://#{login_base}" unless login_base.start_with?("http")
+    login_url = "#{login_base}/login?username=#{CGI.escape(user.username)}"
 
     message = {
       channel: slack_id,

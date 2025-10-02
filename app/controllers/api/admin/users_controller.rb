@@ -59,8 +59,13 @@ module Api
 
         if @user.save
           # Send email
-          UserMailer.welcome_email(@user, temp_password).deliver_later
-          render json: { message: "Welcome email sent successfully" }, status: :ok
+          begin
+            UserMailer.welcome_email(@user, temp_password).deliver_later
+            render json: { message: "Welcome email sent successfully" }, status: :ok
+          rescue => e
+            Rails.logger.error "Email delivery failed: #{e.message}"
+            render json: { errors: "Email delivery failed: #{e.message}" }, status: :unprocessable_entity
+          end
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
         end
