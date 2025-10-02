@@ -279,10 +279,14 @@ module Api
       def build_test_channel_name
         template = SystemConfig.get("slack_channel_name_template", "{{course}}-oral-exam-session-ta-{{ta_name}}-week{{week}}-{{term}}")
 
-        template.gsub("{{course}}", "psych10")
+        # Get actual config values and sanitize for Slack channel names
+        course = SystemConfig.get("slack_course_name", "PSYCH 10").downcase.gsub(/\s+/, "").gsub(/[^a-z0-9\-]/, "-")
+        term = SystemConfig.get("slack_term", "Fall 2025").downcase.gsub(/\s+/, "").gsub(/[^a-z0-9\-]/, "-")
+
+        template.gsub("{{course}}", course)
                 .gsub("{{ta_name}}", "john-smith")
                 .gsub("{{week}}", "1")
-                .gsub("{{term}}", "fall-2025")
+                .gsub("{{term}}", term)
                 .downcase
                 .gsub(/[^a-z0-9\-]/, "-")
       end
