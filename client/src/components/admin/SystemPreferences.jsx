@@ -25,11 +25,16 @@ export default function SystemPreferences() {
     slack_test_mode: false,
     slack_test_user_id: '',
     admin_slack_ids: '',
+    slack_exam_location: '',
+    slack_course_name: '',
+    slack_term: '',
     grade_form_urls: {},
     exam_dates: {}  // New: flexible exam dates { 1: '2025-01-15', 2: '2025-01-22', ... }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [googleDriveStatus, setGoogleDriveStatus] = useState(null);
+  const [sendingTest, setSendingTest] = useState(null);
 
   useEffect(() => {
     loadConfig();
@@ -70,11 +75,18 @@ export default function SystemPreferences() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setGoogleDriveStatus(null);
 
     try {
       console.log('Saving config:', config);
       const response = await api.put('/admin/config', { config });
       console.log('Save response:', response.data);
+
+      // Check if Google Drive validation results are included
+      if (response.data.google_drive_status) {
+        setGoogleDriveStatus(response.data.google_drive_status);
+      }
+
       alert('Configuration saved successfully');
       // Reload config to ensure we have the latest from server
       await loadConfig();
@@ -108,6 +120,26 @@ export default function SystemPreferences() {
       }
     };
     reader.readAsText(file);
+  };
+
+  const sendTestMessage = async (messageType) => {
+    if (!config.slack_test_user_id) {
+      alert('Please set a Test User Slack ID first');
+      return;
+    }
+
+    setSendingTest(messageType);
+    try {
+      const response = await api.post('/admin/slack_messages/test_message', {
+        message_type: messageType,
+        test_user_id: config.slack_test_user_id
+      });
+      alert(`✅ Test ${messageType} message sent successfully!`);
+    } catch (err) {
+      alert(`Failed to send test message: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setSendingTest(null);
+    }
   };
 
   if (loading) {
@@ -441,6 +473,43 @@ export default function SystemPreferences() {
             </small>
           </div>
 
+          {/* Google Drive Validation Status */}
+          {googleDriveStatus && (
+            <div style={{
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1rem',
+              backgroundColor: googleDriveStatus.valid ? '#d1fae5' : '#fee2e2',
+              border: `1px solid ${googleDriveStatus.valid ? '#10b981' : '#ef4444'}`
+            }}>
+              <div style={{
+                fontWeight: '600',
+                marginBottom: '0.5rem',
+                color: googleDriveStatus.valid ? '#065f46' : '#991b1b'
+              }}>
+                {googleDriveStatus.message}
+              </div>
+              {googleDriveStatus.details && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: googleDriveStatus.valid ? '#047857' : '#b91c1c'
+                }}>
+                  {googleDriveStatus.details}
+                </div>
+              )}
+              {googleDriveStatus.error && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  marginTop: '0.5rem',
+                  fontFamily: 'monospace',
+                  color: '#991b1b'
+                }}>
+                  Error: {googleDriveStatus.error}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Google Service Account JSON */}
           <div>
             <label htmlFor="google_service_account_json" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: '600' }}>
@@ -688,11 +757,77 @@ export default function SystemPreferences() {
             </ul>
           </div>
 
+          {/* Template Variable Configuration */}
+          <div>
+            <h4 style={{ color: 'var(--primary)', marginTop: 0, marginBottom: '1rem' }}>Template Variables</h4>
+            <p style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+              Configure the values for template variables used in Slack messages
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label htmlFor="slack_exam_location" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  Exam Location <code style={{ fontWeight: 'normal', color: 'var(--text-light)' }}>{'{{location}}'}</code>
+                </label>
+                <input
+                  id="slack_exam_location"
+                  type="text"
+                  className="form-input"
+                  value={config.slack_exam_location}
+                  onChange={(e) => handleChange('slack_exam_location', e.target.value)}
+                  placeholder="e.g., Jordan Hall 420"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="slack_course_name" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  Course Name <code style={{ fontWeight: 'normal', color: 'var(--text-light)' }}>{'{{course}}'}</code>
+                </label>
+                <input
+                  id="slack_course_name"
+                  type="text"
+                  className="form-input"
+                  value={config.slack_course_name}
+                  onChange={(e) => handleChange('slack_course_name', e.target.value)}
+                  placeholder="e.g., PSYCH 10 / STATS 60"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="slack_term" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  Term <code style={{ fontWeight: 'normal', color: 'var(--text-light)' }}>{'{{term}}'}</code>
+                </label>
+                <input
+                  id="slack_term"
+                  type="text"
+                  className="form-input"
+                  value={config.slack_term}
+                  onChange={(e) => handleChange('slack_term', e.target.value)}
+                  placeholder="e.g., Fall 2025"
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Channel Name Template */}
           <div>
-            <label htmlFor="slack_channel_name_template" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Channel Name Template
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <label htmlFor="slack_channel_name_template" style={{ fontWeight: '600' }}>
+                Channel Name Template
+              </label>
+              <button
+                type="button"
+                onClick={() => sendTestMessage('channel_name')}
+                disabled={sendingTest === 'channel_name'}
+                className="btn btn-outline"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+              >
+                {sendingTest === 'channel_name' ? 'Sending...' : '🧪 Test'}
+              </button>
+            </div>
             <input
               id="slack_channel_name_template"
               type="text"
@@ -709,9 +844,20 @@ export default function SystemPreferences() {
 
           {/* Student Message Template */}
           <div>
-            <label htmlFor="slack_student_message_template" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Student Notification Message
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <label htmlFor="slack_student_message_template" style={{ fontWeight: '600' }}>
+                Student Notification Message
+              </label>
+              <button
+                type="button"
+                onClick={() => sendTestMessage('student')}
+                disabled={sendingTest === 'student'}
+                className="btn btn-outline"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+              >
+                {sendingTest === 'student' ? 'Sending...' : '🧪 Test'}
+              </button>
+            </div>
             <textarea
               id="slack_student_message_template"
               className="form-input"
@@ -728,9 +874,20 @@ export default function SystemPreferences() {
 
           {/* TA Message Template */}
           <div>
-            <label htmlFor="slack_ta_message_template" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              TA/Admin Schedule Message
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <label htmlFor="slack_ta_message_template" style={{ fontWeight: '600' }}>
+                TA/Admin Schedule Message
+              </label>
+              <button
+                type="button"
+                onClick={() => sendTestMessage('ta')}
+                disabled={sendingTest === 'ta'}
+                className="btn btn-outline"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+              >
+                {sendingTest === 'ta' ? 'Sending...' : '🧪 Test'}
+              </button>
+            </div>
             <textarea
               id="slack_ta_message_template"
               className="form-input"
