@@ -41,7 +41,15 @@ class SlackMatcher
   def auto_match_by_email
     return false if @slack_users.empty?
 
-    students = Student.all.includes(:section)
+    begin
+      students = Student.all.includes(:section)
+      Rails.logger.info "Auto-matching #{students.count} students with #{@slack_users.count} Slack users"
+    rescue => e
+      Rails.logger.error "Error loading students: #{e.class} - #{e.message}"
+      @errors << "Database error loading students: #{e.message}"
+      return false
+    end
+
     students.each do |student|
       slack_user = @slack_users.find { |u| u[:email].downcase == student.email.downcase }
 
@@ -54,6 +62,7 @@ class SlackMatcher
         @matched_count += 1
       end
     rescue => e
+      Rails.logger.error "Error matching student #{student.id} (#{student.full_name}): #{e.class} - #{e.message}"
       @errors << "Error matching student #{student.full_name}: #{e.message}"
     end
 
@@ -93,7 +102,7 @@ class SlackMatcher
         id: student.id,
         full_name: student.full_name,
         email: student.email,
-        section: student.section.code,
+        section: student.section&.code || "N/A",
         suggested_match: find_suggestion(student),
         slack_user_id: student.slack_user_id,
         slack_username: student.slack_username
