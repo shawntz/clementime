@@ -57,10 +57,13 @@ module Api
       end
 
       def user_params
-        params.require(:user).permit(
+        permitted = params.require(:user).permit(
           :username, :email, :password, :password_confirmation,
-          :role, :first_name, :last_name, :is_active, :location
+          :first_name, :last_name, :is_active, :location
         )
+        # Only admins can set role, and it must be explicitly allowed
+        permitted[:role] = params[:user][:role] if params[:user][:role].present? && params[:user][:role].in?(['admin', 'ta'])
+        permitted
       end
 
       def user_response(user)
