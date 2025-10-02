@@ -58,9 +58,9 @@ module Api
         @user.must_change_password = true
 
         if @user.save
-          # Send email
+          # Send email immediately (not using background job)
           begin
-            UserMailer.welcome_email(@user, temp_password).deliver_later
+            UserMailer.welcome_email(@user, temp_password).deliver_now
             render json: { message: "Welcome email sent successfully" }, status: :ok
           rescue => e
             Rails.logger.error "Email delivery failed: #{e.message}"
