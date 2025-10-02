@@ -9,6 +9,9 @@ export default function RosterManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSection, setSelectedSection] = useState('all');
   const [selectedWeekGroup, setSelectedWeekGroup] = useState('all');
+  const [constraintFilter, setConstraintFilter] = useState('all');
+  const [constraintType, setConstraintType] = useState('all');
+  const [availableConstraintTypes, setAvailableConstraintTypes] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showConstraintModal, setShowConstraintModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -17,16 +20,26 @@ export default function RosterManager() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [constraintFilter, constraintType]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      const params = {};
+      if (constraintFilter !== 'all') {
+        params.constraint_filter = constraintFilter;
+      }
+      if (constraintType !== 'all') {
+        params.constraint_type = constraintType;
+      }
+
       const [studentsRes, sectionsRes] = await Promise.all([
-        api.get('/admin/students'),
+        api.get('/admin/students', { params }),
         api.get('/admin/sections')
       ]);
+
       setStudents(studentsRes.data.students);
+      setAvailableConstraintTypes(studentsRes.data.constraint_types || []);
       setSections(sectionsRes.data.sections.filter(s => {
         const parts = s.code.split('-');
         return parts.length >= 4 && parseInt(parts[3]) !== 1;
@@ -97,8 +110,8 @@ export default function RosterManager() {
           Roster Management
         </h3>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 300px' }}>
             <input
               type="text"
               className="form-input"
@@ -108,7 +121,7 @@ export default function RosterManager() {
               style={{ width: '100%' }}
             />
           </div>
-          <div style={{ minWidth: '200px' }}>
+          <div style={{ minWidth: '180px' }}>
             <select
               className="form-input"
               value={selectedSection}
@@ -123,7 +136,7 @@ export default function RosterManager() {
               ))}
             </select>
           </div>
-          <div style={{ minWidth: '150px' }}>
+          <div style={{ minWidth: '140px' }}>
             <select
               className="form-input"
               value={selectedWeekGroup}
@@ -135,6 +148,40 @@ export default function RosterManager() {
               <option value="even">Even Weeks</option>
             </select>
           </div>
+          <div style={{ minWidth: '180px' }}>
+            <select
+              className="form-input"
+              value={constraintFilter}
+              onChange={(e) => {
+                setConstraintFilter(e.target.value);
+                if (e.target.value !== 'with_constraints') {
+                  setConstraintType('all');
+                }
+              }}
+              style={{ width: '100%' }}
+            >
+              <option value="all">All Students</option>
+              <option value="with_constraints">With Constraints</option>
+              <option value="without_constraints">Without Constraints</option>
+            </select>
+          </div>
+          {constraintFilter === 'with_constraints' && (
+            <div style={{ minWidth: '180px' }}>
+              <select
+                className="form-input"
+                value={constraintType}
+                onChange={(e) => setConstraintType(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="all">All Constraint Types</option>
+                {availableConstraintTypes.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.label} ({type.count})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div style={{ color: 'var(--text-light)', marginBottom: '1rem' }}>
@@ -149,6 +196,7 @@ export default function RosterManager() {
               <th>Name</th>
               <th>Email</th>
               <th>Section</th>
+              <th>Constraints</th>
               <th>Slack</th>
               <th>Status</th>
               <th>Actions</th>
@@ -164,6 +212,31 @@ export default function RosterManager() {
                     <span className="badge badge-primary">{student.section.name}</span>
                   ) : (
                     <span style={{ color: 'var(--text-light)' }}>No section</span>
+                  )}
+                </td>
+                <td>
+                  {student.constraints_count > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>
+                        {student.constraints_count} constraint{student.constraints_count !== 1 ? 's' : ''}
+                      </span>
+                      {student.constraint_types && student.constraint_types.length > 0 && (
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-light)', display: 'flex', flexWrap: 'wrap', gap: '0.15rem' }}>
+                          {student.constraint_types.map(type => (
+                            <span key={type} style={{
+                              backgroundColor: 'var(--bg-light)',
+                              padding: '0.1rem 0.3rem',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {type.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>None</span>
                   )}
                 </td>
                 <td>

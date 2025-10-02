@@ -14,8 +14,29 @@ module Api
         # Filter by active status
         students = students.where(is_active: params[:is_active]) if params[:is_active].present?
 
+        # Filter by constraint status
+        if params[:constraint_filter].present?
+          case params[:constraint_filter]
+          when "with_constraints"
+            students = students.joins(:constraints).where(constraints: { is_active: true }).distinct
+          when "without_constraints"
+            students = students.left_joins(:constraints)
+                              .where(constraints: { id: nil })
+                              .or(students.left_joins(:constraints).where(constraints: { is_active: false }))
+                              .distinct
+          end
+        end
+
+        # Filter by specific constraint type
+        if params[:constraint_type].present?
+          students = students.joins(:constraints)
+                            .where(constraints: { constraint_type: params[:constraint_type], is_active: true })
+                            .distinct
+        end
+
         render json: {
-          students: students.map { |s| student_response(s) }
+          students: students.map { |s| student_response(s) },
+          constraint_types: get_active_constraint_types
         }, status: :ok
       end
 
@@ -58,6 +79,20 @@ module Api
         params.require(:student).permit(:week_group, :is_active)
       end
 
+      def get_active_constraint_types
+        Constraint.where(is_active: true)
+                  .select(:constraint_type)
+                  .distinct
+                  .pluck(:constraint_type)
+                  .map { |type|
+                    {
+                      value: type,
+                      label: type.split("_").map(&:capitalize).join(" "),
+                      count: Constraint.where(constraint_type: type, is_active: true).count
+                    }
+                  }
+      end
+
       def student_response(student)
         {
           id: student.id,
@@ -73,7 +108,8 @@ module Api
           slack_username: student.slack_username,
           slack_user_id: student.slack_user_id,
           is_active: student.is_active,
-          constraints_count: student.constraints.active.count
+          constraints_count: student.constraints.active.count,
+          constraint_types: student.constraints.active.pluck(:constraint_type).uniq
         }
       end
 
