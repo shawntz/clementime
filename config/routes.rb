@@ -29,6 +29,7 @@ Rails.application.routes.draw do
       resources :users, only: [ :index, :show, :create, :update, :destroy ] do
         member do
           post "send_welcome_email", to: "users#send_welcome_email"
+          post "send_slack_credentials", to: "users#send_slack_credentials"
         end
       end
 

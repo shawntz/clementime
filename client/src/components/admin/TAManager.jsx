@@ -63,6 +63,22 @@ export default function TAManager() {
     }
   };
 
+  const sendSlackCredentials = async (taId, taName, slackId) => {
+    if (!slackId) {
+      alert('This TA has no Slack ID configured. Please add one first.');
+      return;
+    }
+
+    if (!confirm(`Send login credentials via Slack to ${taName}?`)) return;
+
+    try {
+      await api.post(`/admin/users/${taId}/send_slack_credentials`);
+      alert('Credentials sent via Slack successfully!');
+    } catch (err) {
+      alert(err.response?.data?.errors || 'Failed to send Slack message');
+    }
+  };
+
   if (loading) {
     return <div className="spinner" />;
   }
@@ -139,6 +155,15 @@ export default function TAManager() {
                         title="Send welcome email with new temporary password"
                       >
                         📧 Email
+                      </button>
+                      <button
+                        onClick={() => sendSlackCredentials(ta.id, ta.full_name, ta.slack_id)}
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                        title="Send credentials via Slack DM"
+                        disabled={!ta.slack_id}
+                      >
+                        💬 Slack
                       </button>
                       <button
                         onClick={() => toggleTAStatus(ta.id, ta.is_active)}
