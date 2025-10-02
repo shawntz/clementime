@@ -85,6 +85,7 @@ Rails.application.routes.draw do
       # Recordings
       post "recordings", to: "recordings#create"
       post "recordings/:id/upload", to: "recordings#upload"
+      post "recordings/test", to: "recordings#test"
     end
   end
 
