@@ -136,14 +136,15 @@ module Api
         else
           # Try to access the root folder
           begin
-            folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)
+            folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)&.strip
             if folder_id.present?
               # Attempt to get folder metadata to verify access
-              uploader.instance_variable_get(:@drive_service).get_file(folder_id, fields: "id, name")
+              folder_info = uploader.instance_variable_get(:@drive_service).get_file(folder_id, fields: "id, name")
               {
                 valid: true,
                 message: "✅ Google Drive credentials verified successfully",
-                details: "Successfully authenticated and can access the configured folder"
+                details: "Successfully authenticated and can access folder: #{folder_info.name}",
+                folder_id: folder_id
               }
             else
               {
@@ -157,7 +158,8 @@ module Api
               valid: false,
               message: "❌ Google Drive credentials valid but folder access failed",
               error: e.message,
-              details: "Credentials are valid but cannot access the specified folder. Check folder ID and permissions."
+              folder_id_attempted: folder_id,
+              details: "Steps to fix:\n1. Verify folder ID is correct (from Google Drive URL)\n2. Share the folder with service account email\n3. Grant 'Editor' permissions\n4. Wait a few minutes for permissions to propagate"
             }
           end
         end
