@@ -109,6 +109,39 @@ module Api
         render json: { errors: "Exam slot not found" }, status: :not_found
       end
 
+      def create_test_audio_data
+        # Create a minimal valid WAV file header (1 second of silence at 44.1kHz, 16-bit, mono)
+        sample_rate = 44100
+        bits_per_sample = 16
+        num_channels = 1
+        duration = 1 # seconds
+        num_samples = sample_rate * duration
+
+        data_size = num_samples * num_channels * (bits_per_sample / 8)
+        file_size = 36 + data_size
+
+        wav_header = [
+          "RIFF",
+          [ file_size ].pack("V"),
+          "WAVE",
+          "fmt ",
+          [ 16 ].pack("V"),  # fmt chunk size
+          [ 1 ].pack("v"),   # audio format (PCM)
+          [ num_channels ].pack("v"),
+          [ sample_rate ].pack("V"),
+          [ sample_rate * num_channels * bits_per_sample / 8 ].pack("V"), # byte rate
+          [ num_channels * bits_per_sample / 8 ].pack("v"), # block align
+          [ bits_per_sample ].pack("v"),
+          "data",
+          [ data_size ].pack("V")
+        ].join
+
+        # Silent audio data (all zeros)
+        audio_data = "\x00" * data_size
+
+        wav_header + audio_data
+      end
+
       def recording_response(recording)
         {
           id: recording.id,
