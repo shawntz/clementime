@@ -475,13 +475,14 @@ module Api
         # Get TA for this section
         ta = exam_slot.section.ta
         ta_name = ta ? ta.full_name : "TBA"
+        location = ta && ta.location.present? ? ta.location : "TBA"
 
         template.gsub("{{student_name}}", exam_slot.student.full_name)
                 .gsub("{{exam_number}}", exam_slot.exam_number.to_s)
                 .gsub("{{week}}", exam_slot.week_number.to_s)
                 .gsub("{{date}}", exam_slot.date ? exam_slot.date.strftime("%A, %B %d, %Y") : "TBA")
                 .gsub("{{time}}", exam_slot.formatted_time_range)
-                .gsub("{{location}}", SystemConfig.get("slack_exam_location", ""))
+                .gsub("{{location}}", location)
                 .gsub("{{ta_name}}", ta_name)
                 .gsub("{{course}}", SystemConfig.get("slack_course_name", ""))
                 .gsub("{{term}}", SystemConfig.get("slack_term", ""))
