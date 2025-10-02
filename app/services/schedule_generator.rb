@@ -78,17 +78,21 @@ class ScheduleGenerator
   end
 
   def assign_week_groups(students, section)
-    unassigned = students.select { |s| s.week_group.nil? }
-    return if unassigned.empty?
-
-    # Check for week_preference constraints
-    unassigned.each do |student|
+    # First, handle all students with week_preference constraints
+    # This overrides any existing week_group assignment
+    students.each do |student|
       week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
       if week_constraint
-        student.update!(week_group: week_constraint.constraint_value)
-        unassigned.delete(student)
+        # Update week group if it doesn't match the constraint
+        if student.week_group != week_constraint.constraint_value
+          student.update!(week_group: week_constraint.constraint_value)
+        end
       end
     end
+
+    # Then handle students without week_group assignment
+    unassigned = students.select { |s| s.week_group.nil? }
+    return if unassigned.empty?
 
     # Randomly assign remaining students to odd/even
     shuffled = unassigned.shuffle

@@ -67,6 +67,7 @@ Rails.application.routes.draw do
       delete "schedules/clear", to: "schedules#clear"
       post "schedules/regenerate_student/:student_id", to: "schedules#regenerate_student"
       get "schedules/overview", to: "schedules#overview"
+      get "schedules/export_csv", to: "schedules#export_csv"
 
       # Exam Slot Histories
       get "students/:student_id/exam_slots/:exam_number/histories", to: "exam_slot_histories#index"

@@ -56,10 +56,86 @@ module Api
         render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
+      def export_csv
+        require "csv"
+
+        # Get all exam slots with associated data
+        exam_slots = ExamSlot.includes(:student, :section, section: :ta)
+                             .order(:exam_number, :week_number, :section_id, :start_time)
+
+        csv_data = CSV.generate(headers: true) do |csv|
+          # Headers
+          csv << [
+            "Exam Number",
+            "Week Number",
+            "Week Type",
+            "Section Code",
+            "Section Name",
+            "TA Name",
+            "Student Name",
+            "Student Email",
+            "Date",
+            "Start Time",
+            "End Time",
+            "Duration (min)",
+            "Scheduled",
+            "Locked"
+          ]
+
+          # Data rows
+          exam_slots.each do |slot|
+            csv << [
+              slot.exam_number,
+              slot.week_number,
+              slot.student.week_group,
+              slot.section.code,
+              slot.section.name,
+              slot.section.ta ? slot.section.ta.full_name : "No TA",
+              slot.student.full_name,
+              slot.student.email,
+              slot.date ? slot.date.strftime("%Y-%m-%d") : "Not scheduled",
+              slot.start_time ? slot.start_time.strftime("%H:%M") : "Not scheduled",
+              slot.end_time ? slot.end_time.strftime("%H:%M") : "Not scheduled",
+              slot.start_time && slot.end_time ? ((slot.end_time - slot.start_time) / 60).to_i : "N/A",
+              slot.is_scheduled ? "Yes" : "No",
+              slot.is_locked ? "Yes" : "No"
+            ]
+          end
+        end
+
+        send_data csv_data,
+                  filename: "exam_schedules_#{Date.today.strftime('%Y%m%d')}.csv",
+                  type: "text/csv",
+                  disposition: "attachment"
+      end
+
       def overview
         sections = Section.active.includes(:students, :ta)
 
         overview_data = sections.map do |section|
+          # Get unscheduled slots with full details
+          unscheduled_slots = ExamSlot.where(section: section, is_scheduled: false)
+                                      .includes(:student)
+                                      .map do |slot|
+            {
+              id: slot.id,
+              exam_number: slot.exam_number,
+              week_number: slot.week_number,
+              week_type: slot.student.week_group,
+              is_locked: slot.is_locked,
+              student: {
+                id: slot.student.id,
+                full_name: slot.student.full_name,
+                email: slot.student.email
+              },
+              section: {
+                id: section.id,
+                name: section.name,
+                code: section.code
+              }
+            }
+          end
+
           {
             section: {
               id: section.id,
@@ -72,11 +148,13 @@ module Api
             } : nil,
             students_count: section.students.active.count,
             scheduled_slots: ExamSlot.where(section: section, is_scheduled: true).count,
-            unscheduled_slots: ExamSlot.where(section: section, is_scheduled: false).count
+            unscheduled_slots_count: unscheduled_slots.count,
+            unscheduled_slots: unscheduled_slots
           }
         end
 
         render json: {
+          sections: overview_data,
           overview: overview_data,
           total_students: Student.active.count,
           total_scheduled: ExamSlot.where(is_scheduled: true).count,

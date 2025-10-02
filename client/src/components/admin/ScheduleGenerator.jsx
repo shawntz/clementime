@@ -93,6 +93,16 @@ export default function ScheduleGenerator() {
     }
   };
 
+  const exportToCSV = () => {
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = '/api/admin/schedules/export_csv';
+    link.download = `exam_schedules_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Helper function to generate cross-listed code pills
   const getCrossListedCodes = (code) => {
     const parts = code.split('-');
@@ -120,13 +130,20 @@ export default function ScheduleGenerator() {
           Students will be randomly assigned to odd/even weeks within their section.
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <button
             onClick={generateSchedules}
             className="btn btn-primary"
             disabled={loading}
           >
             {loading ? 'Generating...' : '🗓️ Generate All Schedules'}
+          </button>
+          <button
+            onClick={exportToCSV}
+            className="btn btn-outline"
+            disabled={loading}
+          >
+            📥 Export to CSV
           </button>
           <button
             onClick={clearSchedules}
@@ -236,7 +253,7 @@ export default function ScheduleGenerator() {
                       <span className="badge badge-success">{item.scheduled_slots}</span>
                     </td>
                     <td>
-                      <span className="badge badge-error">{item.unscheduled_slots}</span>
+                      <span className="badge badge-error">{item.unscheduled_slots_count || item.unscheduled_slots}</span>
                     </td>
                   </tr>
                 );
