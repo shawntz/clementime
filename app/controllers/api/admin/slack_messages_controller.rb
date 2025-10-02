@@ -163,11 +163,14 @@ module Api
           return render json: { error: "Test user ID is required" }, status: :unprocessable_entity
         end
 
-        begin
-          slack_api = SlackApiService.new
+        bot_token = SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN)
+        unless bot_token.present?
+          return render json: { error: "Slack bot token not configured" }, status: :unprocessable_entity
+        end
 
+        begin
           # Build test message with dummy data
-          message = case message_type
+          message_text = case message_type
           when "student"
             build_test_student_message
           when "ta"
@@ -180,15 +183,22 @@ module Api
             return render json: { error: "Invalid message type" }, status: :unprocessable_entity
           end
 
-          # Send to MPDM if admin IDs are configured, otherwise DM
-          if admin_slack_ids.any?
+          # Determine channel (MPDM or DM)
+          channel = if admin_slack_ids.any?
             # Create MPDM with test user and admins
             all_user_ids = ([ test_user_id ] + admin_slack_ids).uniq
-            slack_api.send_mpdm_message(all_user_ids, message)
+            SlackNotifier.create_mpdm(bot_token, all_user_ids)
           else
             # Send DM to test user only
-            slack_api.send_direct_message(test_user_id, message)
+            test_user_id
           end
+
+          unless channel
+            return render json: { error: "Failed to create Slack conversation" }, status: :internal_server_error
+          end
+
+          # Send message
+          send_slack_test_message(bot_token, channel, message_text)
 
           render json: {
             message: "Test message sent successfully",
@@ -244,6 +254,35 @@ module Api
                 .gsub("{{term}}", "fall-2025")
                 .downcase
                 .gsub(/[^a-z0-9\-]/, "-")
+      end
+
+      def send_slack_test_message(bot_token, channel, message_text)
+        require "net/http"
+        require "uri"
+        require "json"
+
+        message = {
+          channel: channel,
+          text: message_text
+        }
+
+        uri = URI.parse("https://slack.com/api/chat.postMessage")
+        request = Net::HTTP::Post.new(uri)
+        request["Authorization"] = "Bearer #{bot_token}"
+        request["Content-Type"] = "application/json"
+        request.body = message.to_json
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(request)
+        end
+
+        result = JSON.parse(response.body)
+
+        unless result["ok"]
+          raise "Slack API error: #{result["error"] || "Unknown error"}"
+        end
+
+        result
       end
 
       def build_ta_message(ta, section, exam_number, week_type, student_count)
