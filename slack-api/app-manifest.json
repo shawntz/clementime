@@ -20,7 +20,8 @@
         "groups:write",
         "im:write",
         "users:read",
-        "groups:read"
+        "groups:read",
+        "mpim:write"
       ]
     }
   },
