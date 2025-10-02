@@ -116,9 +116,9 @@ module Api
           # Check if uploader has errors during initialization
           if uploader.errors.any?
             return render json: {
-              message: "❌ Google Drive not configured",
+              message: "❌ Google Drive initialization failed",
               error: uploader.errors.join(", "),
-              help: "Please configure Google Drive credentials in System Config:\n- google_service_account_json (base64 encoded JSON)\n- google_drive_folder_id (root folder ID)"
+              help: "Check System Config settings:\n- google_service_account_json (valid JSON credentials)\n- google_drive_folder_id (valid folder ID)"
             }, status: :ok
           end
 

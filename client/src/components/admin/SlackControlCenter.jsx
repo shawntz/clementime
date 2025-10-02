@@ -69,9 +69,18 @@ export default function SlackControlCenter() {
 
     try {
       const response = await api.post('/admin/slack_messages/test_recording');
-      alert(`Recording test successful!\n\n${response.data.message}`);
+
+      // Check if it's a success or error response
+      if (response.data.status === 'success' && response.data.details) {
+        const details = response.data.details;
+        alert(`${response.data.message}\n\nFile: ${details.file_name}\nURL: ${details.file_url}\nUploaded: ${details.uploaded_size}\nDownloaded: ${details.downloaded_size}\n${details.verification}`);
+      } else {
+        // Show error details
+        alert(`${response.data.message}\n\nError: ${response.data.error}\n\n${response.data.help || ''}`);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Recording test failed');
+      alert(`Recording test failed!\n\n${err.response?.data?.error || err.message}`);
     } finally {
       setTestingRecording(false);
     }
