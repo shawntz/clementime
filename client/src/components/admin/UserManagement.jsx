@@ -44,6 +44,33 @@ export default function UserManagement() {
     }
   };
 
+  const sendWelcomeEmail = async (userId, userName) => {
+    if (!confirm(`Send welcome email with new password to ${userName}?`)) return;
+
+    try {
+      await api.post(`/admin/users/${userId}/send_welcome_email`);
+      alert('Welcome email sent successfully!');
+    } catch (err) {
+      alert(err.response?.data?.errors?.join(', ') || 'Failed to send email');
+    }
+  };
+
+  const sendSlackCredentials = async (userId, userName, slackId) => {
+    if (!slackId) {
+      alert('This user has no Slack ID configured. Please add one first.');
+      return;
+    }
+
+    if (!confirm(`Send login credentials via Slack to ${userName}?`)) return;
+
+    try {
+      await api.post(`/admin/users/${userId}/send_slack_credentials`);
+      alert('Credentials sent via Slack successfully!');
+    } catch (err) {
+      alert(err.response?.data?.errors || 'Failed to send Slack message');
+    }
+  };
+
   if (loading) {
     return <div className="spinner" />;
   }
@@ -70,6 +97,7 @@ export default function UserManagement() {
                 <th>Username</th>
                 <th>Full Name</th>
                 <th>Email</th>
+                <th>Slack ID</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -80,19 +108,37 @@ export default function UserManagement() {
                   <td style={{ fontWeight: '500' }}>{user.username}</td>
                   <td>{user.full_name}</td>
                   <td>{user.email}</td>
+                  <td>{user.slack_id ? <code>{user.slack_id}</code> : <span style={{ color: 'var(--text-light)' }}>Not set</span>}</td>
                   <td>
                     <span className={`badge ${user.is_active ? 'badge-success' : 'badge-error'}`}>
                       {user.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <button
                         className="btn btn-outline"
                         onClick={() => setEditingUser(user)}
                         style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => sendWelcomeEmail(user.id, user.full_name)}
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                        title="Send welcome email with new temporary password"
+                      >
+                        📧 Email
+                      </button>
+                      <button
+                        onClick={() => sendSlackCredentials(user.id, user.full_name, user.slack_id)}
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                        title="Send credentials via Slack DM"
+                        disabled={!user.slack_id}
+                      >
+                        💬 Slack
                       </button>
                       <button
                         className="btn"
@@ -283,7 +329,8 @@ function EditAdminModal({ user, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     username: user.username,
     full_name: user.full_name,
-    email: user.email
+    email: user.email,
+    slack_id: user.slack_id || ''
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -353,6 +400,20 @@ function EditAdminModal({ user, onClose, onSuccess }) {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Slack ID</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g., U01234ABCDE"
+              value={formData.slack_id}
+              onChange={(e) => setFormData({ ...formData, slack_id: e.target.value })}
+            />
+            <small style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+              Used for Slack notifications and channel assignments
+            </small>
           </div>
 
           {error && (
