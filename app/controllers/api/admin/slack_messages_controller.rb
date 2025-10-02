@@ -46,9 +46,9 @@ module Api
                                 .where(exam_number: exam_number, is_scheduled: true)
                                 .order(:start_time)
 
-            schedule_list = exam_slots.map do |slot|
-              "• #{slot.formatted_time_range}: #{slot.student.full_name}"
-            end.join("\n")
+            schedule_list = exam_slots.map.with_index(1) do |slot, index|
+              "#{index}. *#{slot.student.full_name}*\n🕐 #{slot.formatted_time_range}"
+            end.join("\n\n")
 
             # Send message to TA with admins in MPDM
             message = build_ta_message_with_schedule(ta, section, exam_number, week_type, students.count, schedule_list)
@@ -105,12 +105,28 @@ module Api
         errors = []
         locked_count = 0
 
+        bot_token = SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN)
+        unless bot_token.present?
+          return render json: { errors: "Slack bot token not configured" }, status: :unprocessable_entity
+        end
+
+        # Check if test mode is enabled
+        test_mode = SystemConfig.get("slack_test_mode", false)
+        test_user_id = SystemConfig.get("slack_test_user_id", "")
+
         exam_slots.each do |slot|
           # Build message for student
           message = build_student_message(slot)
 
           begin
-            send_slack_message(slot.student.slack_user_id, message)
+            # Determine which Slack user to send to
+            slack_user_id = if test_mode && test_user_id.present?
+              test_user_id
+            else
+              slot.student.slack_user_id
+            end
+
+            send_slack_message_to_channel(bot_token, slack_user_id, message)
 
             # Lock the slot after sending
             slot.update!(is_locked: true)
@@ -266,7 +282,7 @@ module Api
       def build_test_ta_message
         template = SystemConfig.get("slack_ta_message_template", "📋 {{ta_name}} - Oral Exam Session Schedule")
 
-        schedule_list = "• 1:30 PM - 1:37 PM: Jane Doe\n• 1:38 PM - 1:45 PM: John Smith\n• 1:46 PM - 1:53 PM: Sarah Johnson"
+        schedule_list = "1. *Jane Doe*\n🕐 1:30 PM - 1:37 PM\n\n2. *John Smith*\n🕐 1:38 PM - 1:45 PM\n\n3. *Sarah Johnson*\n🕐 1:46 PM - 1:53 PM"
 
         template.gsub("{{ta_name}}", "Test TA")
                 .gsub("{{exam_number}}", "1")
@@ -342,11 +358,11 @@ module Api
       end
 
       def build_student_message(exam_slot)
-        template = SystemConfig.get("slack_student_schedule_template", "")
+        template = SystemConfig.get("slack_student_message_template", "")
 
         # Get TA for this section
-        ta = exam_slot.section.tas.first
-        facilitator = ta ? ta.full_name : "TBA"
+        ta = exam_slot.section.ta
+        ta_name = ta ? ta.full_name : "TBA"
 
         template.gsub("{{student_name}}", exam_slot.student.full_name)
                 .gsub("{{exam_number}}", exam_slot.exam_number.to_s)
@@ -354,7 +370,7 @@ module Api
                 .gsub("{{date}}", exam_slot.date ? exam_slot.date.strftime("%A, %B %d, %Y") : "TBA")
                 .gsub("{{time}}", exam_slot.formatted_time_range)
                 .gsub("{{location}}", SystemConfig.get("slack_exam_location", ""))
-                .gsub("{{facilitator}}", facilitator)
+                .gsub("{{ta_name}}", ta_name)
                 .gsub("{{course}}", SystemConfig.get("slack_course_name", ""))
                 .gsub("{{term}}", SystemConfig.get("slack_term", ""))
       end
