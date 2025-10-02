@@ -55,7 +55,10 @@ class SlackNotifier
       slack_id
     end
 
-    return { success: false, error: "Failed to create conversation" } unless channel
+    unless channel
+      error_msg = "Failed to create conversation with #{participants.length} participants. Check Rails logs for details."
+      return { success: false, error: error_msg }
+    end
 
     login_base = ENV["APP_HOST"] || "http://localhost:5173"
     login_base = "https://#{login_base}" unless login_base.start_with?("http")
@@ -153,7 +156,14 @@ class SlackNotifier
     end
 
     result = JSON.parse(response.body)
-    result["ok"] ? result["channel"]["id"] : nil
+    if result["ok"]
+      result["channel"]["id"]
+    else
+      error_msg = "Failed to create MPDM: #{result["error"] || "Unknown error"}"
+      Rails.logger.error "#{error_msg} - User IDs: #{user_ids.inspect}"
+      Rails.logger.error "Full response: #{result.inspect}"
+      nil
+    end
   rescue => e
     Rails.logger.error "Failed to create MPDM: #{e.message}"
     nil

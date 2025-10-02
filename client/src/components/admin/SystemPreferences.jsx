@@ -19,9 +19,9 @@ export default function SystemPreferences() {
     slack_bot_token: '',
     slack_app_token: '',
     slack_signing_secret: '',
-    slack_channel_name_template: '',
-    slack_student_message_template: '',
-    slack_ta_message_template: '',
+    slack_channel_name_template: '{{course}}-oralexam-{{ta_name}}-week{{week}}-{{term}}',
+    slack_student_message_template: '📝 TEST: Oral Exam Session for {{student_name}}\n\nDate: {{date}}\nTime: {{time}}\nLocation: {{location}}\nFacilitator: {{ta_name}}\n\n📋 Course: {{course}} | 🎓 Term: {{term}}',
+    slack_ta_message_template: 'Date: {{date}}\nLocation: {{location}}\nWeek: {{week}}\n\nToday\'s Schedule ({{student_count}} students):\n\n{{schedule_list}}\n\n🌐 Go to TA Page\n📝 Grade Form\n\n📋 Course: {{course}} | 🎓 Week {{week}} | 👥 {{student_count}} members',
     slack_test_mode: false,
     slack_test_user_id: '',
     admin_slack_ids: '',
@@ -901,7 +901,7 @@ export default function SystemPreferences() {
               className="form-input"
               value={config.slack_student_message_template}
               onChange={(e) => handleChange('slack_student_message_template', e.target.value)}
-              placeholder={'📝 TEST: Oral Exam Session for {{student_name}}\n\nDate: {{date}}\nTime: {{time}}\nLocation: {{location}}\nFacilitator: {{facilitator}}\n\n📋 Course: {{course}} | 📚 Term: {{term}}'}
+              placeholder={'📝 TEST: Oral Exam Session for {{student_name}}\n\nDate: {{date}}\nTime: {{time}}\nLocation: {{location}}\nFacilitator: {{ta_name}}\n\n📋 Course: {{course}} | 🎓 Term: {{term}}'}
               rows="10"
               style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.875rem' }}
             />

@@ -8,7 +8,10 @@ class SystemConfig < ApplicationRecord
     def get(key, default = nil)
       config = find_by(key: key)
       return default unless config
-      parse_value(config.value, config.config_type)
+
+      parsed_value = parse_value(config.value, config.config_type)
+      # Return default if value is blank (empty string or nil)
+      parsed_value.blank? ? default : parsed_value
     end
 
     def set(key, value, config_type: "string", description: nil)

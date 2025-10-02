@@ -214,6 +214,11 @@ module Api
             return render json: { error: "Invalid message type" }, status: :unprocessable_entity
           end
 
+          # Validate message has content
+          if message_text.blank? || message_text.strip.empty?
+            return render json: { error: "Message template is empty. Please add content to the template." }, status: :unprocessable_entity
+          end
+
           # Determine channel (MPDM or DM)
           channel = if admin_slack_ids.any?
             # Create MPDM with test user and admins
