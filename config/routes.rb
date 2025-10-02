@@ -76,6 +76,6 @@ Rails.application.routes.draw do
   end
 
   # Serve React app (all non-API routes)
-  get "*path", to: "application#index", constraints: ->(req) { !req.xhr? && req.format.html? }
+  get "*path", to: "application#index", constraints: ->(req) { !req.xhr? && req.path !~ /\.\w+$/ }
   root "application#index"
 end
