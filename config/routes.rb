@@ -70,6 +70,11 @@ Rails.application.routes.draw do
       # System configuration
       get "config", to: "config#index"
       put "config", to: "config#update"
+
+      # Slack messages
+      post "slack_messages/send_ta_schedules", to: "slack_messages#send_ta_schedules"
+      post "slack_messages/send_student_schedules", to: "slack_messages#send_student_schedules"
+      post "slack_messages/test_recording", to: "slack_messages#test_recording"
     end
 
     # TA routes
