@@ -16,12 +16,21 @@ module Api
           return render json: { errors: "Invalid week type" }, status: :unprocessable_entity
         end
 
+        bot_token = SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN)
+        unless bot_token.present?
+          return render json: { errors: "Slack bot token not configured" }, status: :unprocessable_entity
+        end
+
+        admin_slack_ids = SystemConfig.get("admin_slack_ids", "").split(",").map(&:strip).reject(&:blank?)
+
         # Get all TAs with sections
         tas = User.where(role: "ta").includes(:sections)
         results = []
         errors = []
 
         tas.each do |ta|
+          next unless ta.slack_id.present?
+
           ta.sections.each do |section|
             # Get students for this section, exam, and week type
             students = Student.joins(:exam_slots)
@@ -31,12 +40,34 @@ module Api
 
             next if students.empty?
 
-            # Send message to TA
-            message = build_ta_message(ta, section, exam_number, week_type, students.count)
+            # Build schedule list with times
+            exam_slots = ExamSlot.joins(:student)
+                                .where(students: { section: section, week_group: week_type })
+                                .where(exam_number: exam_number, is_scheduled: true)
+                                .order(:start_time)
+
+            schedule_list = exam_slots.map do |slot|
+              "• #{slot.formatted_time_range}: #{slot.student.full_name}"
+            end.join("\n")
+
+            # Send message to TA with admins in MPDM
+            message = build_ta_message_with_schedule(ta, section, exam_number, week_type, students.count, schedule_list)
 
             begin
-              send_slack_message(ta.slack_user_id, message)
-              results << { ta: ta.full_name, section: section.name, student_count: students.count }
+              # Create MPDM with TA and admins
+              channel = if admin_slack_ids.any?
+                all_user_ids = ([ ta.slack_id ] + admin_slack_ids).uniq
+                SlackNotifier.create_mpdm(bot_token, all_user_ids)
+              else
+                ta.slack_id
+              end
+
+              if channel
+                send_slack_message_to_channel(bot_token, channel, message)
+                results << { ta: ta.full_name, section: section.name, student_count: students.count }
+              else
+                errors << "#{ta.full_name} (#{section.name}): Failed to create conversation"
+              end
             rescue => e
               errors << "#{ta.full_name} (#{section.name}): #{e.message}"
             end
@@ -319,10 +350,68 @@ module Api
                 .gsub("{{term}}", SystemConfig.get("slack_term", ""))
       end
 
-      def send_slack_message(slack_user_id, message)
-        # Use existing Slack API service
-        slack_api = SlackApiService.new
-        slack_api.send_direct_message(slack_user_id, message)
+      def send_slack_message_to_channel(bot_token, channel, message_text)
+        require "net/http"
+        require "uri"
+        require "json"
+
+        message = {
+          channel: channel,
+          text: message_text
+        }
+
+        uri = URI.parse("https://slack.com/api/chat.postMessage")
+        request = Net::HTTP::Post.new(uri)
+        request["Authorization"] = "Bearer #{bot_token}"
+        request["Content-Type"] = "application/json"
+        request.body = message.to_json
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(request)
+        end
+
+        result = JSON.parse(response.body)
+
+        unless result["ok"]
+          raise "Slack API error: #{result["error"] || "Unknown error"}"
+        end
+
+        result
+      end
+
+      def build_ta_message_with_schedule(ta, section, exam_number, week_type, student_count, schedule_list)
+        template = SystemConfig.get("slack_ta_message_template", "")
+        week_number = calculate_week_number(exam_number, week_type)
+
+        # Get exam date from exam_dates config or calculate it
+        exam_date_key = "#{exam_number}_#{week_type == 'odd' ? 'odd' : 'even'}"
+        exam_dates = SystemConfig.get("exam_dates", {})
+        exam_date_str = exam_dates[exam_date_key]
+
+        date_formatted = if exam_date_str
+          Date.parse(exam_date_str).strftime("%A, %B %d, %Y")
+        else
+          "TBA"
+        end
+
+        # Get grade form URL for this exam
+        grade_form_urls = SystemConfig.get("grade_form_urls", {})
+        grade_form_url = grade_form_urls[exam_number.to_s] || grade_form_urls[exam_number] || "Not set"
+
+        base_url = SystemConfig.get("base_url", "")
+        ta_page_url = "#{base_url}/ta"
+
+        template.gsub("{{ta_name}}", ta.full_name)
+                .gsub("{{exam_number}}", exam_number.to_s)
+                .gsub("{{week}}", week_number.to_s)
+                .gsub("{{date}}", date_formatted)
+                .gsub("{{location}}", SystemConfig.get("slack_exam_location", "TBA"))
+                .gsub("{{student_count}}", student_count.to_s)
+                .gsub("{{schedule_list}}", schedule_list)
+                .gsub("{{ta_page_url}}", ta_page_url)
+                .gsub("{{grade_form_url}}", grade_form_url)
+                .gsub("{{course}}", SystemConfig.get("slack_course_name", ""))
+                .gsub("{{term}}", SystemConfig.get("slack_term", ""))
       end
 
       def calculate_week_number(exam_number, week_type)

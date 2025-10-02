@@ -25,6 +25,8 @@ module Api
           slack_test_mode: SystemConfig.get("slack_test_mode", false),
           slack_test_user_id: SystemConfig.get("slack_test_user_id", ""),
           admin_slack_ids: SystemConfig.get("admin_slack_ids", ""),
+          super_admin_slack_id: SystemConfig.get("super_admin_slack_id", ""),
+          super_admin_email: SystemConfig.get("super_admin_email", ""),
           slack_exam_location: SystemConfig.get("slack_exam_location", ""),
           slack_course_name: SystemConfig.get("slack_course_name", ""),
           slack_term: SystemConfig.get("slack_term", ""),
@@ -85,6 +87,10 @@ module Api
               SystemConfig.set("slack_test_user_id", value, config_type: "string")
             when "admin_slack_ids"
               SystemConfig.set("admin_slack_ids", value, config_type: "string")
+            when "super_admin_slack_id"
+              SystemConfig.set("super_admin_slack_id", value, config_type: "string")
+            when "super_admin_email"
+              SystemConfig.set("super_admin_email", value, config_type: "string")
             when "slack_exam_location"
               SystemConfig.set("slack_exam_location", value, config_type: "text")
             when "slack_course_name"
