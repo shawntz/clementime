@@ -1,6 +1,6 @@
 class Section < ApplicationRecord
   # Associations
-  belongs_to :ta, class_name: 'User', optional: true
+  belongs_to :ta, class_name: "User", optional: true
   has_many :students, dependent: :destroy
   has_many :exam_slots, dependent: :destroy
   has_many :recordings, dependent: :destroy

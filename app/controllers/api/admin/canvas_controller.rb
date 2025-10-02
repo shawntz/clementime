@@ -5,14 +5,14 @@ module Api
 
       def upload
         unless params[:file]
-          return render json: { errors: 'No file uploaded' }, status: :unprocessable_entity
+          return render json: { errors: "No file uploaded" }, status: :unprocessable_entity
         end
 
         importer = CanvasRosterImporter.new(params[:file].tempfile)
 
         if importer.import
           render json: {
-            message: 'Canvas roster imported successfully',
+            message: "Canvas roster imported successfully",
             success_count: importer.success_count,
             sections_created: importer.sections_created
           }, status: :ok
@@ -22,7 +22,7 @@ module Api
           }, status: :unprocessable_entity
         end
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
     end
   end

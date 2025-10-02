@@ -1,5 +1,5 @@
-require 'csv'
-require 'fuzzy_match'
+require "csv"
+require "fuzzy_match"
 
 class SlackMatcher
   attr_reader :errors, :matched_count, :slack_users
@@ -33,7 +33,7 @@ class SlackMatcher
     end
 
     # Filter out bots and deactivated users
-    @slack_users.reject! { |u| u[:status] == 'Bot' || u[:status] == 'Deactivated' }
+    @slack_users.reject! { |u| u[:status] == "Bot" || u[:status] == "Deactivated" }
 
     @errors.empty?
   end

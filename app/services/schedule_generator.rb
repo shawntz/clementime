@@ -60,11 +60,11 @@ class ScheduleGenerator
   private
 
   def load_config
-    @exam_day = SystemConfig.get(SystemConfig::EXAM_DAY, 'friday')
+    @exam_day = SystemConfig.get(SystemConfig::EXAM_DAY, "friday")
 
     # Parse time strings (format: "HH:MM") into Time objects for today
-    start_time_str = SystemConfig.get(SystemConfig::EXAM_START_TIME, '13:30')
-    end_time_str = SystemConfig.get(SystemConfig::EXAM_END_TIME, '14:50')
+    start_time_str = SystemConfig.get(SystemConfig::EXAM_START_TIME, "13:30")
+    end_time_str = SystemConfig.get(SystemConfig::EXAM_END_TIME, "14:50")
     @exam_start_time = Time.parse("2000-01-01 #{start_time_str}")
     @exam_end_time = Time.parse("2000-01-01 #{end_time_str}")
 
@@ -83,7 +83,7 @@ class ScheduleGenerator
 
     # Check for week_preference constraints
     unassigned.each do |student|
-      week_constraint = student.constraints.active.find_by(constraint_type: 'week_preference')
+      week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
       if week_constraint
         student.update!(week_group: week_constraint.constraint_value)
         unassigned.delete(student)
@@ -93,7 +93,7 @@ class ScheduleGenerator
     # Randomly assign remaining students to odd/even
     shuffled = unassigned.shuffle
     shuffled.each_with_index do |student, index|
-      week_group = index.even? ? 'odd' : 'even'
+      week_group = index.even? ? "odd" : "even"
       student.update!(week_group: week_group)
     end
   end
@@ -105,8 +105,8 @@ class ScheduleGenerator
     even_week = base_week + 1
 
     # Separate students by week group
-    odd_students = students.select { |s| s.week_group == 'odd' }
-    even_students = students.select { |s| s.week_group == 'even' }
+    odd_students = students.select { |s| s.week_group == "odd" }
+    even_students = students.select { |s| s.week_group == "even" }
 
     # Generate slots for odd week
     generate_week_slots(section, odd_students, exam_number, odd_week)
@@ -173,7 +173,7 @@ class ScheduleGenerator
   def generate_single_student_slot(student, section, exam_number)
     # Determine which week based on week_group
     base_week = (exam_number - 1) * 2 + 1
-    week_number = student.week_group == 'odd' ? base_week : base_week + 1
+    week_number = student.week_group == "odd" ? base_week : base_week + 1
 
     exam_date = calculate_exam_date(week_number)
 
@@ -233,13 +233,13 @@ class ScheduleGenerator
 
   def day_name_to_wday(day_name)
     {
-      'sunday' => 0,
-      'monday' => 1,
-      'tuesday' => 2,
-      'wednesday' => 3,
-      'thursday' => 4,
-      'friday' => 5,
-      'saturday' => 6
+      "sunday" => 0,
+      "monday" => 1,
+      "tuesday" => 2,
+      "wednesday" => 3,
+      "thursday" => 4,
+      "friday" => 5,
+      "saturday" => 6
     }[day_name.downcase] || 5
   end
 
@@ -248,16 +248,16 @@ class ScheduleGenerator
 
     constraints.each do |constraint|
       case constraint.constraint_type
-      when 'time_before'
+      when "time_before"
         max_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
         return false if time > max_time
-      when 'time_after'
+      when "time_after"
         min_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
         return false if time < min_time
-      when 'specific_date'
+      when "specific_date"
         required_date = Date.parse(constraint.constraint_value)
         return false if date != required_date
-      when 'exclude_date'
+      when "exclude_date"
         excluded_date = Date.parse(constraint.constraint_value)
         return false if date == excluded_date
       end

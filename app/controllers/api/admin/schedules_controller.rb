@@ -8,7 +8,7 @@ module Api
 
         if generator.generate_all_schedules
           render json: {
-            message: 'Schedules generated successfully',
+            message: "Schedules generated successfully",
             generated_count: generator.generated_count
           }, status: :ok
         else
@@ -17,7 +17,7 @@ module Api
           }, status: :unprocessable_entity
         end
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       def regenerate_student
@@ -26,7 +26,7 @@ module Api
 
         if generator.regenerate_student_schedule(student.id)
           render json: {
-            message: 'Student schedule regenerated successfully',
+            message: "Student schedule regenerated successfully",
             student: {
               id: student.id,
               full_name: student.full_name,
@@ -39,9 +39,9 @@ module Api
           }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Student not found' }, status: :not_found
+        render json: { errors: "Student not found" }, status: :not_found
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       def clear
@@ -50,10 +50,10 @@ module Api
         Student.update_all(week_group: nil)
 
         render json: {
-          message: 'All schedules cleared successfully'
+          message: "All schedules cleared successfully"
         }, status: :ok
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       def overview

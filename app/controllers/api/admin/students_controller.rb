@@ -2,7 +2,7 @@ module Api
   module Admin
     class StudentsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_student, only: [:show, :update, :deactivate]
+      before_action :set_student, only: [ :show, :update, :deactivate ]
 
       def index
         students = Student.includes(:section, :constraints)
@@ -26,7 +26,7 @@ module Api
       def update
         if @student.update(student_params)
           render json: {
-            message: 'Student updated successfully',
+            message: "Student updated successfully",
             student: student_detail_response(@student)
           }, status: :ok
         else
@@ -36,7 +36,7 @@ module Api
 
       def deactivate
         @student.update(is_active: false)
-        render json: { message: 'Student deactivated successfully' }, status: :ok
+        render json: { message: "Student deactivated successfully" }, status: :ok
       end
 
       private
@@ -44,7 +44,7 @@ module Api
       def set_student
         @student = Student.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Student not found' }, status: :not_found
+        render json: { errors: "Student not found" }, status: :not_found
       end
 
       def student_params

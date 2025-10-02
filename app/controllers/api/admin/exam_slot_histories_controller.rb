@@ -21,7 +21,7 @@ module Api
           }, status: :ok
         end
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Student not found' }, status: :not_found
+        render json: { errors: "Student not found" }, status: :not_found
       end
 
       def revert
@@ -30,7 +30,7 @@ module Api
         history = ExamSlotHistory.find(params[:id])
 
         unless history.exam_slot_id == exam_slot&.id
-          render json: { errors: 'History does not match exam slot' }, status: :unprocessable_entity
+          render json: { errors: "History does not match exam slot" }, status: :unprocessable_entity
           return
         end
 
@@ -46,13 +46,13 @@ module Api
         end
 
         render json: {
-          message: 'Schedule reverted successfully',
+          message: "Schedule reverted successfully",
           exam_slot: exam_slot_response(exam_slot)
         }, status: :ok
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Record not found' }, status: :not_found
+        render json: { errors: "Record not found" }, status: :not_found
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       private

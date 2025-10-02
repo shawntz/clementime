@@ -11,7 +11,7 @@ class SystemConfig < ApplicationRecord
       parse_value(config.value, config.config_type)
     end
 
-    def set(key, value, config_type: 'string', description: nil)
+    def set(key, value, config_type: "string", description: nil)
       config = find_or_initialize_by(key: key)
       config.value = serialize_value(value, config_type)
       config.config_type = config_type
@@ -26,17 +26,17 @@ class SystemConfig < ApplicationRecord
       return nil if value.nil?
 
       case type
-      when 'string'
+      when "string"
         value
-      when 'integer'
+      when "integer"
         value.to_i
-      when 'boolean'
-        value.to_s.downcase == 'true'
-      when 'json'
+      when "boolean"
+        value.to_s.downcase == "true"
+      when "json"
         JSON.parse(value)
-      when 'time'
+      when "time"
         Time.parse(value)
-      when 'date'
+      when "date"
         Date.parse(value)
       else
         value
@@ -48,9 +48,9 @@ class SystemConfig < ApplicationRecord
 
     def serialize_value(value, type)
       case type
-      when 'json'
+      when "json"
         value.to_json
-      when 'time', 'date'
+      when "time", "date"
         value.to_s
       else
         value.to_s
@@ -59,16 +59,16 @@ class SystemConfig < ApplicationRecord
   end
 
   # Configuration key constants
-  EXAM_DAY = 'exam_day'
-  EXAM_START_TIME = 'exam_start_time'
-  EXAM_END_TIME = 'exam_end_time'
-  EXAM_DURATION_MINUTES = 'exam_duration_minutes'
-  EXAM_BUFFER_MINUTES = 'exam_buffer_minutes'
-  GOOGLE_DRIVE_FOLDER_ID = 'google_drive_folder_id'
-  SLACK_BOT_TOKEN = 'slack_bot_token'
-  SLACK_APP_TOKEN = 'slack_app_token'
-  SLACK_SIGNING_SECRET = 'slack_signing_secret'
-  QUARTER_START_DATE = 'quarter_start_date'
-  TOTAL_EXAMS = 'total_exams'
-  NOTIFICATION_TIME = 'notification_time'
+  EXAM_DAY = "exam_day"
+  EXAM_START_TIME = "exam_start_time"
+  EXAM_END_TIME = "exam_end_time"
+  EXAM_DURATION_MINUTES = "exam_duration_minutes"
+  EXAM_BUFFER_MINUTES = "exam_buffer_minutes"
+  GOOGLE_DRIVE_FOLDER_ID = "google_drive_folder_id"
+  SLACK_BOT_TOKEN = "slack_bot_token"
+  SLACK_APP_TOKEN = "slack_app_token"
+  SLACK_SIGNING_SECRET = "slack_signing_secret"
+  QUARTER_START_DATE = "quarter_start_date"
+  TOTAL_EXAMS = "total_exams"
+  NOTIFICATION_TIME = "notification_time"
 end

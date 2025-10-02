@@ -1,4 +1,4 @@
-require 'csv'
+require "csv"
 
 class CanvasRosterImporter
   attr_reader :errors, :success_count, :sections_created
@@ -54,7 +54,7 @@ class CanvasRosterImporter
     return if section_codes.empty?
 
     # Filter out lecture sections (-01), we only care about discussion sections
-    discussion_codes = section_codes.reject { |code| code.end_with?('-01') }
+    discussion_codes = section_codes.reject { |code| code.end_with?("-01") }
 
     # If only enrolled in lecture (no discussion), skip this student
     return if discussion_codes.empty?
@@ -118,7 +118,7 @@ class CanvasRosterImporter
   def normalize_section_code(code)
     # Convert F25-STATS-60-XX to F25-PSYCH-10-XX (normalize cross-listed sections)
     # This ensures all students in the same discussion section share one section record
-    parts = code.split('-')
+    parts = code.split("-")
     return code unless parts.length >= 4
 
     term = parts[0]
@@ -127,7 +127,7 @@ class CanvasRosterImporter
     section = parts[3]
 
     # Normalize section number (remove leading zeros)
-    section_num = section.to_i.to_s.rjust(2, '0')
+    section_num = section.to_i.to_s.rjust(2, "0")
 
     # Always use PSYCH-10 as the canonical code
     "#{term}-PSYCH-10-#{section_num}"
@@ -136,7 +136,7 @@ class CanvasRosterImporter
   def generate_section_name(code)
     # Parse code like "F25-STATS-60-02" into "Section 2"
     # Strip leading zeros from section numbers
-    parts = code.split('-')
+    parts = code.split("-")
     if parts.length >= 4
       section = parts[3]
       # Strip leading zeros to normalize section numbers (010 -> 10, 02 -> 2)

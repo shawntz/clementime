@@ -1,6 +1,6 @@
 module Api
   class AuthController < ApplicationController
-    before_action :authenticate_request, only: [:current_user, :change_password, :logout]
+    before_action :authenticate_request, only: [ :current_user, :change_password, :logout ]
 
     def login
       user = User.find_by(username: params[:username])
@@ -13,10 +13,10 @@ module Api
             user: user_response(user)
           }, status: :ok
         else
-          render json: { errors: 'Account is inactive' }, status: :unauthorized
+          render json: { errors: "Account is inactive" }, status: :unauthorized
         end
       else
-        render json: { errors: 'Invalid username or password' }, status: :unauthorized
+        render json: { errors: "Invalid username or password" }, status: :unauthorized
       end
     end
 
@@ -31,35 +31,35 @@ module Api
           password_confirmation: params[:new_password_confirmation],
           must_change_password: false
         )
-          render json: { message: 'Password changed successfully' }, status: :ok
+          render json: { message: "Password changed successfully" }, status: :ok
         else
           render json: { errors: @current_user.errors.full_messages }, status: :unprocessable_entity
         end
       else
-        render json: { errors: 'Current password is incorrect' }, status: :unauthorized
+        render json: { errors: "Current password is incorrect" }, status: :unauthorized
       end
     end
 
     def logout
       # With JWT, logout is handled client-side by removing the token
-      render json: { message: 'Logged out successfully' }, status: :ok
+      render json: { message: "Logged out successfully" }, status: :ok
     end
 
     private
 
     def authenticate_request
-      header = request.headers['Authorization']
-      header = header.split(' ').last if header
+      header = request.headers["Authorization"]
+      header = header.split(" ").last if header
 
       begin
         @decoded = JsonWebToken.decode(header)
         @current_user = User.find(@decoded[:user_id]) if @decoded
       rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
-        render json: { errors: 'Unauthorized' }, status: :unauthorized
+        render json: { errors: "Unauthorized" }, status: :unauthorized
         return
       end
 
-      render json: { errors: 'Unauthorized' }, status: :unauthorized unless @current_user
+      render json: { errors: "Unauthorized" }, status: :unauthorized unless @current_user
     end
 
     def user_response(user)

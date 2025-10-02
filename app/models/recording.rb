@@ -3,7 +3,7 @@ class Recording < ApplicationRecord
   belongs_to :exam_slot
   belongs_to :section
   belongs_to :student
-  belongs_to :ta, class_name: 'User'
+  belongs_to :ta, class_name: "User"
 
   # Validations
   validates :exam_slot_id, uniqueness: true

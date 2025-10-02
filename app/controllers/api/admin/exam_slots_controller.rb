@@ -15,20 +15,20 @@ module Api
 
         if slot.update(start_time: start_time, end_time: end_time)
           render json: {
-            message: 'Time slot updated successfully',
+            message: "Time slot updated successfully",
             slot: {
               id: slot.id,
-              start_time: slot.start_time.strftime('%H:%M'),
-              end_time: slot.end_time.strftime('%H:%M')
+              start_time: slot.start_time.strftime("%H:%M"),
+              end_time: slot.end_time.strftime("%H:%M")
             }
           }, status: :ok
         else
           render json: { errors: slot.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Exam slot not found' }, status: :not_found
+        render json: { errors: "Exam slot not found" }, status: :not_found
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
     end
   end

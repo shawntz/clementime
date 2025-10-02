@@ -2,10 +2,10 @@ module Api
   module Admin
     class UsersController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_user, only: [:show, :update, :destroy]
+      before_action :set_user, only: [ :show, :update, :destroy ]
 
       def index
-        users = User.where(role: params[:role] || 'ta')
+        users = User.where(role: params[:role] || "ta")
         users = users.where(username: params[:username]) if params[:username].present?
         users = users.order(:last_name, :first_name)
 
@@ -24,7 +24,7 @@ module Api
 
         if user.save
           render json: {
-            message: 'User created successfully',
+            message: "User created successfully",
             user: user_response(user)
           }, status: :created
         else
@@ -35,7 +35,7 @@ module Api
       def update
         if @user.update(user_params)
           render json: {
-            message: 'User updated successfully',
+            message: "User updated successfully",
             user: user_response(@user)
           }, status: :ok
         else
@@ -45,7 +45,7 @@ module Api
 
       def destroy
         @user.update(is_active: false)
-        render json: { message: 'User deactivated successfully' }, status: :ok
+        render json: { message: "User deactivated successfully" }, status: :ok
       end
 
       private
@@ -53,7 +53,7 @@ module Api
       def set_user
         @user = User.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'User not found' }, status: :not_found
+        render json: { errors: "User not found" }, status: :not_found
       end
 
       def user_params
@@ -62,7 +62,7 @@ module Api
           :first_name, :last_name, :is_active, :location
         )
         # Only admins can set role, and it must be explicitly allowed
-        permitted[:role] = params[:user][:role] if params[:user][:role].present? && params[:user][:role].in?(['admin', 'ta'])
+        permitted[:role] = params[:user][:role] if params[:user][:role].present? && params[:user][:role].in?([ "admin", "ta" ])
         permitted
       end
 

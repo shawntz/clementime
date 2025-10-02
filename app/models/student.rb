@@ -17,8 +17,8 @@ class Student < ApplicationRecord
   scope :without_slack, -> { where(slack_user_id: nil) }
   scope :slack_matched, -> { where(slack_matched: true) }
   scope :slack_unmatched, -> { where(slack_matched: false) }
-  scope :odd_week, -> { where(week_group: 'odd') }
-  scope :even_week, -> { where(week_group: 'even') }
+  scope :odd_week, -> { where(week_group: "odd") }
+  scope :even_week, -> { where(week_group: "even") }
 
   # Methods
   def scheduled_exams_count

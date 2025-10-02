@@ -14,7 +14,7 @@ module Api
       # Check if username is being changed and if it's already taken
       if params[:username] && params[:username] != current_user.username
         if User.where(username: params[:username]).where.not(id: current_user.id).exists?
-          render json: { errors: ['Username is already taken'] }, status: :unprocessable_entity
+          render json: { errors: [ "Username is already taken" ] }, status: :unprocessable_entity
           return
         end
       end
@@ -28,7 +28,7 @@ module Api
 
       if current_user.update(update_params)
         render json: {
-          message: 'Profile updated successfully',
+          message: "Profile updated successfully",
           user: user_response(current_user)
         }, status: :ok
       else
@@ -38,12 +38,12 @@ module Api
 
     def update_password
       unless current_user.authenticate(params[:current_password])
-        render json: { errors: ['Current password is incorrect'] }, status: :unprocessable_entity
+        render json: { errors: [ "Current password is incorrect" ] }, status: :unprocessable_entity
         return
       end
 
       if params[:new_password] != params[:password_confirmation]
-        render json: { errors: ['New password and confirmation do not match'] }, status: :unprocessable_entity
+        render json: { errors: [ "New password and confirmation do not match" ] }, status: :unprocessable_entity
         return
       end
 
@@ -52,7 +52,7 @@ module Api
         password_confirmation: params[:password_confirmation],
         must_change_password: false
       )
-        render json: { message: 'Password updated successfully' }, status: :ok
+        render json: { message: "Password updated successfully" }, status: :ok
       else
         render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
       end

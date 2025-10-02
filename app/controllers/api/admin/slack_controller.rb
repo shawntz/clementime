@@ -5,7 +5,7 @@ module Api
 
       def upload
         unless params[:file]
-          return render json: { errors: 'No file uploaded' }, status: :unprocessable_entity
+          return render json: { errors: "No file uploaded" }, status: :unprocessable_entity
         end
 
         matcher = SlackMatcher.new(params[:file].tempfile)
@@ -18,7 +18,7 @@ module Api
           Rails.cache.write("slack_users_#{current_user.id}", matcher.slack_users, expires_in: 1.hour)
 
           render json: {
-            message: 'Slack roster uploaded successfully',
+            message: "Slack roster uploaded successfully",
             matched_count: matcher.matched_count,
             total_slack_users: matcher.slack_users.count
           }, status: :ok
@@ -28,7 +28,7 @@ module Api
           }, status: :unprocessable_entity
         end
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       def unmatched
@@ -65,7 +65,7 @@ module Api
         slack_user = slack_users.find { |u| u[:userid] == params[:slack_user_id] }
 
         unless slack_user
-          return render json: { errors: 'Slack user not found' }, status: :not_found
+          return render json: { errors: "Slack user not found" }, status: :not_found
         end
 
         if student.update(
@@ -74,7 +74,7 @@ module Api
           slack_matched: true
         )
           render json: {
-            message: 'Student matched successfully',
+            message: "Student matched successfully",
             student: {
               id: student.id,
               full_name: student.full_name,
@@ -85,7 +85,7 @@ module Api
           render json: { errors: student.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Student not found' }, status: :not_found
+        render json: { errors: "Student not found" }, status: :not_found
       end
     end
   end

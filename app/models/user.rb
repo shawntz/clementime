@@ -2,8 +2,8 @@ class User < ApplicationRecord
   has_secure_password
 
   # Associations
-  has_many :sections, foreign_key: 'ta_id', dependent: :nullify
-  has_many :recordings, foreign_key: 'ta_id', dependent: :nullify
+  has_many :sections, foreign_key: "ta_id", dependent: :nullify
+  has_many :recordings, foreign_key: "ta_id", dependent: :nullify
 
   # Validations
   validates :username, presence: true, uniqueness: { case_sensitive: false }
@@ -14,8 +14,8 @@ class User < ApplicationRecord
 
   # Scopes
   scope :active, -> { where(is_active: true) }
-  scope :admins, -> { where(role: 'admin') }
-  scope :tas, -> { where(role: 'ta') }
+  scope :admins, -> { where(role: "admin") }
+  scope :tas, -> { where(role: "ta") }
 
   # Methods
   def full_name
@@ -23,10 +23,10 @@ class User < ApplicationRecord
   end
 
   def admin?
-    role == 'admin'
+    role == "admin"
   end
 
   def ta?
-    role == 'ta'
+    role == "ta"
   end
 end

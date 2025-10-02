@@ -1,5 +1,5 @@
-require 'google/apis/drive_v3'
-require 'googleauth'
+require "google/apis/drive_v3"
+require "googleauth"
 
 class GoogleDriveUploader
   attr_reader :errors
@@ -45,14 +45,14 @@ class GoogleDriveUploader
       # Upload file to TA folder
       file_metadata = {
         name: filename,
-        parents: [ta_folder_id]
+        parents: [ ta_folder_id ]
       }
 
       file = @drive_service.create_file(
         file_metadata,
-        fields: 'id, name, webViewLink',
+        fields: "id, name, webViewLink",
         upload_source: file_path,
-        content_type: 'audio/webm'
+        content_type: "audio/webm"
       )
 
       # Update recording
@@ -76,7 +76,7 @@ class GoogleDriveUploader
 
     begin
       # Create temp file
-      temp_file = Tempfile.new(['recording', '.webm'])
+      temp_file = Tempfile.new([ "recording", ".webm" ])
       temp_file.binmode
       temp_file.write(audio_data)
       temp_file.rewind
@@ -98,7 +98,7 @@ class GoogleDriveUploader
   def setup_service
     begin
       # Get service account credentials from SystemConfig or environment
-      credentials_json = SystemConfig.get('google_service_account_json') || ENV['GOOGLE_SERVICE_ACCOUNT_JSON']
+      credentials_json = SystemConfig.get("google_service_account_json") || ENV["GOOGLE_SERVICE_ACCOUNT_JSON"]
 
       unless credentials_json
         @errors << "Google service account JSON not configured"
@@ -119,7 +119,7 @@ class GoogleDriveUploader
       @drive_service.authorization = credentials
 
       # Test connection
-      @drive_service.get_file('root', fields: 'id')
+      @drive_service.get_file("root", fields: "id")
 
     rescue => e
       @errors << "Failed to initialize Google Drive service: #{e.message}"
@@ -134,8 +134,8 @@ class GoogleDriveUploader
 
     response = @drive_service.list_files(
       q: query,
-      fields: 'files(id, name)',
-      spaces: 'drive'
+      fields: "files(id, name)",
+      spaces: "drive"
     )
 
     # Return existing folder if found
@@ -144,13 +144,13 @@ class GoogleDriveUploader
     # Create new folder
     file_metadata = {
       name: folder_name,
-      mime_type: 'application/vnd.google-apps.folder',
-      parents: [parent_id]
+      mime_type: "application/vnd.google-apps.folder",
+      parents: [ parent_id ]
     }
 
     folder = @drive_service.create_file(
       file_metadata,
-      fields: 'id'
+      fields: "id"
     )
 
     folder.id
@@ -162,13 +162,13 @@ class GoogleDriveUploader
   def generate_filename(recording)
     student = recording.student
     exam_slot = recording.exam_slot
-    timestamp = recording.recorded_at.strftime('%Y%m%d_%H%M%S')
+    timestamp = recording.recorded_at.strftime("%Y%m%d_%H%M%S")
 
     # Format: Section_StudentName_Exam1_20250101_143000.webm
     "#{recording.section.code}_#{sanitize_filename(student.full_name)}_Exam#{exam_slot.exam_number}_#{timestamp}.webm"
   end
 
   def sanitize_filename(filename)
-    filename.gsub(/[^0-9A-Za-z.\-]/, '_')
+    filename.gsub(/[^0-9A-Za-z.\-]/, "_")
   end
 end

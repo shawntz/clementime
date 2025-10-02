@@ -2,7 +2,7 @@ module Api
   module Admin
     class SectionsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_section, only: [:show, :update, :assign_ta, :time_slots]
+      before_action :set_section, only: [ :show, :update, :assign_ta, :time_slots ]
 
       def index
         sections = Section.includes(:ta, :students)
@@ -22,7 +22,7 @@ module Api
 
         if section.save
           render json: {
-            message: 'Section created successfully',
+            message: "Section created successfully",
             section: section_response(section)
           }, status: :created
         else
@@ -33,7 +33,7 @@ module Api
       def update
         if @section.update(section_params)
           render json: {
-            message: 'Section updated successfully',
+            message: "Section updated successfully",
             section: section_response(@section)
           }, status: :ok
         else
@@ -45,19 +45,19 @@ module Api
         ta = User.find(params[:ta_id])
 
         unless ta.ta?
-          return render json: { errors: 'User is not a TA' }, status: :unprocessable_entity
+          return render json: { errors: "User is not a TA" }, status: :unprocessable_entity
         end
 
         if @section.update(ta: ta)
           render json: {
-            message: 'TA assigned successfully',
+            message: "TA assigned successfully",
             section: section_response(@section)
           }, status: :ok
         else
           render json: { errors: @section.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'TA not found' }, status: :not_found
+        render json: { errors: "TA not found" }, status: :not_found
       end
 
       def time_slots
@@ -79,8 +79,8 @@ module Api
               week_number: slot.week_number,
               week_group: slot.student.week_group,
               date: slot.date,
-              start_time: slot.start_time&.strftime('%H:%M'),
-              end_time: slot.end_time&.strftime('%H:%M'),
+              start_time: slot.start_time&.strftime("%H:%M"),
+              end_time: slot.end_time&.strftime("%H:%M"),
               is_scheduled: slot.is_scheduled
             }
           end
@@ -92,7 +92,7 @@ module Api
       def set_section
         @section = Section.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Section not found' }, status: :not_found
+        render json: { errors: "Section not found" }, status: :not_found
       end
 
       def section_params

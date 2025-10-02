@@ -5,7 +5,7 @@ module Api
         week_number = params[:week_number].to_i
 
         unless current_user.ta?
-          return render json: { errors: 'Access denied' }, status: :forbidden
+          return render json: { errors: "Access denied" }, status: :forbidden
         end
 
         sections = current_user.sections.active.includes(:students)
@@ -48,8 +48,8 @@ module Api
           },
           exam_number: slot.exam_number,
           date: slot.date,
-          start_time: slot.start_time&.strftime('%H:%M'),
-          end_time: slot.end_time&.strftime('%H:%M'),
+          start_time: slot.start_time&.strftime("%H:%M"),
+          end_time: slot.end_time&.strftime("%H:%M"),
           formatted_time: slot.formatted_time_range,
           has_recording: slot.has_recording?,
           recording: slot.recording ? {

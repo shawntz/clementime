@@ -1,21 +1,21 @@
 module Api
   module Ta
     class RecordingsController < Api::BaseController
-      before_action :set_exam_slot, only: [:create]
+      before_action :set_exam_slot, only: [ :create ]
 
       def create
         unless current_user.ta?
-          return render json: { errors: 'Access denied' }, status: :forbidden
+          return render json: { errors: "Access denied" }, status: :forbidden
         end
 
         # Verify TA has access to this section
         unless current_user.sections.exists?(id: @exam_slot.section_id)
-          return render json: { errors: 'Access denied to this section' }, status: :forbidden
+          return render json: { errors: "Access denied to this section" }, status: :forbidden
         end
 
         # Check if recording already exists
         if @exam_slot.recording.present?
-          return render json: { errors: 'Recording already exists for this exam slot' }, status: :unprocessable_entity
+          return render json: { errors: "Recording already exists for this exam slot" }, status: :unprocessable_entity
         end
 
         recording = Recording.new(
@@ -28,7 +28,7 @@ module Api
 
         if recording.save
           render json: {
-            message: 'Recording created successfully',
+            message: "Recording created successfully",
             recording: recording_response(recording)
           }, status: :created
         else
@@ -40,16 +40,16 @@ module Api
         recording = Recording.find(params[:id])
 
         unless current_user.ta?
-          return render json: { errors: 'Access denied' }, status: :forbidden
+          return render json: { errors: "Access denied" }, status: :forbidden
         end
 
         # Verify TA owns this recording
         unless recording.ta_id == current_user.id
-          return render json: { errors: 'Access denied to this recording' }, status: :forbidden
+          return render json: { errors: "Access denied to this recording" }, status: :forbidden
         end
 
         unless params[:audio_data]
-          return render json: { errors: 'No audio data provided' }, status: :unprocessable_entity
+          return render json: { errors: "No audio data provided" }, status: :unprocessable_entity
         end
 
         # Decode base64 audio data
@@ -59,7 +59,7 @@ module Api
 
         if uploader.upload_from_data(audio_data, recording)
           render json: {
-            message: 'Recording uploaded successfully',
+            message: "Recording uploaded successfully",
             recording: recording_response(recording.reload)
           }, status: :ok
         else
@@ -68,9 +68,9 @@ module Api
           }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Recording not found' }, status: :not_found
+        render json: { errors: "Recording not found" }, status: :not_found
       rescue => e
-        render json: { errors: [e.message] }, status: :internal_server_error
+        render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
       private
@@ -78,7 +78,7 @@ module Api
       def set_exam_slot
         @exam_slot = ExamSlot.find(params[:exam_slot_id])
       rescue ActiveRecord::RecordNotFound
-        render json: { errors: 'Exam slot not found' }, status: :not_found
+        render json: { errors: "Exam slot not found" }, status: :not_found
       end
 
       def recording_response(recording)

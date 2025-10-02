@@ -3,7 +3,7 @@ class ExamSlot < ApplicationRecord
   belongs_to :student
   belongs_to :section
   has_one :recording, dependent: :destroy
-  has_many :histories, class_name: 'ExamSlotHistory', dependent: :destroy
+  has_many :histories, class_name: "ExamSlotHistory", dependent: :destroy
 
   # Callbacks
   after_update :create_history_entry, if: :saved_change_to_scheduling_attributes?
@@ -21,8 +21,8 @@ class ExamSlot < ApplicationRecord
   scope :unscheduled, -> { where(is_scheduled: false) }
   scope :for_exam, ->(exam_num) { where(exam_number: exam_num) }
   scope :for_week, ->(week_num) { where(week_number: week_num) }
-  scope :upcoming, -> { where('date >= ?', Date.today).order(:date, :start_time) }
-  scope :past, -> { where('date < ?', Date.today).order(date: :desc, start_time: :desc) }
+  scope :upcoming, -> { where("date >= ?", Date.today).order(:date, :start_time) }
+  scope :past, -> { where("date < ?", Date.today).order(date: :desc, start_time: :desc) }
 
   # Methods
   def duration_minutes
@@ -31,7 +31,7 @@ class ExamSlot < ApplicationRecord
   end
 
   def formatted_time_range
-    return 'Not scheduled' unless start_time && end_time
+    return "Not scheduled" unless start_time && end_time
     "#{start_time.strftime('%I:%M %p')} - #{end_time.strftime('%I:%M %p')}"
   end
 
@@ -63,8 +63,8 @@ class ExamSlot < ApplicationRecord
       end_time: end_time_before_last_save,
       is_scheduled: is_scheduled_before_last_save,
       changed_at: Time.current,
-      changed_by: 'system',
-      reason: 'Schedule updated'
+      changed_by: "system",
+      reason: "Schedule updated"
     )
   end
 end
