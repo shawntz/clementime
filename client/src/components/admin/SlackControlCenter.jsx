@@ -77,6 +77,27 @@ export default function SlackControlCenter() {
     }
   };
 
+  const bulkUnlock = async (examNumber, weekType) => {
+    if (!confirm(`⚠️ EMERGENCY UNLOCK\n\nUnlock all schedules for Oral Exam #${examNumber} (${weekType} week)?\n\nThis should only be done in emergency situations when you need to modify schedules after they've been sent to students.`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.post('/admin/exam_slots/bulk_unlock', {
+        exam_number: examNumber,
+        week_type: weekType
+      });
+      alert(`✅ ${response.data.message}\n\n${response.data.count} schedules unlocked.`);
+    } catch (err) {
+      setError(err.response?.data?.errors || 'Failed to unlock schedules');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
@@ -149,6 +170,14 @@ export default function SlackControlCenter() {
                     >
                       🔒 Send to Students & Lock
                     </button>
+                    <button
+                      onClick={() => bulkUnlock(examNumber, 'odd')}
+                      disabled={loading}
+                      className="btn btn-outline"
+                      style={{ fontSize: '0.875rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                    >
+                      🔓 Emergency Unlock
+                    </button>
                   </div>
                 </div>
 
@@ -178,6 +207,14 @@ export default function SlackControlCenter() {
                       style={{ fontSize: '0.875rem' }}
                     >
                       🔒 Send to Students & Lock
+                    </button>
+                    <button
+                      onClick={() => bulkUnlock(examNumber, 'even')}
+                      disabled={loading}
+                      className="btn btn-outline"
+                      style={{ fontSize: '0.875rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                    >
+                      🔓 Emergency Unlock
                     </button>
                   </div>
                 </div>
