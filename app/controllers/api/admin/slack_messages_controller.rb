@@ -253,7 +253,7 @@ module Api
                 .gsub("{{date}}", "Friday, October 10, 2025")
                 .gsub("{{time}}", "1:30 PM - 1:37 PM")
                 .gsub("{{location}}", SystemConfig.get("slack_exam_location", "Jordan Hall 420"))
-                .gsub("{{facilitator}}", "John Smith")
+                .gsub("{{ta_name}}", "John Smith")
                 .gsub("{{course}}", SystemConfig.get("slack_course_name", "PSYCH 10 / STATS 60"))
                 .gsub("{{term}}", SystemConfig.get("slack_term", "Fall 2025"))
       end
