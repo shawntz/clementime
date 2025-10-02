@@ -128,12 +128,40 @@ export default function RosterManager() {
     return <div className="spinner" />;
   }
 
+  const downloadRosterBySection = async () => {
+    try {
+      const response = await api.get('/admin/students/export_by_section', {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `roster_by_section_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Failed to download roster: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Roster Management
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ color: 'var(--primary)', margin: 0 }}>
+            Roster Management
+          </h3>
+          <button
+            onClick={downloadRosterBySection}
+            className="btn btn-primary"
+            style={{ fontSize: '0.875rem' }}
+          >
+            📥 Download CSV by Section
+          </button>
+        </div>
 
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px' }}>

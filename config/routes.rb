@@ -4,6 +4,9 @@ Rails.application.routes.draw do
 
   # API routes
   namespace :api do
+    # Version
+    get "version", to: "version#show"
+
     # Authentication
     post "auth/login", to: "auth#login"
     post "auth/logout", to: "auth#logout"
@@ -52,6 +55,7 @@ Rails.application.routes.draw do
       resources :students, only: [ :index, :show, :update ] do
         collection do
           delete "clear_all", to: "students#clear_all"
+          get "export_by_section", to: "students#export_by_section"
         end
         member do
           put "deactivate", to: "students#deactivate"
