@@ -14,9 +14,15 @@ class GoogleDriveUploader
     return false unless @drive_service
 
     begin
-      root_folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)
-      unless root_folder_id
+      root_folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)&.strip
+      unless root_folder_id.present?
         @errors << "Google Drive folder ID not configured"
+        return false
+      end
+
+      # Validate folder ID format
+      unless root_folder_id.match?(/^[a-zA-Z0-9_-]+$/)
+        @errors << "Invalid Google Drive folder ID format. Please check the folder ID and try again."
         return false
       end
 
@@ -63,6 +69,17 @@ class GoogleDriveUploader
       )
 
       true
+    rescue Google::Apis::ClientError => e
+      if e.message.include?("File not found") || e.message.include?("notFound")
+        @errors << "Google Drive folder not found. Please verify the folder ID is correct and the service account has access to it."
+      elsif e.message.include?("Invalid") || e.message.include?("Bad Request")
+        @errors << "Invalid Google Drive folder ID format. Please check your configuration."
+      else
+        @errors << "Google Drive error: #{e.message}"
+      end
+      Rails.logger.error("Google Drive upload error: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      false
     rescue => e
       @errors << "Upload failed: #{e.message}"
       Rails.logger.error("Google Drive upload error: #{e.message}")
@@ -97,9 +114,14 @@ class GoogleDriveUploader
     return { success: false, error: "Drive service not initialized" } unless @drive_service
 
     begin
-      root_folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)
-      unless root_folder_id
+      root_folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)&.strip
+      unless root_folder_id.present?
         return { success: false, error: "Google Drive folder ID not configured" }
+      end
+
+      # Validate folder ID format
+      unless root_folder_id.match?(/^[a-zA-Z0-9_-]+$/)
+        return { success: false, error: "Invalid Google Drive folder ID format. Please check the folder ID and try again." }
       end
 
       # Create test folder
@@ -148,6 +170,14 @@ class GoogleDriveUploader
         downloaded_size: downloaded_content.string.bytesize,
         verification: audio_data.bytesize == downloaded_content.string.bytesize ? "✅ Match" : "❌ Size mismatch"
       }
+    rescue Google::Apis::ClientError => e
+      error_msg = e.message
+      if e.message.include?("File not found") || e.message.include?("notFound")
+        error_msg = "Google Drive folder not found. Please verify the folder ID is correct and the service account has access to it. Error: #{e.message}"
+      elsif e.message.include?("Invalid") || e.message.include?("Bad Request")
+        error_msg = "Invalid Google Drive folder ID format. Please check your configuration. Error: #{e.message}"
+      end
+      { success: false, error: error_msg, backtrace: e.backtrace.first(5) }
     rescue => e
       { success: false, error: e.message, backtrace: e.backtrace.first(5) }
     end
