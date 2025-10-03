@@ -42,7 +42,6 @@ module Api
 
       def export_by_section
         require "csv"
-        require "zip"
 
         # Get all sections with students
         sections = Section.includes(students: :section, ta: nil)
@@ -53,50 +52,34 @@ module Api
           return render json: { error: "No sections with students found" }, status: :not_found
         end
 
-        # Create a temporary file for the zip
-        temp_file = Tempfile.new([ "roster_export", ".zip" ])
+        # Generate CSV data for all sections combined
+        csv_data = CSV.generate(headers: true) do |csv|
+          csv << [ "Name", "Email", "Slack ID", "SIS ID", "Section Number", "Section Name", "TA Name" ]
 
-        begin
-          Zip::File.open(temp_file.path, ::Zip::File::CREATE) do |zipfile|
-            sections.each do |section|
-              students = section.students.where(is_active: true).order(:full_name)
-              next if students.empty?
+          sections.each do |section|
+            students = section.students.where(is_active: true).order(:full_name)
 
-              # Generate CSV for this section
-              csv_data = CSV.generate(headers: true) do |csv|
-                csv << [ "Name", "Email", "Slack ID", "SIS ID", "Section Number", "Section Name", "TA Name" ]
-
-                students.each do |student|
-                  csv << [
-                    student.full_name,
-                    student.email,
-                    student.slack_user_id || "",
-                    student.sis_user_id || "",
-                    section.code,
-                    section.name,
-                    section.ta ? section.ta.full_name : "No TA"
-                  ]
-                end
-              end
-
-              # Add CSV to zip with sanitized section name
-              safe_section_name = section.name.gsub(/[^a-zA-Z0-9\-_]/, "_")
-              zipfile.get_output_stream("#{safe_section_name}.csv") { |f| f.write(csv_data) }
+            students.each do |student|
+              csv << [
+                student.full_name,
+                student.email,
+                student.slack_user_id || "",
+                student.sis_user_id || "",
+                section.code,
+                section.name,
+                section.ta ? section.ta.full_name : "No TA"
+              ]
             end
           end
-
-          # Send the zip file
-          send_file temp_file.path,
-                    filename: "roster_by_section_#{Date.today.strftime('%Y%m%d')}.zip",
-                    type: "application/zip",
-                    disposition: "attachment"
-        rescue => e
-          render json: { error: e.message }, status: :internal_server_error
-        ensure
-          # Clean up temp file after sending
-          temp_file.close
-          temp_file.unlink
         end
+
+        # Send the CSV file
+        send_data csv_data,
+                  filename: "roster_by_section_#{Date.today.strftime('%Y%m%d')}.csv",
+                  type: "text/csv",
+                  disposition: "attachment"
+      rescue => e
+        render json: { error: e.message }, status: :internal_server_error
       end
 
       def show

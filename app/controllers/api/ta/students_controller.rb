@@ -48,7 +48,6 @@ module Api
 
       def export_by_section
         require "csv"
-        require "zip"
 
         unless current_user.ta?
           return render json: { errors: "Access denied" }, status: :forbidden
@@ -64,36 +63,30 @@ module Api
           return render json: { error: "No sections with students found" }, status: :not_found
         end
 
-        # Create a temporary file for the zip
-        temp_file = Tempfile.new([ "roster_by_section", ".zip" ])
+        # Generate CSV data for all TA's sections combined
+        csv_data = CSV.generate(headers: true) do |csv|
+          csv << [ "Full Name", "Email", "Section", "Week Group", "Active" ]
 
-        begin
-          Zip::File.open(temp_file.path, ::Zip::File::CREATE) do |zipfile|
-            sections.each do |section|
-              csv_string = CSV.generate do |csv|
-                csv << [ "Full Name", "Email", "Section", "Week Group", "Active" ]
-                section.students.order(:full_name).each do |student|
-                  csv << [
-                    student.full_name,
-                    student.email,
-                    section.name,
-                    student.week_group,
-                    student.is_active ? "Yes" : "No"
-                  ]
-                end
-              end
-
-              zipfile.get_output_stream("#{section.name.gsub(/[^0-9A-Za-z.\-]/, '_')}.csv") do |f|
-                f.write csv_string
-              end
+          sections.each do |section|
+            section.students.order(:full_name).each do |student|
+              csv << [
+                student.full_name,
+                student.email,
+                section.name,
+                student.week_group,
+                student.is_active ? "Yes" : "No"
+              ]
             end
           end
-
-          send_file temp_file.path, type: "application/zip", filename: "roster_by_section_#{Date.today}.zip"
-        ensure
-          temp_file.close
-          temp_file.unlink
         end
+
+        # Send the CSV file
+        send_data csv_data,
+                  filename: "roster_by_section_#{Date.today.strftime('%Y%m%d')}.csv",
+                  type: "text/csv",
+                  disposition: "attachment"
+      rescue => e
+        render json: { error: e.message }, status: :internal_server_error
       end
 
       private
