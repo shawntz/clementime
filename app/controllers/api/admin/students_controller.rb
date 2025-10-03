@@ -49,6 +49,10 @@ module Api
                          .where.not(students: { id: nil })
                          .order(:name)
 
+        if sections.empty?
+          return render json: { error: "No sections with students found" }, status: :not_found
+        end
+
         # Create a temporary file for the zip
         temp_file = Tempfile.new([ "roster_export", ".zip" ])
 
@@ -86,6 +90,8 @@ module Api
                     filename: "roster_by_section_#{Date.today.strftime('%Y%m%d')}.zip",
                     type: "application/zip",
                     disposition: "attachment"
+        rescue => e
+          render json: { error: e.message }, status: :internal_server_error
         ensure
           # Clean up temp file after sending
           temp_file.close

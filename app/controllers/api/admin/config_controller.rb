@@ -60,7 +60,18 @@ module Api
             when "total_exams"
               SystemConfig.set(SystemConfig::TOTAL_EXAMS, value.to_i, config_type: "integer")
             when "google_drive_folder_id"
-              SystemConfig.set(SystemConfig::GOOGLE_DRIVE_FOLDER_ID, value, config_type: "string")
+              # Validate and clean folder ID
+              cleaned_value = value.to_s.strip
+
+              # Extract folder ID from URL if a URL was provided
+              if cleaned_value.include?("drive.google.com")
+                # Extract from URL like: https://drive.google.com/drive/folders/1ABC...XYZ
+                if cleaned_value.match(/folders\/([a-zA-Z0-9_-]+)/)
+                  cleaned_value = $1
+                end
+              end
+
+              SystemConfig.set(SystemConfig::GOOGLE_DRIVE_FOLDER_ID, cleaned_value, config_type: "string")
               google_drive_updated = true
             when "google_service_account_json"
               SystemConfig.set("google_service_account_json", value, config_type: "string")
@@ -154,12 +165,21 @@ module Api
               }
             end
           rescue => e
+            error_details = "Steps to fix:\n1. Verify folder ID is correct (from Google Drive URL)\n2. Share the folder with service account email\n3. Grant 'Editor' permissions\n4. Wait a few minutes for permissions to propagate"
+
+            # Add specific guidance for common errors
+            if e.message.include?("File not found") || e.message.include?("notFound")
+              error_details = "The folder ID '#{folder_id}' was not found. This usually means:\n1. The folder ID is incorrect or incomplete\n2. The folder was deleted\n3. The service account doesn't have access to it\n\nHow to fix:\n1. Get the folder ID from the Google Drive URL (the long string after /folders/)\n2. Share the folder with the service account email (found in your JSON credentials)\n3. Grant 'Editor' permissions to the service account"
+            elsif e.message.include?("Invalid") || e.message.include?("Bad Request")
+              error_details = "The folder ID format is invalid. Make sure you're using the full folder ID from the Google Drive URL (the long alphanumeric string after /folders/)"
+            end
+
             {
               valid: false,
               message: "❌ Google Drive credentials valid but folder access failed",
               error: e.message,
               folder_id_attempted: folder_id,
-              details: "Steps to fix:\n1. Verify folder ID is correct (from Google Drive URL)\n2. Share the folder with service account email\n3. Grant 'Editor' permissions\n4. Wait a few minutes for permissions to propagate"
+              details: error_details
             }
           end
         end
