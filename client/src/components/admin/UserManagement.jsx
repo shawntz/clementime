@@ -367,7 +367,8 @@ function CreateAdminModal({ onClose, onSuccess }) {
     username: '',
     full_name: '',
     email: '',
-    password: ''
+    password: '',
+    slack_id: ''
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -451,6 +452,20 @@ function CreateAdminModal({ onClose, onSuccess }) {
             />
             <small style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
               Minimum 6 characters
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Slack ID</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g., U01234ABCDE"
+              value={formData.slack_id}
+              onChange={(e) => setFormData({ ...formData, slack_id: e.target.value })}
+            />
+            <small style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+              Used for Slack notifications and channel assignments
             </small>
           </div>
 
