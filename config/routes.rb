@@ -90,8 +90,18 @@ Rails.application.routes.draw do
 
     # TA routes
     namespace :ta do
+      # Configuration (public values only)
+      get "config", to: "config#index"
+
       # Schedules
       get "schedules", to: "schedules#index"
+
+      # Students (read-only, limited to TA's sections)
+      get "students", to: "students#index"
+      get "students/export_by_section", to: "students#export_by_section"
+
+      # Sections (read-only, limited to TA's sections)
+      get "sections", to: "sections#index"
 
       # Recordings
       post "recordings", to: "recordings#create"
