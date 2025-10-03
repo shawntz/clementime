@@ -115,7 +115,20 @@ export default function ScheduleGenerator() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to export CSV', err);
-      alert('Failed to export CSV: ' + (err.response?.data?.error || err.message));
+      let errorMessage = 'Failed to export CSV';
+      if (err.response?.data instanceof Blob) {
+        // If error response is a blob (JSON), parse it
+        try {
+          const text = await err.response.data.text();
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = err.message;
+        }
+      } else {
+        errorMessage = err.response?.data?.error || err.message;
+      }
+      alert(errorMessage);
     }
   };
 
