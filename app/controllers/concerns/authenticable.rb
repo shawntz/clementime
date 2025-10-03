@@ -32,4 +32,6 @@ module Authenticable
       render json: { errors: "Forbidden - Admin access required" }, status: :forbidden
     end
   end
+
+  alias_method :authenticate_user!, :authenticate_request
 end

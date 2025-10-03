@@ -29,4 +29,8 @@ class User < ApplicationRecord
   def ta?
     role == "ta"
   end
+
+  def section_ids
+    sections.pluck(:id)
+  end
 end

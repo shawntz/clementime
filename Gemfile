@@ -44,6 +44,7 @@ gem "googleauth"
 gem "jwt"
 gem "csv"
 gem "fuzzy_match"
+gem "rubyzip", require: "zip"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
