@@ -60,7 +60,7 @@ function ScheduleView() {
   useEffect(() => {
     const loadExamDates = async () => {
       try {
-        const response = await api.get('/admin/config');
+        const response = await api.get('/ta/config');
         const dates = response.data.exam_dates || {};
         setExamDates(dates);
 

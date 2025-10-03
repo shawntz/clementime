@@ -14,7 +14,8 @@ export default function Layout({ children, title, showAdminTabs = false }) {
   useEffect(() => {
     const loadNavbarTitle = async () => {
       try {
-        const response = await api.get('/admin/config');
+        const endpoint = user?.role === 'admin' ? '/admin/config' : '/ta/config';
+        const response = await api.get(endpoint);
         setNavbarTitle(response.data.navbar_title || '');
       } catch (err) {
         console.error('Failed to load navbar title', err);

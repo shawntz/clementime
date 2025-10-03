@@ -28,8 +28,8 @@ export default function RosterView() {
       }
 
       const [studentsRes, sectionsRes] = await Promise.all([
-        api.get('/admin/students', { params }),
-        api.get('/admin/sections')
+        api.get('/ta/students', { params }),
+        api.get('/ta/sections')
       ]);
 
       setStudents(studentsRes.data.students);
@@ -55,7 +55,7 @@ export default function RosterView() {
 
   const downloadRosterBySection = async () => {
     try {
-      const response = await api.get('/admin/students/export_by_section', {
+      const response = await api.get('/ta/students/export_by_section', {
         responseType: 'blob'
       });
       const blob = new Blob([response.data], { type: 'application/zip' });
@@ -68,7 +68,20 @@ export default function RosterView() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Failed to download roster: ' + (err.response?.data?.error || err.message));
+      let errorMessage = 'Failed to download roster';
+      if (err.response?.data instanceof Blob) {
+        // If error response is a blob (JSON), parse it
+        try {
+          const text = await err.response.data.text();
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = err.message;
+        }
+      } else {
+        errorMessage = err.response?.data?.error || err.message;
+      }
+      alert(errorMessage);
     }
   };
 

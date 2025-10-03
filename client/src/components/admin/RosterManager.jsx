@@ -143,7 +143,20 @@ export default function RosterManager() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Failed to download roster: ' + (err.response?.data?.error || err.message));
+      let errorMessage = 'Failed to download roster';
+      if (err.response?.data instanceof Blob) {
+        // If error response is a blob (JSON), parse it
+        try {
+          const text = await err.response.data.text();
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = err.message;
+        }
+      } else {
+        errorMessage = err.response?.data?.error || err.message;
+      }
+      alert(errorMessage);
     }
   };
 
