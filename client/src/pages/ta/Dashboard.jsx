@@ -56,13 +56,23 @@ function ScheduleView() {
   const [weekNumber, setWeekNumber] = useState(1);
   const [examDates, setExamDates] = useState({});
   const [sortedWeeks, setSortedWeeks] = useState([]);
+  const [showDriveWarning, setShowDriveWarning] = useState(false);
+  const [driveAuthorized, setDriveAuthorized] = useState(false);
 
   useEffect(() => {
     const loadExamDates = async () => {
       try {
         const response = await api.get('/ta/config');
         const dates = response.data.exam_dates || {};
+        const googleDriveAuth = response.data.google_drive_authorized || false;
+
         setExamDates(dates);
+        setDriveAuthorized(googleDriveAuth);
+
+        // Show warning if Google Drive is not authorized
+        if (!googleDriveAuth) {
+          setShowDriveWarning(true);
+        }
 
         // Create array of weeks with their dates
         // Each exam spans 2 weeks: Exam 1 = Weeks 1-2, Exam 2 = Weeks 3-4, etc.
@@ -132,6 +142,54 @@ function ScheduleView() {
 
   return (
     <>
+      {/* Google Drive Warning Modal */}
+      {showDriveWarning && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
+            <h3 style={{ color: 'var(--error)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '2rem' }}>⚠️</span>
+              Google Drive Not Configured
+            </h3>
+
+            <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
+              Recording uploads to Google Drive are not currently available. Recordings will be saved locally to your computer instead.
+            </p>
+
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: '#92400e' }}>
+                <strong>Note for Instructor/Admin:</strong> Please configure Google Drive OAuth in System Preferences → Integrations to enable automatic uploads.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowDriveWarning(false)}
+                className="btn btn-primary"
+              >
+                Got it, Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Week Tabs */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '0' }}>
         <div style={{

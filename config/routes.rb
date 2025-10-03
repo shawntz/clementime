@@ -82,6 +82,12 @@ Rails.application.routes.draw do
       put "config", to: "config#update"
       post "config/test_google_drive", to: "config#test_google_drive"
 
+      # Google OAuth
+      get "google_auth/authorize_url", to: "google_auth#authorize_url"
+      get "google_auth/callback", to: "google_auth#callback"
+      get "google_auth/status", to: "google_auth#status"
+      delete "google_auth/revoke", to: "google_auth#revoke"
+
       # Slack messages
       post "slack_messages/send_ta_schedules", to: "slack_messages#send_ta_schedules"
       post "slack_messages/send_student_schedules", to: "slack_messages#send_student_schedules"

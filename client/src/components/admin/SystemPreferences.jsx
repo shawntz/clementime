@@ -39,9 +39,23 @@ export default function SystemPreferences() {
   const [sendingTest, setSendingTest] = useState(null);
   const [testingDrive, setTestingDrive] = useState(false);
   const [driveTestResult, setDriveTestResult] = useState(null);
+  const [googleAuthStatus, setGoogleAuthStatus] = useState(null);
+  const [authorizingGoogle, setAuthorizingGoogle] = useState(false);
 
   useEffect(() => {
     loadConfig();
+    loadGoogleAuthStatus();
+
+    // Check for OAuth callback success/error
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('google_auth_success')) {
+      alert('✅ Google Drive authorized successfully!');
+      loadGoogleAuthStatus();
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('google_auth_error')) {
+      alert('❌ Google Drive authorization failed: ' + urlParams.get('google_auth_error'));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const loadConfig = async () => {
@@ -160,6 +174,40 @@ export default function SystemPreferences() {
       });
     } finally {
       setTestingDrive(false);
+    }
+  };
+
+  const loadGoogleAuthStatus = async () => {
+    try {
+      const response = await api.get('/admin/google_auth/status');
+      setGoogleAuthStatus(response.data);
+    } catch (err) {
+      console.error('Failed to load Google auth status:', err);
+    }
+  };
+
+  const authorizeGoogleDrive = async () => {
+    setAuthorizingGoogle(true);
+    try {
+      const response = await api.get('/admin/google_auth/authorize_url');
+      window.location.href = response.data.authorization_url;
+    } catch (err) {
+      alert('Failed to get authorization URL: ' + (err.response?.data?.error || err.message));
+      setAuthorizingGoogle(false);
+    }
+  };
+
+  const revokeGoogleDrive = async () => {
+    if (!confirm('Are you sure you want to revoke Google Drive access? You will need to re-authorize.')) {
+      return;
+    }
+
+    try {
+      await api.delete('/admin/google_auth/revoke');
+      alert('Google Drive access revoked successfully');
+      loadGoogleAuthStatus();
+    } catch (err) {
+      alert('Failed to revoke access: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -473,7 +521,125 @@ export default function SystemPreferences() {
 
         {activeTab === 'integrations' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive</h4>
+          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive - OAuth 2.0</h4>
+
+          {/* OAuth Authorization Status */}
+          <div style={{
+            padding: '1rem',
+            borderRadius: '8px',
+            backgroundColor: googleAuthStatus?.authorized ? '#d1fae5' : '#fef3c7',
+            border: `1px solid ${googleAuthStatus?.authorized ? '#10b981' : '#f59e0b'}`
+          }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: googleAuthStatus?.authorized ? '#065f46' : '#92400e' }}>
+              {googleAuthStatus?.authorized ? '✅ Google Drive Authorized' : '⚠️ Google Drive Not Authorized'}
+            </div>
+            {googleAuthStatus?.authorized ? (
+              <div>
+                <p style={{ fontSize: '0.875rem', color: '#047857', marginBottom: '0.5rem' }}>
+                  Your Google account is connected and ready to upload recordings.
+                </p>
+                <button
+                  type="button"
+                  onClick={revokeGoogleDrive}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                >
+                  🔓 Revoke Access
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontSize: '0.875rem', color: '#92400e', marginBottom: '0.5rem' }}>
+                  Click below to authorize Clementime to upload recordings to your Google Drive.
+                </p>
+                <button
+                  type="button"
+                  onClick={authorizeGoogleDrive}
+                  disabled={authorizingGoogle}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                >
+                  {authorizingGoogle ? '🔄 Redirecting...' : '🔐 Authorize Google Drive'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive Configuration</h4>
+
+          {/* OAuth Client Credentials */}
+          <div>
+            <label htmlFor="google_oauth_client_id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              Google OAuth Client ID
+            </label>
+            <input
+              id="google_oauth_client_id"
+              type="text"
+              className="form-input"
+              value={config.google_oauth_client_id || ''}
+              onChange={(e) => handleChange('google_oauth_client_id', e.target.value)}
+              placeholder="123456789-abcdefg.apps.googleusercontent.com"
+              style={{ width: '100%' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+              From Google Cloud Console → APIs & Services → Credentials
+            </small>
+          </div>
+
+          <div>
+            <label htmlFor="google_oauth_client_secret" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              Google OAuth Client Secret
+            </label>
+            <input
+              id="google_oauth_client_secret"
+              type="password"
+              className="form-input"
+              value={config.google_oauth_client_secret || ''}
+              onChange={(e) => handleChange('google_oauth_client_secret', e.target.value)}
+              placeholder="GOCSPX-..."
+              style={{ width: '100%' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+              Client secret from Google Cloud Console
+            </small>
+          </div>
+
+          <div style={{
+            background: '#e3f2fd',
+            border: '1px solid #2196f3',
+            borderRadius: '8px',
+            padding: '1rem',
+            fontSize: '0.875rem'
+          }}>
+            <h5 style={{ margin: '0 0 0.75rem 0', color: '#1976d2' }}>How to Set Up OAuth 2.0</h5>
+            <ol style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: '1.6' }}>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2' }}>Google Cloud Console</a>
+              </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Navigate to <strong>APIs & Services → Credentials</strong>
+              </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Click <strong>Create Credentials → OAuth 2.0 Client ID</strong>
+              </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Application type: <strong>Web application</strong>
+              </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Add authorized redirect URI: <code style={{ background: 'white', padding: '0.125rem 0.25rem', borderRadius: '3px' }}>{config.base_url || 'https://your-app.com'}/api/admin/google_auth/callback</code>
+              </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Copy Client ID and Client Secret above
+              </li>
+              <li>
+                <strong>Important:</strong> Enable the <strong>Google Drive API</strong> in APIs & Services → Library
+              </li>
+            </ol>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
+
+          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive Folder</h4>
 
           {/* Google Drive Folder ID */}
           <div>

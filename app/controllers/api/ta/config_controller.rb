@@ -14,7 +14,8 @@ module Api
           quarter_start_date: SystemConfig.get(SystemConfig::QUARTER_START_DATE, Date.today.to_s),
           total_exams: SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5),
           navbar_title: SystemConfig.get("navbar_title", ""),
-          exam_dates: SystemConfig.get("exam_dates", {})
+          exam_dates: SystemConfig.get("exam_dates", {}),
+          google_drive_authorized: SystemConfig.get("google_oauth_authorized", false)
         }
 
         render json: config_hash, status: :ok

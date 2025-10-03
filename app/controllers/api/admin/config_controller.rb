@@ -16,6 +16,8 @@ module Api
           base_url: SystemConfig.get("base_url", ""),
           google_drive_folder_id: SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID, ""),
           google_service_account_json: SystemConfig.get("google_service_account_json", ""),
+          google_oauth_client_id: SystemConfig.get("google_oauth_client_id", ""),
+          google_oauth_client_secret: SystemConfig.get("google_oauth_client_secret", ""),
           slack_bot_token: SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN, ""),
           slack_app_token: SystemConfig.get(SystemConfig::SLACK_APP_TOKEN, ""),
           slack_signing_secret: SystemConfig.get(SystemConfig::SLACK_SIGNING_SECRET, ""),
@@ -136,6 +138,10 @@ module Api
             when "google_service_account_json"
               SystemConfig.set("google_service_account_json", value, config_type: "string")
               google_drive_updated = true
+            when "google_oauth_client_id"
+              SystemConfig.set("google_oauth_client_id", value, config_type: "string")
+            when "google_oauth_client_secret"
+              SystemConfig.set("google_oauth_client_secret", value, config_type: "string")
             when "slack_bot_token"
               SystemConfig.set(SystemConfig::SLACK_BOT_TOKEN, value, config_type: "string")
             when "slack_app_token"
