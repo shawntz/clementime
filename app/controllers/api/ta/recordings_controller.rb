@@ -2,6 +2,7 @@ module Api
   module Ta
     class RecordingsController < Api::BaseController
       before_action :set_exam_slot, only: [ :create ]
+      before_action :set_recording, only: [ :destroy ]
 
       def create
         unless current_user.ta?
@@ -74,6 +75,27 @@ module Api
         render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
+      def destroy
+        unless current_user.ta?
+          return render json: { errors: "Access denied" }, status: :forbidden
+        end
+
+        # Verify TA owns this recording
+        unless @recording.ta_id == current_user.id
+          return render json: { errors: "Access denied to this recording" }, status: :forbidden
+        end
+
+        if @recording.destroy
+          render json: {
+            message: "Recording deleted successfully"
+          }, status: :ok
+        else
+          render json: { errors: "Failed to delete recording" }, status: :unprocessable_entity
+        end
+      rescue ActiveRecord::RecordNotFound
+        render json: { errors: "Recording not found" }, status: :not_found
+      end
+
       def test
         unless current_user.ta?
           return render json: { errors: "Access denied" }, status: :forbidden
@@ -103,6 +125,10 @@ module Api
       end
 
       private
+
+      def set_recording
+        @recording = Recording.find(params[:id])
+      end
 
       def set_exam_slot
         @exam_slot = ExamSlot.find(params[:exam_slot_id])

@@ -21,6 +21,7 @@ export default function WeeklySchedule({ weekNumber }) {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [deletingRecording, setDeletingRecording] = useState(null);
 
   useEffect(() => {
     loadSchedule();
@@ -35,6 +36,23 @@ export default function WeeklySchedule({ weekNumber }) {
       console.error('Failed to load schedule', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteRecording = async (recordingId) => {
+    if (!confirm('Are you sure you want to delete this recording? This cannot be undone.')) {
+      return;
+    }
+
+    setDeletingRecording(recordingId);
+    try {
+      await api.delete(`/ta/recordings/${recordingId}`);
+      alert('Recording deleted successfully');
+      loadSchedule();
+    } catch (err) {
+      alert('Failed to delete recording: ' + (err.response?.data?.errors || err.message));
+    } finally {
+      setDeletingRecording(null);
     }
   };
 
@@ -101,25 +119,49 @@ export default function WeeklySchedule({ weekNumber }) {
                         )}
                       </td>
                       <td>
-                        {slot.has_recording && slot.recording.uploaded && slot.recording.recording_url ? (
-                          <a
-                            href={slot.recording.recording_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-outline"
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                          >
-                            ▶️ Play
-                          </a>
-                        ) : !slot.has_recording ? (
-                          <button
-                            onClick={() => setSelectedSlot(slot)}
-                            className="btn btn-primary"
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                          >
-                            🎙️ Record
-                          </button>
-                        ) : null}
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {slot.has_recording && slot.recording.uploaded && slot.recording.recording_url ? (
+                            <>
+                              <a
+                                href={slot.recording.recording_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-outline"
+                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                              >
+                                ▶️ Play
+                              </a>
+                              <button
+                                onClick={() => deleteRecording(slot.recording.id)}
+                                disabled={deletingRecording === slot.recording.id}
+                                className="btn btn-outline"
+                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                              >
+                                {deletingRecording === slot.recording.id ? '...' : '🗑️'}
+                              </button>
+                            </>
+                          ) : slot.has_recording && !slot.recording.uploaded ? (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Not uploaded</span>
+                              <button
+                                onClick={() => deleteRecording(slot.recording.id)}
+                                disabled={deletingRecording === slot.recording.id}
+                                className="btn btn-outline"
+                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                              >
+                                {deletingRecording === slot.recording.id ? '...' : '🗑️'}
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => setSelectedSlot(slot)}
+                              className="btn btn-primary"
+                              style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                            >
+                              🎙️ Record
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

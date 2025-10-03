@@ -113,6 +113,7 @@ Rails.application.routes.draw do
       # Recordings
       post "recordings", to: "recordings#create"
       post "recordings/:id/upload", to: "recordings#upload"
+      delete "recordings/:id", to: "recordings#destroy"
       post "recordings/test", to: "recordings#test"
     end
   end
