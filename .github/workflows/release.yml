@@ -73,6 +73,14 @@ jobs:
           esac
 
           NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+
+          # Check if tag already exists and increment patch if it does
+          while git rev-parse "$NEW_VERSION" >/dev/null 2>&1; do
+            echo "Tag $NEW_VERSION already exists, incrementing..."
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          done
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "New version: $NEW_VERSION"
 
