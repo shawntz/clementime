@@ -9,13 +9,13 @@ class Recording < ApplicationRecord
   validates :exam_slot_id, uniqueness: true
 
   # Scopes
-  scope :uploaded, -> { where.not(google_drive_file_id: nil) }
-  scope :not_uploaded, -> { where(google_drive_file_id: nil) }
+  scope :uploaded, -> { where.not(recording_url: nil) }
+  scope :not_uploaded, -> { where(recording_url: nil) }
   scope :recent, -> { order(recorded_at: :desc) }
 
   # Methods
   def uploaded?
-    google_drive_file_id.present? && uploaded_at.present?
+    recording_url.present?
   end
 
   def duration

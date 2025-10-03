@@ -549,21 +549,6 @@ export default function SystemPreferences() {
             </small>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
-
-          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Legacy Google Drive (Deprecated)</h4>
-
-          <div style={{
-            background: '#fef3c7',
-            border: '1px solid #f59e0b',
-            borderRadius: '8px',
-            padding: '1rem'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: '#92400e' }}>
-              Google Drive integration has been replaced with Cloudflare R2. Please configure R2 above for recording storage.
-            </p>
-          </div>
-
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0' }} />
 
           <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Slack</h4>
