@@ -4,7 +4,8 @@ require "googleauth"
 module Api
   module Admin
     class GoogleAuthController < Api::BaseController
-      before_action :authorize_admin!
+      before_action :authorize_admin!, except: [ :callback ]
+      skip_before_action :authenticate_request, only: [ :callback ]
 
       def authorize_url
         # Get OAuth client credentials from config
@@ -34,7 +35,7 @@ module Api
         state = params[:state]
 
         unless code.present?
-          return redirect_to "/admin?google_auth_error=missing_code"
+          return redirect_to "/admin/preferences?google_auth_error=missing_code"
         end
 
         # Exchange code for tokens
@@ -62,13 +63,13 @@ module Api
           SystemConfig.set("google_oauth_expires_at", (Time.current + tokens["expires_in"].to_i.seconds).to_s, config_type: "string")
           SystemConfig.set("google_oauth_authorized", true, config_type: "boolean")
 
-          redirect_to "/admin?google_auth_success=true"
+          redirect_to "/admin/preferences?google_auth_success=true"
         rescue RestClient::ExceptionWithResponse => e
           Rails.logger.error("Google OAuth error: #{e.response}")
-          redirect_to "/admin?google_auth_error=#{ERB::Util.url_encode(e.message)}"
+          redirect_to "/admin/preferences?google_auth_error=#{ERB::Util.url_encode(e.message)}"
         rescue => e
           Rails.logger.error("Google OAuth error: #{e.message}")
-          redirect_to "/admin?google_auth_error=#{ERB::Util.url_encode(e.message)}"
+          redirect_to "/admin/preferences?google_auth_error=#{ERB::Util.url_encode(e.message)}"
         end
       end
 
