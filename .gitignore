@@ -4,9 +4,6 @@
 # belong in git's global ignore instead:
 # `$XDG_CONFIG_HOME/git/ignore` or `~/.config/git/ignore`
 
-# Version file (generated during Docker build)
-/VERSION
-
 # Ignore bundler config.
 /.bundle
 
