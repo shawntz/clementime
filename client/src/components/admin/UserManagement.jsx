@@ -379,8 +379,18 @@ function CreateAdminModal({ onClose, onSuccess }) {
     setError(null);
 
     try {
+      // Split full_name into first_name and last_name
+      const nameParts = formData.full_name.trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
       await api.post('/admin/users', {
-        ...formData,
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        slack_id: formData.slack_id,
+        first_name: firstName,
+        last_name: lastName,
         role: 'admin'
       });
       onSuccess();
@@ -514,7 +524,18 @@ function EditAdminModal({ user, onClose, onSuccess }) {
     setError(null);
 
     try {
-      await api.put(`/admin/users/${user.id}`, formData);
+      // Split full_name into first_name and last_name
+      const nameParts = formData.full_name.trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      await api.put(`/admin/users/${user.id}`, {
+        username: formData.username,
+        email: formData.email,
+        slack_id: formData.slack_id,
+        first_name: firstName,
+        last_name: lastName
+      });
       onSuccess();
     } catch (err) {
       setError(err.response?.data?.errors?.join(', ') || 'Failed to update admin user');
