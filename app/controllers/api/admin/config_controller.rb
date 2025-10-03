@@ -37,6 +37,66 @@ module Api
         render json: config_hash, status: :ok
       end
 
+      def test_google_drive
+        uploader = GoogleDriveUploader.new
+
+        if uploader.errors.any?
+          return render json: {
+            success: false,
+            error: uploader.errors.join(", ")
+          }, status: :unprocessable_entity
+        end
+
+        begin
+          folder_id = SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID)&.strip
+
+          unless folder_id.present?
+            return render json: {
+              success: false,
+              error: "Google Drive folder ID not configured"
+            }, status: :unprocessable_entity
+          end
+
+          # Get folder info
+          drive_service = uploader.instance_variable_get(:@drive_service)
+          folder_info = drive_service.get_file(folder_id, fields: "id, name")
+
+          # List subfolders
+          response = drive_service.list_files(
+            q: "'#{folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            fields: "files(id, name)",
+            order_by: "name"
+          )
+
+          folder_structure = response.files.map(&:name)
+
+          render json: {
+            success: true,
+            root_folder_id: folder_id,
+            root_folder_name: folder_info.name,
+            folder_structure: folder_structure
+          }, status: :ok
+        rescue Google::Apis::ClientError => e
+          error_msg = if e.message.include?("File not found") || e.message.include?("notFound")
+            "Folder not found. Verify the folder ID is correct and the service account has access."
+          elsif e.message.include?("Invalid") || e.message.include?("Bad Request")
+            "Invalid folder ID format. Check your configuration."
+          else
+            e.message
+          end
+
+          render json: {
+            success: false,
+            error: error_msg
+          }, status: :unprocessable_entity
+        rescue => e
+          render json: {
+            success: false,
+            error: e.message
+          }, status: :internal_server_error
+        end
+      end
+
       def update
         config_params = params[:config] || {}
         errors = []

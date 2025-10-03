@@ -68,7 +68,7 @@ module Api
         temp_file = Tempfile.new([ "roster_by_section", ".zip" ])
 
         begin
-          Zip::File.open(temp_file.path, Zip::File::CREATE) do |zipfile|
+          Zip::File.open(temp_file.path, ::Zip::File::CREATE) do |zipfile|
             sections.each do |section|
               csv_string = CSV.generate do |csv|
                 csv << [ "Full Name", "Email", "Section", "Week Group", "Active" ]

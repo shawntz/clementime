@@ -80,6 +80,7 @@ Rails.application.routes.draw do
       # System configuration
       get "config", to: "config#index"
       put "config", to: "config#update"
+      post "config/test_google_drive", to: "config#test_google_drive"
 
       # Slack messages
       post "slack_messages/send_ta_schedules", to: "slack_messages#send_ta_schedules"

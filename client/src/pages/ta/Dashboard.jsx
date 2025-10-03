@@ -65,31 +65,36 @@ function ScheduleView() {
         setExamDates(dates);
 
         // Create array of weeks with their dates
+        // Each exam spans 2 weeks: Exam 1 = Weeks 1-2, Exam 2 = Weeks 3-4, etc.
         const weeks = [];
-        const totalExams = response.data.total_exams || 10;
+        const totalExams = response.data.total_exams || 5;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        for (let i = 1; i <= totalExams; i++) {
-          const oddKey = `${i}_odd`;
-          const evenKey = `${i}_even`;
+        for (let examNum = 1; examNum <= totalExams; examNum++) {
+          const oddKey = `${examNum}_odd`;
+          const evenKey = `${examNum}_even`;
           const oddDate = dates[oddKey] ? new Date(dates[oddKey]) : null;
           const evenDate = dates[evenKey] ? new Date(dates[evenKey]) : null;
 
-          // Use the earlier of the two dates (odd or even) as the exam date
-          let examDate = null;
-          if (oddDate && evenDate) {
-            examDate = oddDate < evenDate ? oddDate : evenDate;
-          } else if (oddDate) {
-            examDate = oddDate;
-          } else if (evenDate) {
-            examDate = evenDate;
-          }
+          // Week numbers for this exam
+          const oddWeekNum = (examNum - 1) * 2 + 1;
+          const evenWeekNum = (examNum - 1) * 2 + 2;
 
+          // Add odd week
           weeks.push({
-            weekNumber: i,
-            date: examDate,
-            isPast: examDate ? examDate < today : false
+            weekNumber: oddWeekNum,
+            examNumber: examNum,
+            date: oddDate,
+            isPast: oddDate ? oddDate < today : false
+          });
+
+          // Add even week
+          weeks.push({
+            weekNumber: evenWeekNum,
+            examNumber: examNum,
+            date: evenDate,
+            isPast: evenDate ? evenDate < today : false
           });
         }
 
@@ -133,7 +138,7 @@ function ScheduleView() {
           display: 'flex',
           gap: '0.5rem',
           padding: '1rem',
-          flexWrap: 'wrap',
+          overflowX: 'auto',
           borderBottom: '1px solid var(--border)'
         }}>
           {sortedWeeks.map((week) => (
@@ -144,10 +149,11 @@ function ScheduleView() {
               style={{
                 fontSize: '0.875rem',
                 padding: '0.5rem 1rem',
-                opacity: week.isPast ? 0.6 : 1
+                opacity: week.isPast ? 0.6 : 1,
+                whiteSpace: 'nowrap'
               }}
             >
-              Week {week.weekNumber} (Oral Exam {week.weekNumber})
+              Week {week.weekNumber} (Oral Exam {week.examNumber})
             </button>
           ))}
         </div>

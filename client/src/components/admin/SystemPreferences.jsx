@@ -37,6 +37,8 @@ export default function SystemPreferences() {
   const [saving, setSaving] = useState(false);
   const [googleDriveStatus, setGoogleDriveStatus] = useState(null);
   const [sendingTest, setSendingTest] = useState(null);
+  const [testingDrive, setTestingDrive] = useState(false);
+  const [driveTestResult, setDriveTestResult] = useState(null);
 
   useEffect(() => {
     loadConfig();
@@ -141,6 +143,23 @@ export default function SystemPreferences() {
       alert(`Failed to send test message: ${err.response?.data?.error || err.message}`);
     } finally {
       setSendingTest(null);
+    }
+  };
+
+  const testGoogleDriveConnection = async () => {
+    setTestingDrive(true);
+    setDriveTestResult(null);
+
+    try {
+      const response = await api.post('/admin/config/test_google_drive');
+      setDriveTestResult(response.data);
+    } catch (err) {
+      setDriveTestResult({
+        success: false,
+        error: err.response?.data?.error || err.message
+      });
+    } finally {
+      setTestingDrive(false);
     }
   };
 
@@ -507,6 +526,80 @@ export default function SystemPreferences() {
                   color: '#991b1b'
                 }}>
                   Error: {googleDriveStatus.error}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Test Google Drive Connection */}
+          <div>
+            <button
+              type="button"
+              onClick={testGoogleDriveConnection}
+              disabled={testingDrive}
+              className="btn btn-outline"
+              style={{ marginBottom: '1rem' }}
+            >
+              {testingDrive ? '🔄 Testing...' : '🧪 Test Google Drive Connection'}
+            </button>
+          </div>
+
+          {driveTestResult && (
+            <div style={{
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1rem',
+              backgroundColor: driveTestResult.success ? '#d1fae5' : '#fee2e2',
+              border: `1px solid ${driveTestResult.success ? '#10b981' : '#ef4444'}`
+            }}>
+              <div style={{
+                fontWeight: '600',
+                marginBottom: '0.5rem',
+                color: driveTestResult.success ? '#065f46' : '#991b1b'
+              }}>
+                {driveTestResult.success ? '✅ Connection Successful' : '❌ Connection Failed'}
+              </div>
+
+              {driveTestResult.error && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#991b1b',
+                  marginBottom: '0.5rem',
+                  fontFamily: 'monospace'
+                }}>
+                  {driveTestResult.error}
+                </div>
+              )}
+
+              {driveTestResult.folder_structure && (
+                <div style={{ marginTop: '1rem' }}>
+                  <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#065f46' }}>
+                    Folder Structure:
+                  </div>
+                  <div style={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem',
+                    background: 'white',
+                    padding: '0.75rem',
+                    borderRadius: '4px',
+                    border: '1px solid #10b981',
+                    maxHeight: '300px',
+                    overflowY: 'auto'
+                  }}>
+                    <div style={{ marginBottom: '0.5rem', color: '#047857' }}>
+                      📁 <strong>{driveTestResult.root_folder_name}</strong> (Root)
+                    </div>
+                    {driveTestResult.folder_structure.map((folder, idx) => (
+                      <div key={idx} style={{ marginLeft: '1.5rem', marginBottom: '0.25rem', color: '#059669' }}>
+                        📁 {folder}
+                      </div>
+                    ))}
+                    {driveTestResult.folder_structure.length === 0 && (
+                      <div style={{ marginLeft: '1.5rem', color: '#6b7280', fontStyle: 'italic' }}>
+                        (No subfolders - recordings will be organized here)
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

@@ -76,7 +76,13 @@ export default function AudioRecorder({ slot, onClose }) {
           alert('Recording saved locally and uploaded successfully!');
           onClose();
         } catch (uploadErr) {
-          alert('Recording saved locally but upload failed: ' + uploadErr.message + '\nYou can manually upload the downloaded file later.');
+          console.error('Upload error:', uploadErr);
+          const errorMsg = uploadErr.response?.data?.errors
+            ? (Array.isArray(uploadErr.response.data.errors)
+                ? uploadErr.response.data.errors.join(', ')
+                : uploadErr.response.data.errors)
+            : uploadErr.message;
+          alert('Recording saved locally but upload failed: ' + errorMsg + '\n\nYou can manually upload the downloaded file later.');
           onClose();
         }
       };

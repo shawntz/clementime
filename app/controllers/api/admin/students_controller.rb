@@ -57,7 +57,7 @@ module Api
         temp_file = Tempfile.new([ "roster_export", ".zip" ])
 
         begin
-          Zip::File.open(temp_file.path, Zip::File::CREATE) do |zipfile|
+          Zip::File.open(temp_file.path, ::Zip::File::CREATE) do |zipfile|
             sections.each do |section|
               students = section.students.where(is_active: true).order(:full_name)
               next if students.empty?
