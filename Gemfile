@@ -46,6 +46,7 @@ gem "csv"
 gem "fuzzy_match"
 gem "rubyzip", require: "zip"
 gem "rest-client"
+gem "aws-sdk-s3"  # For Cloudflare R2 storage
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

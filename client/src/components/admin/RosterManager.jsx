@@ -133,11 +133,11 @@ export default function RosterManager() {
       const response = await api.get('/admin/students/export_by_section', {
         responseType: 'blob'
       });
-      const blob = new Blob([response.data], { type: 'application/zip' });
+      const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `roster_by_section_${new Date().toISOString().split('T')[0]}.zip`;
+      link.download = `roster_by_section_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

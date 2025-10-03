@@ -151,7 +151,7 @@ export default function AudioRecorder({ slot, onClose }) {
         {uploading && (
           <div style={{ textAlign: 'center' }}>
             <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-            <p>Uploading to Google Drive...</p>
+            <p>Uploading to cloud storage...</p>
           </div>
         )}
       </div>

@@ -55,7 +55,8 @@ module Api
           recording: slot.recording ? {
             id: slot.recording.id,
             recorded_at: slot.recording.recorded_at,
-            uploaded: slot.recording.uploaded?
+            uploaded: slot.recording.uploaded?,
+            recording_url: slot.recording.recording_url
           } : nil
         }
       end

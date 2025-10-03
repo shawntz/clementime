@@ -101,7 +101,17 @@ export default function WeeklySchedule({ weekNumber }) {
                         )}
                       </td>
                       <td>
-                        {!slot.has_recording && (
+                        {slot.has_recording && slot.recording.uploaded && slot.recording.recording_url ? (
+                          <a
+                            href={slot.recording.recording_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline"
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                          >
+                            ▶️ Play
+                          </a>
+                        ) : !slot.has_recording ? (
                           <button
                             onClick={() => setSelectedSlot(slot)}
                             className="btn btn-primary"
@@ -109,7 +119,7 @@ export default function WeeklySchedule({ weekNumber }) {
                           >
                             🎙️ Record
                           </button>
-                        )}
+                        ) : null}
                       </td>
                     </tr>
                   ))}

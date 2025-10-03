@@ -56,22 +56,22 @@ function ScheduleView() {
   const [weekNumber, setWeekNumber] = useState(1);
   const [examDates, setExamDates] = useState({});
   const [sortedWeeks, setSortedWeeks] = useState([]);
-  const [showDriveWarning, setShowDriveWarning] = useState(false);
-  const [driveAuthorized, setDriveAuthorized] = useState(false);
+  const [showStorageWarning, setShowStorageWarning] = useState(false);
+  const [r2Configured, setR2Configured] = useState(false);
 
   useEffect(() => {
     const loadExamDates = async () => {
       try {
         const response = await api.get('/ta/config');
         const dates = response.data.exam_dates || {};
-        const googleDriveAuth = response.data.google_drive_authorized || false;
+        const r2Status = response.data.cloudflare_r2_configured || false;
 
         setExamDates(dates);
-        setDriveAuthorized(googleDriveAuth);
+        setR2Configured(r2Status);
 
-        // Show warning if Google Drive is not authorized
-        if (!googleDriveAuth) {
-          setShowDriveWarning(true);
+        // Show warning if R2 is not configured
+        if (!r2Status) {
+          setShowStorageWarning(true);
         }
 
         // Create array of weeks with their dates
@@ -142,8 +142,8 @@ function ScheduleView() {
 
   return (
     <>
-      {/* Google Drive Warning Modal */}
-      {showDriveWarning && (
+      {/* Cloud Storage Warning Modal */}
+      {showStorageWarning && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -159,11 +159,11 @@ function ScheduleView() {
           <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
             <h3 style={{ color: 'var(--error)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '2rem' }}>⚠️</span>
-              Google Drive Not Configured
+              Cloud Storage Not Configured
             </h3>
 
             <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
-              Recording uploads to Google Drive are not currently available. Recordings will be saved locally to your computer instead.
+              Recording uploads to cloud storage are not currently available. Recordings will be saved locally to your computer instead.
             </p>
 
             <div style={{
@@ -174,13 +174,13 @@ function ScheduleView() {
               marginBottom: '1rem'
             }}>
               <p style={{ margin: 0, fontSize: '0.875rem', color: '#92400e' }}>
-                <strong>Note for Instructor/Admin:</strong> Please configure Google Drive OAuth in System Preferences → Integrations to enable automatic uploads.
+                <strong>Note for Instructor/Admin:</strong> Please configure Cloudflare R2 in System Preferences → Integrations to enable automatic uploads.
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => setShowDriveWarning(false)}
+                onClick={() => setShowStorageWarning(false)}
                 className="btn btn-primary"
               >
                 Got it, Continue

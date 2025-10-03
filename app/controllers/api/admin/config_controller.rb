@@ -14,10 +14,11 @@ module Api
           total_exams: SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5),
           navbar_title: SystemConfig.get("navbar_title", ""),
           base_url: SystemConfig.get("base_url", ""),
-          google_drive_folder_id: SystemConfig.get(SystemConfig::GOOGLE_DRIVE_FOLDER_ID, ""),
-          google_service_account_json: SystemConfig.get("google_service_account_json", ""),
-          google_oauth_client_id: SystemConfig.get("google_oauth_client_id", ""),
-          google_oauth_client_secret: SystemConfig.get("google_oauth_client_secret", ""),
+          cloudflare_r2_account_id: SystemConfig.get("cloudflare_r2_account_id", ""),
+          cloudflare_r2_access_key_id: SystemConfig.get("cloudflare_r2_access_key_id", ""),
+          cloudflare_r2_secret_access_key: SystemConfig.get("cloudflare_r2_secret_access_key", ""),
+          cloudflare_r2_bucket_name: SystemConfig.get("cloudflare_r2_bucket_name", ""),
+          cloudflare_r2_public_url: SystemConfig.get("cloudflare_r2_public_url", ""),
           slack_bot_token: SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN, ""),
           slack_app_token: SystemConfig.get(SystemConfig::SLACK_APP_TOKEN, ""),
           slack_signing_secret: SystemConfig.get(SystemConfig::SLACK_SIGNING_SECRET, ""),
@@ -121,27 +122,16 @@ module Api
               SystemConfig.set(SystemConfig::QUARTER_START_DATE, value, config_type: "date")
             when "total_exams"
               SystemConfig.set(SystemConfig::TOTAL_EXAMS, value.to_i, config_type: "integer")
-            when "google_drive_folder_id"
-              # Validate and clean folder ID
-              cleaned_value = value.to_s.strip
-
-              # Extract folder ID from URL if a URL was provided
-              if cleaned_value.include?("drive.google.com")
-                # Extract from URL like: https://drive.google.com/drive/folders/1ABC...XYZ
-                if cleaned_value.match(/folders\/([a-zA-Z0-9_-]+)/)
-                  cleaned_value = $1
-                end
-              end
-
-              SystemConfig.set(SystemConfig::GOOGLE_DRIVE_FOLDER_ID, cleaned_value, config_type: "string")
-              google_drive_updated = true
-            when "google_service_account_json"
-              SystemConfig.set("google_service_account_json", value, config_type: "string")
-              google_drive_updated = true
-            when "google_oauth_client_id"
-              SystemConfig.set("google_oauth_client_id", value, config_type: "string")
-            when "google_oauth_client_secret"
-              SystemConfig.set("google_oauth_client_secret", value, config_type: "string")
+            when "cloudflare_r2_account_id"
+              SystemConfig.set("cloudflare_r2_account_id", value, config_type: "string")
+            when "cloudflare_r2_access_key_id"
+              SystemConfig.set("cloudflare_r2_access_key_id", value, config_type: "string")
+            when "cloudflare_r2_secret_access_key"
+              SystemConfig.set("cloudflare_r2_secret_access_key", value, config_type: "string")
+            when "cloudflare_r2_bucket_name"
+              SystemConfig.set("cloudflare_r2_bucket_name", value, config_type: "string")
+            when "cloudflare_r2_public_url"
+              SystemConfig.set("cloudflare_r2_public_url", value, config_type: "string")
             when "slack_bot_token"
               SystemConfig.set(SystemConfig::SLACK_BOT_TOKEN, value, config_type: "string")
             when "slack_app_token"

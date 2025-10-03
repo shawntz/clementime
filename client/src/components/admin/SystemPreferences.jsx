@@ -3,7 +3,6 @@ import api from '../../services/api';
 
 export default function SystemPreferences() {
   const [activeTab, setActiveTab] = useState('exam');
-  const [showGoogleHelp, setShowGoogleHelp] = useState(false);
   const [config, setConfig] = useState({
     exam_day: 'friday',
     exam_start_time: '13:30',
@@ -14,8 +13,11 @@ export default function SystemPreferences() {
     total_exams: 5,
     navbar_title: '',
     base_url: '',
-    google_drive_folder_id: '',
-    google_service_account_json: '',
+    cloudflare_r2_account_id: '',
+    cloudflare_r2_access_key_id: '',
+    cloudflare_r2_secret_access_key: '',
+    cloudflare_r2_bucket_name: '',
+    cloudflare_r2_public_url: '',
     slack_bot_token: '',
     slack_app_token: '',
     slack_signing_secret: '',
@@ -35,27 +37,10 @@ export default function SystemPreferences() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [googleDriveStatus, setGoogleDriveStatus] = useState(null);
   const [sendingTest, setSendingTest] = useState(null);
-  const [testingDrive, setTestingDrive] = useState(false);
-  const [driveTestResult, setDriveTestResult] = useState(null);
-  const [googleAuthStatus, setGoogleAuthStatus] = useState(null);
-  const [authorizingGoogle, setAuthorizingGoogle] = useState(false);
 
   useEffect(() => {
     loadConfig();
-    loadGoogleAuthStatus();
-
-    // Check for OAuth callback success/error
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('google_auth_success')) {
-      alert('✅ Google Drive authorized successfully!');
-      loadGoogleAuthStatus();
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (urlParams.get('google_auth_error')) {
-      alert('❌ Google Drive authorization failed: ' + urlParams.get('google_auth_error'));
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
   }, []);
 
   const loadConfig = async () => {
@@ -93,17 +78,11 @@ export default function SystemPreferences() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setGoogleDriveStatus(null);
 
     try {
       console.log('Saving config:', config);
       const response = await api.put('/admin/config', { config });
       console.log('Save response:', response.data);
-
-      // Check if Google Drive validation results are included
-      if (response.data.google_drive_status) {
-        setGoogleDriveStatus(response.data.google_drive_status);
-      }
 
       alert('Configuration saved successfully');
       // Reload config to ensure we have the latest from server
@@ -118,26 +97,6 @@ export default function SystemPreferences() {
 
   const handleChange = (field, value) => {
     setConfig(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        // Validate it's valid JSON
-        JSON.parse(event.target.result);
-        // Base64 encode the file content
-        const base64 = btoa(event.target.result);
-        handleChange('google_service_account_json', base64);
-        alert('Service account JSON file uploaded and encoded successfully');
-      } catch (err) {
-        alert('Invalid JSON file: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
   };
 
   const sendTestMessage = async (messageType) => {
@@ -157,57 +116,6 @@ export default function SystemPreferences() {
       alert(`Failed to send test message: ${err.response?.data?.error || err.message}`);
     } finally {
       setSendingTest(null);
-    }
-  };
-
-  const testGoogleDriveConnection = async () => {
-    setTestingDrive(true);
-    setDriveTestResult(null);
-
-    try {
-      const response = await api.post('/admin/config/test_google_drive');
-      setDriveTestResult(response.data);
-    } catch (err) {
-      setDriveTestResult({
-        success: false,
-        error: err.response?.data?.error || err.message
-      });
-    } finally {
-      setTestingDrive(false);
-    }
-  };
-
-  const loadGoogleAuthStatus = async () => {
-    try {
-      const response = await api.get('/admin/google_auth/status');
-      setGoogleAuthStatus(response.data);
-    } catch (err) {
-      console.error('Failed to load Google auth status:', err);
-    }
-  };
-
-  const authorizeGoogleDrive = async () => {
-    setAuthorizingGoogle(true);
-    try {
-      const response = await api.get('/admin/google_auth/authorize_url');
-      window.location.href = response.data.authorization_url;
-    } catch (err) {
-      alert('Failed to get authorization URL: ' + (err.response?.data?.error || err.message));
-      setAuthorizingGoogle(false);
-    }
-  };
-
-  const revokeGoogleDrive = async () => {
-    if (!confirm('Are you sure you want to revoke Google Drive access? You will need to re-authorize.')) {
-      return;
-    }
-
-    try {
-      await api.delete('/admin/google_auth/revoke');
-      alert('Google Drive access revoked successfully');
-      loadGoogleAuthStatus();
-    } catch (err) {
-      alert('Failed to revoke access: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -521,351 +429,142 @@ export default function SystemPreferences() {
 
         {activeTab === 'integrations' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive - OAuth 2.0</h4>
-
-          {/* OAuth Authorization Status */}
-          <div style={{
-            padding: '1rem',
-            borderRadius: '8px',
-            backgroundColor: googleAuthStatus?.authorized ? '#d1fae5' : '#fef3c7',
-            border: `1px solid ${googleAuthStatus?.authorized ? '#10b981' : '#f59e0b'}`
-          }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: googleAuthStatus?.authorized ? '#065f46' : '#92400e' }}>
-              {googleAuthStatus?.authorized ? '✅ Google Drive Authorized' : '⚠️ Google Drive Not Authorized'}
-            </div>
-            {googleAuthStatus?.authorized ? (
-              <div>
-                <p style={{ fontSize: '0.875rem', color: '#047857', marginBottom: '0.5rem' }}>
-                  Your Google account is connected and ready to upload recordings.
-                </p>
-                <button
-                  type="button"
-                  onClick={revokeGoogleDrive}
-                  className="btn btn-outline"
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  🔓 Revoke Access
-                </button>
-              </div>
-            ) : (
-              <div>
-                <p style={{ fontSize: '0.875rem', color: '#92400e', marginBottom: '0.5rem' }}>
-                  Click below to authorize Clementime to upload recordings to your Google Drive.
-                </p>
-                <button
-                  type="button"
-                  onClick={authorizeGoogleDrive}
-                  disabled={authorizingGoogle}
-                  className="btn btn-primary"
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  {authorizingGoogle ? '🔄 Redirecting...' : '🔐 Authorize Google Drive'}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive Configuration</h4>
-
-          {/* OAuth Client Credentials */}
-          <div>
-            <label htmlFor="google_oauth_client_id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Google OAuth Client ID
-            </label>
-            <input
-              id="google_oauth_client_id"
-              type="text"
-              className="form-input"
-              value={config.google_oauth_client_id || ''}
-              onChange={(e) => handleChange('google_oauth_client_id', e.target.value)}
-              placeholder="123456789-abcdefg.apps.googleusercontent.com"
-              style={{ width: '100%' }}
-            />
-            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
-              From Google Cloud Console → APIs & Services → Credentials
-            </small>
-          </div>
-
-          <div>
-            <label htmlFor="google_oauth_client_secret" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Google OAuth Client Secret
-            </label>
-            <input
-              id="google_oauth_client_secret"
-              type="password"
-              className="form-input"
-              value={config.google_oauth_client_secret || ''}
-              onChange={(e) => handleChange('google_oauth_client_secret', e.target.value)}
-              placeholder="GOCSPX-..."
-              style={{ width: '100%' }}
-            />
-            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
-              Client secret from Google Cloud Console
-            </small>
-          </div>
+          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Cloudflare R2 Storage</h4>
 
           <div style={{
             background: '#e3f2fd',
             border: '1px solid #2196f3',
             borderRadius: '8px',
             padding: '1rem',
-            fontSize: '0.875rem'
+            fontSize: '0.875rem',
+            marginBottom: '1rem'
           }}>
-            <h5 style={{ margin: '0 0 0.75rem 0', color: '#1976d2' }}>How to Set Up OAuth 2.0</h5>
+            <h5 style={{ margin: '0 0 0.75rem 0', color: '#1976d2' }}>How to Set Up Cloudflare R2</h5>
             <ol style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: '1.6' }}>
               <li style={{ marginBottom: '0.5rem' }}>
-                Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2' }}>Google Cloud Console</a>
+                Go to <a href="https://dash.cloudflare.com" target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2' }}>Cloudflare Dashboard</a>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                Navigate to <strong>APIs & Services → Credentials</strong>
+                Navigate to <strong>R2 → Create bucket</strong>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                Click <strong>Create Credentials → OAuth 2.0 Client ID</strong>
+                Create a bucket (e.g., "oral-exam-recordings")
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                Application type: <strong>Web application</strong>
+                Go to <strong>Settings → Public Access</strong> and enable <strong>Allow Public Access</strong>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                Add authorized redirect URI: <code style={{ background: 'white', padding: '0.125rem 0.25rem', borderRadius: '3px' }}>{config.base_url || 'https://your-app.com'}/api/admin/google_auth/callback</code>
+                Copy the <strong>Public R2.dev URL</strong> (e.g., https://pub-xxxxx.r2.dev)
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                Copy Client ID and Client Secret above
+                Go to <strong>R2 → Manage R2 API Tokens → Create API Token</strong>
+              </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                Permissions: <strong>Object Read & Write</strong>
               </li>
               <li>
-                <strong>Important:</strong> Enable the <strong>Google Drive API</strong> in APIs & Services → Library
+                Copy <strong>Access Key ID</strong> and <strong>Secret Access Key</strong>
               </li>
             </ol>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
-
-          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Google Drive Folder</h4>
-
-          {/* Google Drive Folder ID */}
           <div>
-            <label htmlFor="google_drive_folder_id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Google Drive Folder ID
+            <label htmlFor="cloudflare_r2_account_id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              Cloudflare Account ID
             </label>
             <input
-              id="google_drive_folder_id"
+              id="cloudflare_r2_account_id"
               type="text"
               className="form-input"
-              value={config.google_drive_folder_id}
-              onChange={(e) => handleChange('google_drive_folder_id', e.target.value)}
-              placeholder="e.g., 1a2b3c4d5e6f7g8h9i0j"
+              value={config.cloudflare_r2_account_id || ''}
+              onChange={(e) => handleChange('cloudflare_r2_account_id', e.target.value)}
+              placeholder="your-account-id"
               style={{ width: '100%' }}
             />
             <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
-              The folder ID from the Google Drive URL where recordings will be uploaded
+              Found in Cloudflare Dashboard → R2 → Overview
             </small>
           </div>
 
-          {/* Google Drive Validation Status */}
-          {googleDriveStatus && (
-            <div style={{
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1rem',
-              backgroundColor: googleDriveStatus.valid ? '#d1fae5' : '#fee2e2',
-              border: `1px solid ${googleDriveStatus.valid ? '#10b981' : '#ef4444'}`
-            }}>
-              <div style={{
-                fontWeight: '600',
-                marginBottom: '0.5rem',
-                color: googleDriveStatus.valid ? '#065f46' : '#991b1b'
-              }}>
-                {googleDriveStatus.message}
-              </div>
-              {googleDriveStatus.details && (
-                <div style={{
-                  fontSize: '0.875rem',
-                  color: googleDriveStatus.valid ? '#047857' : '#b91c1c'
-                }}>
-                  {googleDriveStatus.details}
-                </div>
-              )}
-              {googleDriveStatus.error && (
-                <div style={{
-                  fontSize: '0.875rem',
-                  marginTop: '0.5rem',
-                  fontFamily: 'monospace',
-                  color: '#991b1b'
-                }}>
-                  Error: {googleDriveStatus.error}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Test Google Drive Connection */}
           <div>
-            <button
-              type="button"
-              onClick={testGoogleDriveConnection}
-              disabled={testingDrive}
-              className="btn btn-outline"
-              style={{ marginBottom: '1rem' }}
-            >
-              {testingDrive ? '🔄 Testing...' : '🧪 Test Google Drive Connection'}
-            </button>
-          </div>
-
-          {driveTestResult && (
-            <div style={{
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1rem',
-              backgroundColor: driveTestResult.success ? '#d1fae5' : '#fee2e2',
-              border: `1px solid ${driveTestResult.success ? '#10b981' : '#ef4444'}`
-            }}>
-              <div style={{
-                fontWeight: '600',
-                marginBottom: '0.5rem',
-                color: driveTestResult.success ? '#065f46' : '#991b1b'
-              }}>
-                {driveTestResult.success ? '✅ Connection Successful' : '❌ Connection Failed'}
-              </div>
-
-              {driveTestResult.error && (
-                <div style={{
-                  fontSize: '0.875rem',
-                  color: '#991b1b',
-                  marginBottom: '0.5rem',
-                  fontFamily: 'monospace'
-                }}>
-                  {driveTestResult.error}
-                </div>
-              )}
-
-              {driveTestResult.folder_structure && (
-                <div style={{ marginTop: '1rem' }}>
-                  <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#065f46' }}>
-                    Folder Structure:
-                  </div>
-                  <div style={{
-                    fontFamily: 'monospace',
-                    fontSize: '0.875rem',
-                    background: 'white',
-                    padding: '0.75rem',
-                    borderRadius: '4px',
-                    border: '1px solid #10b981',
-                    maxHeight: '300px',
-                    overflowY: 'auto'
-                  }}>
-                    <div style={{ marginBottom: '0.5rem', color: '#047857' }}>
-                      📁 <strong>{driveTestResult.root_folder_name}</strong> (Root)
-                    </div>
-                    {driveTestResult.folder_structure.map((folder, idx) => (
-                      <div key={idx} style={{ marginLeft: '1.5rem', marginBottom: '0.25rem', color: '#059669' }}>
-                        📁 {folder}
-                      </div>
-                    ))}
-                    {driveTestResult.folder_structure.length === 0 && (
-                      <div style={{ marginLeft: '1.5rem', color: '#6b7280', fontStyle: 'italic' }}>
-                        (No subfolders - recordings will be organized here)
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Google Service Account JSON */}
-          <div>
-            <label htmlFor="google_service_account_json" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Google Service Account JSON
-              <button
-                type="button"
-                onClick={() => setShowGoogleHelp(!showGoogleHelp)}
-                style={{
-                  background: 'var(--primary)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold'
-                }}
-                title="How to get service account JSON"
-              >
-                ?
-              </button>
+            <label htmlFor="cloudflare_r2_access_key_id" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              R2 Access Key ID
             </label>
-
-            {showGoogleHelp && (
-              <div style={{
-                background: '#e3f2fd',
-                border: '1px solid #2196f3',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1rem',
-                fontSize: '0.875rem'
-              }}>
-                <h5 style={{ margin: '0 0 0.75rem 0', color: '#1976d2' }}>How to Create a Google Service Account</h5>
-                <ol style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: '1.6' }}>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2' }}>Google Cloud Console</a>
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Create a new project or select an existing one
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Navigate to <strong>APIs & Services → Credentials</strong>
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Click <strong>Create Credentials → Service Account</strong>
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Fill in the service account details and click <strong>Create and Continue</strong>
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Grant the service account the <strong>Editor</strong> role (or custom role with Drive access)
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Click on the created service account, go to <strong>Keys</strong> tab
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    Click <strong>Add Key → Create new key → JSON</strong>
-                  </li>
-                  <li style={{ marginBottom: '0.5rem' }}>
-                    The JSON file will be downloaded - upload it here
-                  </li>
-                  <li>
-                    <strong>Important:</strong> Enable the <strong>Google Drive API</strong> for your project in APIs & Services → Library
-                  </li>
-                </ol>
-              </div>
-            )}
-
-            <div style={{ marginBottom: '0.5rem' }}>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
-                style={{ display: 'block', marginBottom: '0.5rem' }}
-              />
-              <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', display: 'block' }}>
-                Upload your Google service account JSON file (will be automatically base64 encoded)
-              </small>
-            </div>
-            <textarea
-              id="google_service_account_json"
+            <input
+              id="cloudflare_r2_access_key_id"
+              type="text"
               className="form-input"
-              value={config.google_service_account_json}
-              onChange={(e) => handleChange('google_service_account_json', e.target.value)}
-              placeholder="Or paste the base64-encoded JSON here manually"
-              rows="4"
-              style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.875rem' }}
+              value={config.cloudflare_r2_access_key_id || ''}
+              onChange={(e) => handleChange('cloudflare_r2_access_key_id', e.target.value)}
+              placeholder="Access Key ID"
+              style={{ width: '100%' }}
             />
           </div>
 
+          <div>
+            <label htmlFor="cloudflare_r2_secret_access_key" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              R2 Secret Access Key
+            </label>
+            <input
+              id="cloudflare_r2_secret_access_key"
+              type="password"
+              className="form-input"
+              value={config.cloudflare_r2_secret_access_key || ''}
+              onChange={(e) => handleChange('cloudflare_r2_secret_access_key', e.target.value)}
+              placeholder="Secret Access Key"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="cloudflare_r2_bucket_name" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              R2 Bucket Name
+            </label>
+            <input
+              id="cloudflare_r2_bucket_name"
+              type="text"
+              className="form-input"
+              value={config.cloudflare_r2_bucket_name || ''}
+              onChange={(e) => handleChange('cloudflare_r2_bucket_name', e.target.value)}
+              placeholder="oral-exam-recordings"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="cloudflare_r2_public_url" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              R2 Public URL
+            </label>
+            <input
+              id="cloudflare_r2_public_url"
+              type="text"
+              className="form-input"
+              value={config.cloudflare_r2_public_url || ''}
+              onChange={(e) => handleChange('cloudflare_r2_public_url', e.target.value)}
+              placeholder="https://pub-xxxxx.r2.dev"
+              style={{ width: '100%' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+              The public R2.dev URL from your bucket settings
+            </small>
+          </div>
+
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
+
+          <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Legacy Google Drive (Deprecated)</h4>
+
+          <div style={{
+            background: '#fef3c7',
+            border: '1px solid #f59e0b',
+            borderRadius: '8px',
+            padding: '1rem'
+          }}>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: '#92400e' }}>
+              Google Drive integration has been replaced with Cloudflare R2. Please configure R2 above for recording storage.
+            </p>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0' }} />
 
           <h4 style={{ color: 'var(--primary)', marginTop: 0 }}>Slack</h4>
 

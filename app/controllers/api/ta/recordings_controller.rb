@@ -55,13 +55,8 @@ module Api
         # Decode base64 audio data
         audio_data = Base64.decode64(params[:audio_data])
 
-        # Try OAuth uploader first, fallback to service account
-        uploader = GoogleDriveOauthUploader.new
-
-        # If OAuth not configured, try service account
-        if uploader.errors.any? && uploader.errors.first.include?("not authorized")
-          uploader = GoogleDriveUploader.new
-        end
+        # Use Cloudflare R2 uploader
+        uploader = CloudflareR2Uploader.new
 
         if uploader.upload_from_data(audio_data, recording)
           render json: {
