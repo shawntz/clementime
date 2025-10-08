@@ -19,4 +19,16 @@ class UserMailer < ApplicationMailer
 
     mail(mail_options)
   end
+
+  def password_reset(user)
+    @user = user
+    app_base = ENV["APP_HOST"] || "http://localhost:5173"
+    app_base = "https://#{app_base}" unless app_base.start_with?("http")
+    @reset_url = "#{app_base}/reset-password?token=#{user.reset_password_token}"
+
+    mail(
+      to: user.email,
+      subject: "Password Reset Request - Clementime"
+    )
+  end
 end

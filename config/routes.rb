@@ -12,6 +12,8 @@ Rails.application.routes.draw do
     post "auth/logout", to: "auth#logout"
     post "auth/change_password", to: "auth#change_password"
     get "auth/current_user", to: "auth#current_user"
+    post "auth/forgot_password", to: "auth#forgot_password"
+    post "auth/reset_password", to: "auth#reset_password"
 
     # Profile
     get "profile", to: "profile#show"

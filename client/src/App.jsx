@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import AdminDashboard from './pages/admin/Dashboard';
 import TADashboard from './pages/ta/Dashboard';
 import './index.css';
@@ -49,6 +50,7 @@ function App() {
 
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/app" element={<AppHome />} />
 
           {/* Admin routes */}
