@@ -36,7 +36,9 @@ export default function UserManagement() {
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
       await api.put(`/admin/users/${userId}`, {
-        is_active: !currentStatus
+        user: {
+          is_active: !currentStatus
+        }
       });
       loadUsers();
     } catch (err) {
@@ -395,14 +397,17 @@ function CreateAdminModal({ onClose, onSuccess }) {
       const lastName = nameParts.slice(1).join(' ') || '';
 
       await api.post('/admin/users', {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        password_confirmation: formData.password,
-        slack_id: formData.slack_id,
-        first_name: firstName,
-        last_name: lastName,
-        role: 'admin'
+        user: {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          password_confirmation: formData.password,
+          slack_id: formData.slack_id,
+          first_name: firstName,
+          last_name: lastName,
+          role: 'admin',
+          is_active: true
+        }
       });
       onSuccess();
     } catch (err) {
@@ -536,11 +541,13 @@ function EditAdminModal({ user, onClose, onSuccess }) {
       const lastName = nameParts.slice(1).join(' ') || '';
 
       await api.put(`/admin/users/${user.id}`, {
-        username: formData.username,
-        email: formData.email,
-        slack_id: formData.slack_id,
-        first_name: firstName,
-        last_name: lastName
+        user: {
+          username: formData.username,
+          email: formData.email,
+          slack_id: formData.slack_id,
+          first_name: firstName,
+          last_name: lastName
+        }
       });
       onSuccess();
     } catch (err) {
