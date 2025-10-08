@@ -2,7 +2,7 @@ module Api
   module Admin
     class StudentsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_student, only: [ :show, :update, :deactivate ]
+      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group ]
 
       def index
         students = Student.includes(:section, :constraints)
