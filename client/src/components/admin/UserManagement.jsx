@@ -363,11 +363,21 @@ function SlackCredentialsModal({ user, onClose }) {
 }
 
 function CreateAdminModal({ onClose, onSuccess }) {
+  // Generate a random temporary password
+  const generatePassword = () => {
+    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return password;
+  };
+
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
     email: '',
-    password: '',
+    password: generatePassword(),
     slack_id: ''
   });
   const [saving, setSaving] = useState(false);
@@ -388,6 +398,7 @@ function CreateAdminModal({ onClose, onSuccess }) {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        password_confirmation: formData.password,
         slack_id: formData.slack_id,
         first_name: firstName,
         last_name: lastName,
@@ -451,21 +462,6 @@ function CreateAdminModal({ onClose, onSuccess }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password *</label>
-            <input
-              type="password"
-              className="form-input"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              minLength="6"
-            />
-            <small style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-              Minimum 6 characters
-            </small>
-          </div>
-
-          <div className="form-group">
             <label className="form-label">Slack ID</label>
             <input
               type="text"
@@ -477,6 +473,16 @@ function CreateAdminModal({ onClose, onSuccess }) {
             <small style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
               Used for Slack notifications and channel assignments
             </small>
+          </div>
+
+          <div style={{
+            padding: '0.75rem',
+            backgroundColor: 'var(--info-light)',
+            borderRadius: '6px',
+            marginBottom: '1rem',
+            fontSize: '0.875rem'
+          }}>
+            ℹ️ A temporary password will be auto-generated. Send the welcome email to provide the admin with their login credentials.
           </div>
 
           {error && (
