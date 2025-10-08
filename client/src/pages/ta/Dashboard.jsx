@@ -92,19 +92,29 @@ function ScheduleView() {
           const evenWeekNum = (examNum - 1) * 2 + 2;
 
           // Add odd week
+          const oddDayAfter = oddDate ? new Date(oddDate) : null;
+          if (oddDayAfter) {
+            oddDayAfter.setHours(0, 0, 0, 0);
+            oddDayAfter.setDate(oddDayAfter.getDate() + 1);
+          }
           weeks.push({
             weekNumber: oddWeekNum,
             examNumber: examNum,
             date: oddDate,
-            isPast: oddDate ? oddDate < today : false
+            isPast: oddDayAfter ? today >= oddDayAfter : false
           });
 
           // Add even week
+          const evenDayAfter = evenDate ? new Date(evenDate) : null;
+          if (evenDayAfter) {
+            evenDayAfter.setHours(0, 0, 0, 0);
+            evenDayAfter.setDate(evenDayAfter.getDate() + 1);
+          }
           weeks.push({
             weekNumber: evenWeekNum,
             examNumber: examNum,
             date: evenDate,
-            isPast: evenDate ? evenDate < today : false
+            isPast: evenDayAfter ? today >= evenDayAfter : false
           });
         }
 
