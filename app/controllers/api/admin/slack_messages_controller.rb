@@ -297,7 +297,7 @@ module Api
       private
 
       def build_test_student_message
-        template = SystemConfig.get("slack_student_message_template", "📝 TEST: Oral Exam Session for {{student_name}}")
+        template = SystemConfig.get("slack_student_message_template", "📝 Oral Exam Session for {{student_name}}\n\n📊 Exam Number: {{exam_number}}\n📅 Date: {{date}}\n⏰ Time: {{time}}\n📍 Location: {{location}}\n👤 Facilitator: {{ta_name}}\n\n📋 Course: {{course}} | 🎓 Term: {{term}}")
 
         template.gsub("{{student_name}}", "Jane Doe (TEST)")
                 .gsub("{{exam_number}}", "1")
