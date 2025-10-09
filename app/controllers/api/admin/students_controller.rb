@@ -129,24 +129,41 @@ module Api
           }, status: :forbidden
         end
 
-        # Update student's week group
-        @student.update!(week_group: new_week_group)
+        ActiveRecord::Base.transaction do
+          # Update student's week group
+          @student.update!(week_group: new_week_group)
 
-        # Regenerate schedules for affected exams
-        slots_updated = @student.exam_slots
-                                .where("exam_number >= ?", from_exam)
-                                .update_all(
-                                  is_scheduled: false,
-                                  date: nil,
-                                  start_time: nil,
-                                  end_time: nil
-                                )
+          # Clear affected exam slots
+          slots_cleared = @student.exam_slots
+                                  .where("exam_number >= ?", from_exam)
+                                  .update_all(
+                                    is_scheduled: false,
+                                    date: nil,
+                                    start_time: nil,
+                                    end_time: nil
+                                  )
 
-        render json: {
-          message: "Student transferred to #{new_week_group} week group",
-          student: student_detail_response(@student),
-          slots_cleared: slots_updated
-        }, status: :ok
+          # Get total exams from config
+          total_exams = SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5)
+
+          # Regenerate schedule for affected exams
+          generator = ScheduleGenerator.new
+          section = @student.section
+          slots_scheduled = 0
+
+          (from_exam..total_exams).each do |exam_number|
+            if generator.send(:generate_single_student_slot, @student, section, exam_number)
+              slots_scheduled += 1
+            end
+          end
+
+          render json: {
+            message: "Student transferred to #{new_week_group} week group and rescheduled",
+            student: student_detail_response(@student.reload),
+            slots_cleared: slots_cleared,
+            slots_scheduled: slots_scheduled
+          }, status: :ok
+        end
       rescue => e
         render json: { errors: e.message }, status: :internal_server_error
       end
