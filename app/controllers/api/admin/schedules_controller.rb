@@ -129,6 +129,138 @@ module Api
         end
       end
 
+      def schedule_new_students
+        # Find all students who have unscheduled slots or no slots at all
+        total_exams = SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5)
+        exam_duration = SystemConfig.get(SystemConfig::EXAM_DURATION_MINUTES, 7)
+        exam_buffer = SystemConfig.get(SystemConfig::EXAM_BUFFER_MINUTES, 1)
+        exam_start_time_str = SystemConfig.get(SystemConfig::EXAM_START_TIME, "13:30")
+        exam_end_time_str = SystemConfig.get(SystemConfig::EXAM_END_TIME, "14:50")
+        exam_start_time = Time.parse("2000-01-01 #{exam_start_time_str}")
+        exam_end_time = Time.parse("2000-01-01 #{exam_end_time_str}")
+        quarter_start = SystemConfig.get(SystemConfig::QUARTER_START_DATE, Date.today.to_s)
+        quarter_start_date = quarter_start.is_a?(Date) ? quarter_start : Date.parse(quarter_start.to_s)
+        exam_day = SystemConfig.get(SystemConfig::EXAM_DAY, "friday")
+
+        scheduled_count = 0
+        unscheduled_count = 0
+        students_processed = []
+
+        ActiveRecord::Base.transaction do
+          # Get all active students
+          students = Student.active.includes(:exam_slots, :section)
+
+          students.each do |student|
+            next unless student.section
+            next unless student.week_group
+
+            student_scheduled = 0
+            student_unscheduled = 0
+
+            (1..total_exams).each do |exam_number|
+              existing_slot = student.exam_slots.find_by(exam_number: exam_number)
+
+              # Skip if already scheduled or locked
+              next if existing_slot && (existing_slot.is_scheduled || existing_slot.is_locked)
+
+              # Delete unscheduled slot if it exists
+              existing_slot&.destroy
+
+              # Calculate week number
+              base_week = (exam_number - 1) * 2 + 1
+              week_number = student.week_group == "odd" ? base_week : base_week + 1
+
+              # Calculate exam date
+              days_until_exam = case exam_day.downcase
+              when "monday" then 0
+              when "tuesday" then 1
+              when "wednesday" then 2
+              when "thursday" then 3
+              when "friday" then 4
+              when "saturday" then 5
+              when "sunday" then 6
+              else 4
+              end
+
+              weeks_offset = week_number - 1
+              target_week_monday = quarter_start_date + (weeks_offset * 7).days
+              days_since_monday = (target_week_monday.wday - 1) % 7
+              actual_monday = target_week_monday - days_since_monday.days
+              exam_date = actual_monday + days_until_exam.days
+
+              # Find last slot for this section/date/week
+              section = student.section
+              existing_slots = ExamSlot.joins(:student)
+                                      .where(section: section, date: exam_date, is_scheduled: true)
+                                      .where.not(end_time: nil)
+                                      .order(end_time: :desc)
+
+              # Determine start time
+              if existing_slots.any?
+                last_end_time = existing_slots.first.end_time
+                new_start_time = last_end_time + (exam_buffer * 60)
+              else
+                new_start_time = exam_start_time
+              end
+
+              new_end_time = new_start_time + (exam_duration * 60)
+
+              # Create slot
+              if new_end_time > exam_end_time
+                # Unscheduled
+                ExamSlot.create!(
+                  student: student,
+                  section: section,
+                  exam_number: exam_number,
+                  week_number: week_number,
+                  date: nil,
+                  start_time: nil,
+                  end_time: nil,
+                  is_scheduled: false,
+                  is_locked: false
+                )
+                student_unscheduled += 1
+                unscheduled_count += 1
+              else
+                # Scheduled
+                ExamSlot.create!(
+                  student: student,
+                  section: section,
+                  exam_number: exam_number,
+                  week_number: week_number,
+                  date: exam_date,
+                  start_time: new_start_time,
+                  end_time: new_end_time,
+                  is_scheduled: true,
+                  is_locked: false
+                )
+                student_scheduled += 1
+                scheduled_count += 1
+              end
+            end
+
+            if student_scheduled > 0 || student_unscheduled > 0
+              students_processed << {
+                id: student.id,
+                full_name: student.full_name,
+                scheduled: student_scheduled,
+                unscheduled: student_unscheduled
+              }
+            end
+          end
+        end
+
+        render json: {
+          message: "New students scheduled successfully",
+          scheduled_count: scheduled_count,
+          unscheduled_count: unscheduled_count,
+          students_processed: students_processed
+        }, status: :ok
+      rescue => e
+        Rails.logger.error("Failed to schedule new students: #{e.message}")
+        render json: { errors: [ e.message ] }, status: :internal_server_error
+      end
+
       def overview
         # Auto-lock all slots scheduled for today
         today = Date.today

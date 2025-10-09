@@ -74,6 +74,7 @@ Rails.application.routes.draw do
 
       # Schedules
       post "schedules/generate", to: "schedules#generate"
+      post "schedules/schedule_new_students", to: "schedules#schedule_new_students"
       delete "schedules/clear", to: "schedules#clear"
       post "schedules/regenerate_student/:student_id", to: "schedules#regenerate_student"
       get "schedules/overview", to: "schedules#overview"

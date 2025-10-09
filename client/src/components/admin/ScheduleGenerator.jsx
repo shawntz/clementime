@@ -73,6 +73,39 @@ export default function ScheduleGenerator() {
     }
   };
 
+  const scheduleNewStudents = async () => {
+    if (!confirm('Schedule new students only? This will add new/unscheduled students to the END of existing schedules without affecting anyone else.')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await api.post('/admin/schedules/schedule_new_students');
+      const data = response.data;
+
+      let message = `✅ ${data.scheduled_count} slots scheduled`;
+      if (data.unscheduled_count > 0) {
+        message += `\n⚠️ ${data.unscheduled_count} slots couldn't fit (exceeded exam time)`;
+      }
+      if (data.students_processed.length > 0) {
+        message += `\n\nStudents processed:\n${data.students_processed.map(s =>
+          `• ${s.full_name}: ${s.scheduled} scheduled, ${s.unscheduled} unscheduled`
+        ).join('\n')}`;
+      }
+
+      alert(message);
+      setResult(data);
+      loadOverview();
+    } catch (err) {
+      setError(err.response?.data?.errors?.join(', ') || 'Failed to schedule new students');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearSchedules = async () => {
     if (!confirm('Delete all exam schedules? This cannot be undone.')) {
       return;
@@ -168,6 +201,15 @@ export default function ScheduleGenerator() {
             {loading ? 'Generating...' : '🗓️ Generate All Schedules'}
           </button>
           <button
+            onClick={scheduleNewStudents}
+            className="btn btn-primary"
+            disabled={loading}
+            style={{ backgroundColor: 'var(--success)', borderColor: 'var(--success)' }}
+            title="Add new/unscheduled students to the end of existing schedules without affecting anyone else"
+          >
+            {loading ? 'Scheduling...' : '➕ Schedule New Students'}
+          </button>
+          <button
             onClick={exportToCSV}
             className="btn btn-outline"
             disabled={loading}
@@ -188,7 +230,18 @@ export default function ScheduleGenerator() {
           <div className="alert alert-success" style={{ marginTop: '1rem' }}>
             <strong>✅ Success!</strong>
             <br />
-            Generated {result.generated_count} exam slots
+            {result.generated_count !== undefined ? (
+              `Generated ${result.generated_count} exam slots`
+            ) : result.scheduled_count !== undefined ? (
+              <>
+                Scheduled {result.scheduled_count} slots for {result.students_processed?.length || 0} students
+                {result.unscheduled_count > 0 && (
+                  <><br />⚠️ {result.unscheduled_count} slots couldn't fit (exceeded exam time)</>
+                )}
+              </>
+            ) : (
+              result.message
+            )}
           </div>
         )}
 
