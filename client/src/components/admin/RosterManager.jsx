@@ -669,7 +669,7 @@ export default function RosterManager() {
               marginBottom: '1rem',
               fontSize: '0.875rem'
             }}>
-              ⚠️ <strong>Warning:</strong> All exam slots will be cleared. The section override will persist on future roster uploads.
+              ⚠️ <strong>Warning:</strong> All exam slots for this student will be cleared. The section override will persist on future roster uploads.
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
