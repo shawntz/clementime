@@ -76,26 +76,30 @@ module Api
           }, status: :forbidden
         end
 
-        # Swap times, dates, and week numbers
+        # Swap times and dates, but calculate week_number based on student's week_group
         slot1_data = {
           date: slot1.date,
           start_time: slot1.start_time,
-          end_time: slot1.end_time,
-          week_number: slot1.week_number
+          end_time: slot1.end_time
         }
+
+        # Calculate correct week_number based on exam_number and student's week_group
+        # Formula: week_number = (exam_number - 1) * 2 + (week_group == "odd" ? 1 : 2)
+        slot1_week_number = calculate_week_number(slot1.exam_number, slot1.student.week_group)
+        slot2_week_number = calculate_week_number(slot2.exam_number, slot2.student.week_group)
 
         slot1.update!(
           date: slot2.date,
           start_time: slot2.start_time,
           end_time: slot2.end_time,
-          week_number: slot2.week_number
+          week_number: slot1_week_number
         )
 
         slot2.update!(
           date: slot1_data[:date],
           start_time: slot1_data[:start_time],
           end_time: slot1_data[:end_time],
-          week_number: slot1_data[:week_number]
+          week_number: slot2_week_number
         )
 
         render json: {
@@ -161,6 +165,11 @@ module Api
       end
 
       private
+
+      def calculate_week_number(exam_number, week_group)
+        base_week = (exam_number - 1) * 2 + 1
+        week_group == "odd" ? base_week : base_week + 1
+      end
 
       def slot_response(slot)
         {
