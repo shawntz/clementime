@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 
+// Default Slack message templates
+const DEFAULT_SLACK_TEMPLATES = {
+  student: '📝 Oral Exam Session for {{student_name}}\n\n📊 Exam Number: {{exam_number}}\n📅 Date: {{date}}\n⏰ Time: {{time}}\n📍 Location: {{location}}\n👤 Facilitator: {{ta_name}}\n\n📋 Course: {{course}} | 🎓 Term: {{term}}',
+  ta: '📋 *Oral Exam Schedule*\n\n*Date:* {{date}}\n*Location:* {{location}}\n*Week:* {{week}}\n\n*Today\'s Schedule ({{student_count}} students):*\n\n{{schedule_list}}\n\n🌐 Go to TA Page\n📝 Grade Form\n\n📚 Course: {{course}} | 🎓 Week {{week}} | 👥 {{student_count}} students'
+};
+
 export default function SystemPreferences() {
   const [activeTab, setActiveTab] = useState('exam');
   const [config, setConfig] = useState({
@@ -117,6 +123,16 @@ export default function SystemPreferences() {
     } finally {
       setSendingTest(null);
     }
+  };
+
+  const resetTemplate = (templateType) => {
+    if (!confirm(`Reset ${templateType === 'student' ? 'Student Notification' : 'TA/Admin Schedule'} message to default template?`)) {
+      return;
+    }
+
+    const field = templateType === 'student' ? 'slack_student_message_template' : 'slack_ta_message_template';
+    const defaultValue = DEFAULT_SLACK_TEMPLATES[templateType];
+    handleChange(field, defaultValue);
   };
 
   if (loading) {
@@ -724,6 +740,7 @@ export default function SystemPreferences() {
             <strong style={{ color: '#0369a1' }}>Available Variables:</strong>
             <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem', lineHeight: '1.6', color: '#075985' }}>
               <li><code>{'{{student_name}}'}</code> - Student's full name</li>
+              <li><code>{'{{exam_number}}'}</code> - Exam number (1-5)</li>
               <li><code>{'{{ta_name}}'}</code> - TA's full name (for TA messages)</li>
               <li><code>{'{{date}}'}</code> - Exam date (e.g., Friday, October 10, 2025)</li>
               <li><code>{'{{time}}'}</code> - Exam time slot (e.g., 1:30 PM - 1:37 PM)</li>
@@ -829,15 +846,25 @@ export default function SystemPreferences() {
               <label htmlFor="slack_student_message_template" style={{ fontWeight: '600' }}>
                 Student Notification Message
               </label>
-              <button
-                type="button"
-                onClick={() => sendTestMessage('student')}
-                disabled={sendingTest === 'student'}
-                className="btn btn-outline"
-                style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
-              >
-                {sendingTest === 'student' ? 'Sending...' : '🧪 Test'}
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => resetTemplate('student')}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                >
+                  🔄 Reset to Default
+                </button>
+                <button
+                  type="button"
+                  onClick={() => sendTestMessage('student')}
+                  disabled={sendingTest === 'student'}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                >
+                  {sendingTest === 'student' ? 'Sending...' : '🧪 Test'}
+                </button>
+              </div>
             </div>
             <textarea
               id="slack_student_message_template"
@@ -859,15 +886,25 @@ export default function SystemPreferences() {
               <label htmlFor="slack_ta_message_template" style={{ fontWeight: '600' }}>
                 TA/Admin Schedule Message
               </label>
-              <button
-                type="button"
-                onClick={() => sendTestMessage('ta')}
-                disabled={sendingTest === 'ta'}
-                className="btn btn-outline"
-                style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
-              >
-                {sendingTest === 'ta' ? 'Sending...' : '🧪 Test'}
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => resetTemplate('ta')}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                >
+                  🔄 Reset to Default
+                </button>
+                <button
+                  type="button"
+                  onClick={() => sendTestMessage('ta')}
+                  disabled={sendingTest === 'ta'}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                >
+                  {sendingTest === 'ta' ? 'Sending...' : '🧪 Test'}
+                </button>
+              </div>
             </div>
             <textarea
               id="slack_ta_message_template"
