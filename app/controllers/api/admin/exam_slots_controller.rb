@@ -76,23 +76,26 @@ module Api
           }, status: :forbidden
         end
 
-        # Swap times and dates
+        # Swap times, dates, and week numbers
         slot1_data = {
           date: slot1.date,
           start_time: slot1.start_time,
-          end_time: slot1.end_time
+          end_time: slot1.end_time,
+          week_number: slot1.week_number
         }
 
         slot1.update!(
           date: slot2.date,
           start_time: slot2.start_time,
-          end_time: slot2.end_time
+          end_time: slot2.end_time,
+          week_number: slot2.week_number
         )
 
         slot2.update!(
           date: slot1_data[:date],
           start_time: slot1_data[:start_time],
-          end_time: slot1_data[:end_time]
+          end_time: slot1_data[:end_time],
+          week_number: slot1_data[:week_number]
         )
 
         render json: {
