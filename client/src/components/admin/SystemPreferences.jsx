@@ -126,7 +126,7 @@ export default function SystemPreferences() {
   return (
     <div className="card">
       <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-        System Preferences
+        Preferences
       </h3>
 
       {/* Tabs */}
