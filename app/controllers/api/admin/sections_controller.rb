@@ -63,6 +63,11 @@ module Api
       def time_slots
         exam_number = params[:exam_number].to_i
 
+        # Auto-lock slots scheduled for today
+        today = Date.today
+        ExamSlot.where(section: @section, exam_number: exam_number, date: today, is_scheduled: true, is_locked: false)
+                .update_all(is_locked: true)
+
         slots = ExamSlot.where(section: @section, exam_number: exam_number)
                        .includes(:student)
                        .order(:start_time)
@@ -81,7 +86,8 @@ module Api
               date: slot.date,
               start_time: slot.start_time&.strftime("%H:%M"),
               end_time: slot.end_time&.strftime("%H:%M"),
-              is_scheduled: slot.is_scheduled
+              is_scheduled: slot.is_scheduled,
+              is_locked: slot.is_locked
             }
           end
         }, status: :ok

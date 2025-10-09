@@ -78,6 +78,11 @@ export default function TimeSlotManager() {
   };
 
   const handleDragStart = (e, slot) => {
+    // Prevent dragging locked slots
+    if (slot.is_locked) {
+      e.preventDefault();
+      return;
+    }
     setDraggedSlot(slot);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', e.currentTarget);
@@ -93,6 +98,13 @@ export default function TimeSlotManager() {
 
   const handleDragOver = (e, slot) => {
     e.preventDefault();
+
+    // Don't allow dropping on locked slots
+    if (slot.is_locked) {
+      e.dataTransfer.dropEffect = 'none';
+      return;
+    }
+
     e.dataTransfer.dropEffect = 'move';
 
     if (draggedSlot && slot.id !== draggedSlot.id && slot.week_group === draggedSlot.week_group) {
@@ -112,6 +124,13 @@ export default function TimeSlotManager() {
     e.stopPropagation();
 
     if (!draggedSlot || draggedSlot.id === targetSlot.id) {
+      setDragOverSlot(null);
+      return;
+    }
+
+    // Prevent swapping with locked slots
+    if (draggedSlot.is_locked || targetSlot.is_locked) {
+      alert('Cannot swap locked slots. Locked slots have already been sent to students.');
       setDragOverSlot(null);
       return;
     }
@@ -307,7 +326,7 @@ export default function TimeSlotManager() {
                 {oddWeekSlots.map(slot => (
                   <div
                     key={slot.id}
-                    draggable={slot.is_scheduled}
+                    draggable={slot.is_scheduled && !slot.is_locked}
                     onDragStart={(e) => handleDragStart(e, slot)}
                     onDragEnd={handleDragEnd}
                     onDragOver={(e) => handleDragOver(e, slot)}
@@ -315,25 +334,32 @@ export default function TimeSlotManager() {
                     onDrop={(e) => handleDrop(e, slot)}
                     style={{
                       padding: '1rem',
-                      backgroundColor: dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)',
+                      backgroundColor: slot.is_locked ? '#fef2f2' : (dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)'),
                       borderRadius: '0.5rem',
-                      border: dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)',
-                      cursor: slot.is_scheduled ? 'grab' : 'default',
+                      border: slot.is_locked ? '2px solid #dc2626' : (dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)'),
+                      cursor: slot.is_locked ? 'not-allowed' : (slot.is_scheduled ? 'grab' : 'default'),
                       transition: 'all 0.2s ease',
                       transform: dragOverSlot?.id === slot.id ? 'scale(1.02)' : 'scale(1)',
-                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'
+                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+                      opacity: slot.is_locked ? 0.8 : 1
                     }}
                   >
                     <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {slot.is_scheduled && (
+                      {slot.is_locked ? (
+                        <span style={{ fontSize: '1rem' }}>🔒</span>
+                      ) : slot.is_scheduled ? (
                         <span style={{ fontSize: '1rem', color: 'var(--text-light)' }}>⋮⋮</span>
-                      )}
+                      ) : null}
                       <strong>{slot.student.full_name}</strong>
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
                       Week {slot.week_number} • {slot.date}
                     </div>
-                    {slot.is_scheduled ? (
+                    {slot.is_locked ? (
+                      <div style={{ color: '#dc2626', fontSize: '0.875rem', fontWeight: '600' }}>
+                        🔒 Locked - Sent to student
+                      </div>
+                    ) : slot.is_scheduled ? (
                       <TimeSlotEditor slot={slot} />
                     ) : (
                       <div style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>
@@ -358,7 +384,7 @@ export default function TimeSlotManager() {
                 {evenWeekSlots.map(slot => (
                   <div
                     key={slot.id}
-                    draggable={slot.is_scheduled}
+                    draggable={slot.is_scheduled && !slot.is_locked}
                     onDragStart={(e) => handleDragStart(e, slot)}
                     onDragEnd={handleDragEnd}
                     onDragOver={(e) => handleDragOver(e, slot)}
@@ -366,25 +392,32 @@ export default function TimeSlotManager() {
                     onDrop={(e) => handleDrop(e, slot)}
                     style={{
                       padding: '1rem',
-                      backgroundColor: dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)',
+                      backgroundColor: slot.is_locked ? '#fef2f2' : (dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)'),
                       borderRadius: '0.5rem',
-                      border: dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)',
-                      cursor: slot.is_scheduled ? 'grab' : 'default',
+                      border: slot.is_locked ? '2px solid #dc2626' : (dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)'),
+                      cursor: slot.is_locked ? 'not-allowed' : (slot.is_scheduled ? 'grab' : 'default'),
                       transition: 'all 0.2s ease',
                       transform: dragOverSlot?.id === slot.id ? 'scale(1.02)' : 'scale(1)',
-                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'
+                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+                      opacity: slot.is_locked ? 0.8 : 1
                     }}
                   >
                     <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {slot.is_scheduled && (
+                      {slot.is_locked ? (
+                        <span style={{ fontSize: '1rem' }}>🔒</span>
+                      ) : slot.is_scheduled ? (
                         <span style={{ fontSize: '1rem', color: 'var(--text-light)' }}>⋮⋮</span>
-                      )}
+                      ) : null}
                       <strong>{slot.student.full_name}</strong>
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
                       Week {slot.week_number} • {slot.date}
                     </div>
-                    {slot.is_scheduled ? (
+                    {slot.is_locked ? (
+                      <div style={{ color: '#dc2626', fontSize: '0.875rem', fontWeight: '600' }}>
+                        🔒 Locked - Sent to student
+                      </div>
+                    ) : slot.is_scheduled ? (
                       <TimeSlotEditor slot={slot} />
                     ) : (
                       <div style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>

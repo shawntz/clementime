@@ -130,6 +130,11 @@ module Api
       end
 
       def overview
+        # Auto-lock all slots scheduled for today
+        today = Date.today
+        ExamSlot.where(date: today, is_scheduled: true, is_locked: false)
+                .update_all(is_locked: true)
+
         sections = Section.active.includes(:students, :ta)
 
         overview_data = sections.map do |section|

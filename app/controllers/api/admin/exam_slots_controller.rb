@@ -139,6 +139,24 @@ module Api
         render json: { errors: [ e.message ] }, status: :internal_server_error
       end
 
+      # Auto-lock all slots that are scheduled for today
+      def auto_lock_today
+        today = Date.today
+
+        # Find all scheduled slots for today that aren't already locked
+        slots = ExamSlot.where(date: today, is_scheduled: true, is_locked: false)
+
+        count = slots.update_all(is_locked: true)
+
+        render json: {
+          message: "#{count} schedules auto-locked for today (#{today})",
+          count: count,
+          date: today
+        }, status: :ok
+      rescue => e
+        render json: { errors: [ e.message ] }, status: :internal_server_error
+      end
+
       private
 
       def slot_response(slot)

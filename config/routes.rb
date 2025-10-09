@@ -52,6 +52,7 @@ Rails.application.routes.draw do
       post "exam_slots/swap", to: "exam_slots#swap_slots"
       post "exam_slots/:id/unlock", to: "exam_slots#unlock"
       post "exam_slots/bulk_unlock", to: "exam_slots#bulk_unlock"
+      post "exam_slots/auto_lock_today", to: "exam_slots#auto_lock_today"
 
       # Students
       resources :students, only: [ :index, :show, :update ] do

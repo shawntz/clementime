@@ -8,6 +8,11 @@ module Api
           return render json: { errors: "Access denied" }, status: :forbidden
         end
 
+        # Auto-lock all slots scheduled for today
+        today = Date.today
+        ExamSlot.where(date: today, is_scheduled: true, is_locked: false)
+                .update_all(is_locked: true)
+
         sections = current_user.sections.active.includes(:students)
 
         schedules = sections.map do |section|
