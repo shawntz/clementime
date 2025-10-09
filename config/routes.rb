@@ -65,6 +65,7 @@ Rails.application.routes.draw do
           post "transfer_week_group", to: "students#transfer_week_group"
           post "change_section", to: "students#change_section"
           post "notify_slack", to: "students#notify_slack"
+          post "swap_to_opposite_week", to: "students#swap_to_opposite_week"
         end
       end
 

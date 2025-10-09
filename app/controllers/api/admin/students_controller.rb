@@ -2,7 +2,7 @@ module Api
   module Admin
     class StudentsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group, :change_section, :notify_slack ]
+      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group, :change_section, :notify_slack, :swap_to_opposite_week ]
 
       def index
         students = Student.includes(:section, :constraints)
@@ -213,6 +213,140 @@ module Api
         end
       rescue => e
         render json: { errors: e.message }, status: :internal_server_error
+      end
+
+      # Swap student to opposite week cadence and place at end of schedule
+      def swap_to_opposite_week
+        from_exam = params[:from_exam].to_i
+
+        if from_exam < 1 || from_exam > 5
+          return render json: { errors: "Invalid exam number" }, status: :unprocessable_entity
+        end
+
+        # Determine new week group (opposite of current)
+        new_week_group = @student.week_group == "odd" ? "even" : "odd"
+
+        begin
+          ActiveRecord::Base.transaction do
+            # Get system config
+            total_exams = SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5)
+            exam_duration = SystemConfig.get(SystemConfig::EXAM_DURATION_MINUTES, 7)
+            exam_buffer = SystemConfig.get(SystemConfig::EXAM_BUFFER_MINUTES, 1)
+            exam_end_time_str = SystemConfig.get(SystemConfig::EXAM_END_TIME, "14:50")
+            exam_end_time = Time.parse("2000-01-01 #{exam_end_time_str}")
+
+            # Update student's week group
+            @student.update!(week_group: new_week_group)
+
+            moved_count = 0
+            unlocked_count = 0
+
+            # Process each exam from start onwards
+            (from_exam..total_exams).each do |exam_number|
+              # Find and delete old slot (unlock if needed)
+              old_slot = @student.exam_slots.find_by(exam_number: exam_number)
+
+              if old_slot
+                unlocked_count += 1 if old_slot.is_locked
+                old_slot.destroy
+              end
+
+              # Calculate new week number based on new week_group
+              base_week = (exam_number - 1) * 2 + 1
+              new_week_number = new_week_group == "odd" ? base_week : base_week + 1
+
+              # Calculate exam date for this week
+              quarter_start = SystemConfig.get(SystemConfig::QUARTER_START_DATE, Date.today.to_s)
+              quarter_start_date = quarter_start.is_a?(Date) ? quarter_start : Date.parse(quarter_start.to_s)
+              exam_day = SystemConfig.get(SystemConfig::EXAM_DAY, "friday")
+
+              # Calculate the date
+              days_until_exam = case exam_day.downcase
+              when "monday" then 0
+              when "tuesday" then 1
+              when "wednesday" then 2
+              when "thursday" then 3
+              when "friday" then 4
+              when "saturday" then 5
+              when "sunday" then 6
+              else 4 # default to Friday
+              end
+
+              # Find the Monday of the target week
+              weeks_offset = new_week_number - 1
+              target_week_monday = quarter_start_date + (weeks_offset * 7).days
+
+              # Adjust to the Monday of that week
+              days_since_monday = (target_week_monday.wday - 1) % 7
+              actual_monday = target_week_monday - days_since_monday.days
+
+              # Calculate the exam date
+              exam_date = actual_monday + days_until_exam.days
+
+              # Find the last time slot used on this date for this section
+              section = @student.section
+              existing_slots = ExamSlot.joins(:student)
+                                      .where(section: section, date: exam_date, is_scheduled: true)
+                                      .where.not(end_time: nil)
+                                      .order(end_time: :desc)
+
+              # Determine start time (either after last slot or if it fits before exam_end_time)
+              if existing_slots.any?
+                last_end_time = existing_slots.first.end_time
+                new_start_time = last_end_time + (exam_buffer * 60)
+              else
+                # No existing slots, use exam start time
+                exam_start_time_str = SystemConfig.get(SystemConfig::EXAM_START_TIME, "13:30")
+                new_start_time = Time.parse("2000-01-01 #{exam_start_time_str}")
+              end
+
+              new_end_time = new_start_time + (exam_duration * 60)
+
+              # Check if it fits within exam window
+              if new_end_time > exam_end_time
+                # Create unscheduled slot if it doesn't fit
+                ExamSlot.create!(
+                  student: @student,
+                  section: section,
+                  exam_number: exam_number,
+                  week_number: new_week_number,
+                  date: nil,
+                  start_time: nil,
+                  end_time: nil,
+                  is_scheduled: false,
+                  is_locked: false
+                )
+              else
+                # Create scheduled slot at the end
+                ExamSlot.create!(
+                  student: @student,
+                  section: section,
+                  exam_number: exam_number,
+                  week_number: new_week_number,
+                  date: exam_date,
+                  start_time: new_start_time,
+                  end_time: new_end_time,
+                  is_scheduled: true,
+                  is_locked: false
+                )
+                moved_count += 1
+              end
+            end
+
+            render json: {
+              message: "Student swapped to #{new_week_group} week cadence and placed at end of schedule",
+              student: @student.full_name,
+              old_week_group: new_week_group == "odd" ? "even" : "odd",
+              new_week_group: new_week_group,
+              from_exam: from_exam,
+              moved_count: moved_count,
+              unlocked_count: unlocked_count
+            }, status: :ok
+          end
+        rescue => e
+          Rails.logger.error("Failed to swap student to opposite week: #{e.message}")
+          render json: { errors: e.message }, status: :internal_server_error
+        end
       end
 
       # Send Slack notification to a single student for a specific exam

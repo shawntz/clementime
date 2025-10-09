@@ -18,10 +18,12 @@ export default function RosterManager() {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showChangeSectionModal, setShowChangeSectionModal] = useState(false);
+  const [showSwapWeekModal, setShowSwapWeekModal] = useState(false);
   const [selectedExamNumber, setSelectedExamNumber] = useState(1);
   const [transferFromExam, setTransferFromExam] = useState(1);
   const [transferToWeek, setTransferToWeek] = useState('odd');
   const [changeSectionTo, setChangeSectionTo] = useState('');
+  const [swapFromExam, setSwapFromExam] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -144,6 +146,33 @@ export default function RosterManager() {
     } catch (err) {
       const errorMsg = err.response?.data?.errors || 'Failed to send Slack notification';
       alert(errorMsg);
+    }
+  };
+
+  const openSwapWeekModal = (student) => {
+    setSelectedStudent(student);
+    setSwapFromExam(1);
+    setShowSwapWeekModal(true);
+  };
+
+  const swapToOppositeWeek = async () => {
+    if (!selectedStudent) return;
+
+    const newWeek = selectedStudent.week_group === 'odd' ? 'even' : 'odd';
+
+    if (!confirm(`This will swap ${selectedStudent.full_name} from ${selectedStudent.week_group} to ${newWeek} week cadence starting from Exam ${swapFromExam}.\n\nThis will:\n- Unlock any locked exams from ${swapFromExam} onwards\n- Delete their old time slots\n- Place them at the END of the ${newWeek} week schedule\n- Not affect any other students\n\nContinue?`)) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`/admin/students/${selectedStudent.id}/swap_to_opposite_week`, {
+        from_exam: swapFromExam
+      });
+      alert(response.data.message + `\n\nMoved: ${response.data.moved_count} exams\nUnlocked: ${response.data.unlocked_count} exams`);
+      setShowSwapWeekModal(false);
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.errors || 'Failed to swap week cadence');
     }
   };
 
@@ -412,6 +441,14 @@ export default function RosterManager() {
                       title={student.section_override ? 'Section manually overridden' : 'Change section'}
                     >
                       {student.section_override ? '🔒 ' : ''}🔄 Change Section
+                    </button>
+                    <button
+                      onClick={() => openSwapWeekModal(student)}
+                      className="px-3 py-1.5 text-xs font-medium border border-orange-500 text-orange-600 rounded hover:bg-orange-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!student.week_group}
+                      title="Swap to opposite week cadence and place at end of schedule"
+                    >
+                      🔁 Swap to {student.week_group === 'odd' ? 'Even' : 'Odd'} Week
                     </button>
                     <button
                       onClick={() => openNotifyModal(student)}
@@ -685,6 +722,94 @@ export default function RosterManager() {
               <button
                 onClick={() => {
                   setShowChangeSectionModal(false);
+                  setSelectedStudent(null);
+                }}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Swap to Opposite Week Modal */}
+      {showSwapWeekModal && selectedStudent && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => {
+            setShowSwapWeekModal(false);
+            setSelectedStudent(null);
+          }}
+        >
+          <div
+            className="card"
+            style={{ minWidth: '400px', maxWidth: '500px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+              Swap to Opposite Week Cadence
+            </h3>
+            <p style={{ marginBottom: '1rem' }}>
+              Swap <strong>{selectedStudent.full_name}</strong> from <strong>{selectedStudent.week_group}</strong> to <strong>{selectedStudent.week_group === 'odd' ? 'even' : 'odd'}</strong> week cadence
+            </p>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                Starting from which exam?
+              </label>
+              <select
+                className="form-input"
+                value={swapFromExam}
+                onChange={(e) => setSwapFromExam(parseInt(e.target.value))}
+                style={{ width: '100%' }}
+              >
+                <option value={1}>Exam 1 (and all future exams)</option>
+                <option value={2}>Exam 2 (and all future exams)</option>
+                <option value={3}>Exam 3 (and all future exams)</option>
+                <option value={4}>Exam 4 (and all future exams)</option>
+                <option value={5}>Exam 5 only</option>
+              </select>
+            </div>
+
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: '#fff7ed',
+              border: '1px solid #f97316',
+              borderRadius: '0.5rem',
+              marginBottom: '1rem',
+              fontSize: '0.875rem'
+            }}>
+              <strong>⚠️ This will:</strong>
+              <ul style={{ marginTop: '0.5rem', marginLeft: '1.25rem' }}>
+                <li>Unlock any locked exams from Exam {swapFromExam} onwards</li>
+                <li>Delete their old time slots</li>
+                <li>Place them at the END of the {selectedStudent.week_group === 'odd' ? 'even' : 'odd'} week schedule</li>
+                <li>NOT affect any other students</li>
+              </ul>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={swapToOppositeWeek}
+                className="btn btn-primary"
+              >
+                🔁 Swap Week Cadence
+              </button>
+              <button
+                onClick={() => {
+                  setShowSwapWeekModal(false);
                   setSelectedStudent(null);
                 }}
                 className="btn btn-outline"
