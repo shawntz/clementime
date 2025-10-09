@@ -148,7 +148,40 @@ module Api
 
         ActiveRecord::Base.transaction do
           # Get all active students
-          students = Student.active.includes(:exam_slots, :section)
+          students = Student.active.includes(:exam_slots, :section, :constraints)
+
+          # First, assign week groups to students who don't have one
+          students_without_week_group = students.select { |s| s.section && s.week_group.nil? }
+
+          students_without_week_group.group_by(&:section).each do |section, section_students|
+            # Handle students with week_preference constraints first
+            section_students.each do |student|
+              week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
+              if week_constraint && student.week_group != week_constraint.constraint_value
+                student.update!(week_group: week_constraint.constraint_value)
+              end
+            end
+
+            # Assign remaining students without week_group
+            unassigned = section_students.select { |s| s.week_group.nil? }
+            next if unassigned.empty?
+
+            # Get existing week group distribution in this section
+            existing_students = section.students.active.where.not(week_group: nil)
+            odd_count = existing_students.where(week_group: "odd").count
+            even_count = existing_students.where(week_group: "even").count
+
+            # Assign new students to balance the groups
+            unassigned.each do |student|
+              if odd_count <= even_count
+                student.update!(week_group: "odd")
+                odd_count += 1
+              else
+                student.update!(week_group: "even")
+                even_count += 1
+              end
+            end
+          end
 
           students.each do |student|
             next unless student.section
