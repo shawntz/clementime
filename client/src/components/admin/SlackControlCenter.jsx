@@ -5,7 +5,6 @@ export default function SlackControlCenter() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [testingRecording, setTestingRecording] = useState(false);
 
   const sendTASchedules = async (examNumber, weekType) => {
     if (!confirm(`Send schedule to all TAs for Oral Exam #${examNumber} (${weekType} week)?`)) {
@@ -63,29 +62,6 @@ export default function SlackControlCenter() {
     }
   };
 
-  const testRecording = async () => {
-    setTestingRecording(true);
-    setError(null);
-
-    try {
-      const response = await api.post('/admin/slack_messages/test_recording');
-
-      // Check if it's a success or error response
-      if (response.data.status === 'success' && response.data.details) {
-        const details = response.data.details;
-        alert(`${response.data.message}\n\nFile: ${details.file_name}\nURL: ${details.file_url}\nUploaded: ${details.uploaded_size}\nDownloaded: ${details.downloaded_size}\n${details.verification}`);
-      } else {
-        // Show error details
-        alert(`${response.data.message}\n\nError: ${response.data.error}\n\n${response.data.help || ''}`);
-      }
-    } catch (err) {
-      setError(err.response?.data?.error || 'Recording test failed');
-      alert(`Recording test failed!\n\n${err.response?.data?.error || err.message}`);
-    } finally {
-      setTestingRecording(false);
-    }
-  };
-
   const bulkUnlock = async (examNumber, weekType) => {
     if (!confirm(`⚠️ EMERGENCY UNLOCK\n\nUnlock all schedules for Oral Exam #${examNumber} (${weekType} week)?\n\nThis should only be done in emergency situations when you need to modify schedules after they've been sent to students.`)) {
       return;
@@ -116,28 +92,6 @@ export default function SlackControlCenter() {
         <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>
           Send schedule notifications to TAs and students. Student schedules will be locked after sending.
         </p>
-
-        {/* Recording Test */}
-        <div style={{
-          padding: '1rem',
-          backgroundColor: 'var(--bg-light)',
-          borderRadius: '8px',
-          marginBottom: '1.5rem'
-        }}>
-          <h4 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            🎙️ Recording Test
-          </h4>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
-            Test the recording system without affecting student data
-          </p>
-          <button
-            onClick={testRecording}
-            disabled={testingRecording}
-            className="btn btn-primary"
-          >
-            {testingRecording ? 'Testing...' : 'Test Recording System'}
-          </button>
-        </div>
 
         {/* Exam Selection Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
