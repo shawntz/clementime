@@ -63,6 +63,7 @@ Rails.application.routes.draw do
         member do
           put "deactivate", to: "students#deactivate"
           post "transfer_week_group", to: "students#transfer_week_group"
+          post "change_section", to: "students#change_section"
         end
       end
 

@@ -2,7 +2,7 @@ module Api
   module Admin
     class StudentsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group ]
+      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group, :change_section ]
 
       def index
         students = Student.includes(:section, :constraints)
@@ -43,39 +43,65 @@ module Api
       def export_by_section
         require "csv"
 
-        # Get all sections with students
-        sections = Section.includes(students: :section, ta: nil)
-                         .where.not(students: { id: nil })
-                         .order(:name)
+        # Build base query with filters
+        students = Student.includes(:section, :constraints).order(:full_name)
 
-        if sections.empty?
-          return render json: { error: "No sections with students found" }, status: :not_found
+        # Apply filters
+        students = students.where(section_id: params[:section_id]) if params[:section_id].present?
+        students = students.where(week_group: params[:week_group]) if params[:week_group].present?
+        students = students.where(is_active: params[:is_active]) if params[:is_active].present?
+
+        # Search filter
+        if params[:search].present?
+          search_term = "%#{params[:search].downcase}%"
+          students = students.where(
+            "LOWER(full_name) LIKE ? OR LOWER(email) LIKE ?",
+            search_term, search_term
+          )
         end
 
-        # Generate CSV data for all sections combined
+        # Constraint filters
+        if params[:constraint_filter] == "with_constraints"
+          students = students.joins(:constraints).where(constraints: { is_active: true }).distinct
+        elsif params[:constraint_filter] == "without_constraints"
+          students = students.left_joins(:constraints)
+                            .where(constraints: { id: nil })
+                            .or(students.left_joins(:constraints).where(constraints: { is_active: false }))
+                            .distinct
+        end
+
+        if params[:constraint_type].present?
+          students = students.joins(:constraints)
+                            .where(constraints: { constraint_type: params[:constraint_type], is_active: true })
+                            .distinct
+        end
+
+        if students.empty?
+          return render json: { error: "No students match the current filters" }, status: :not_found
+        end
+
+        # Generate CSV data
         csv_data = CSV.generate(headers: true) do |csv|
-          csv << [ "Name", "Email", "Slack ID", "SIS ID", "Section Number", "Section Name", "TA Name" ]
+          csv << [ "Name", "Email", "Slack ID", "SIS ID", "Section Number", "Section Name", "TA Name", "Week Group", "Active" ]
 
-          sections.each do |section|
-            students = section.students.where(is_active: true).order(:full_name)
-
-            students.each do |student|
-              csv << [
-                student.full_name,
-                student.email,
-                student.slack_user_id || "",
-                student.sis_user_id || "",
-                section.code,
-                section.name,
-                section.ta ? section.ta.full_name : "No TA"
-              ]
-            end
+          students.each do |student|
+            csv << [
+              student.full_name,
+              student.email,
+              student.slack_user_id || "",
+              student.sis_user_id || "",
+              student.section&.code || "",
+              student.section&.name || "",
+              student.section&.ta ? student.section.ta.full_name : "No TA",
+              student.week_group || "",
+              student.is_active ? "Yes" : "No"
+            ]
           end
         end
 
         # Send the CSV file
         send_data csv_data,
-                  filename: "roster_by_section_#{Date.today.strftime('%Y%m%d')}.csv",
+                  filename: "roster_filtered_#{Date.today.strftime('%Y%m%d')}.csv",
                   type: "text/csv",
                   disposition: "attachment"
       rescue => e
@@ -189,6 +215,40 @@ module Api
         render json: { errors: e.message }, status: :internal_server_error
       end
 
+      # Change student's section assignment (with override flag)
+      def change_section
+        new_section = Section.find(params[:section_id])
+
+        # Check if student has any locked exam slots
+        locked_slots_count = @student.exam_slots.where(is_locked: true).count
+
+        if locked_slots_count > 0
+          return render json: {
+            errors: "Cannot change section: #{locked_slots_count} exam slots are locked. Please unlock them first or clear future slots."
+          }, status: :forbidden
+        end
+
+        ActiveRecord::Base.transaction do
+          # Clear all exam slots since they're scheduled for the old section
+          @student.exam_slots.destroy_all
+
+          # Update section and set override flag
+          @student.update!(
+            section: new_section,
+            section_override: true
+          )
+        end
+
+        render json: {
+          message: "Student moved to #{new_section.name}. Section override set - this will be preserved on roster uploads.",
+          student: student_detail_response(@student.reload)
+        }, status: :ok
+      rescue ActiveRecord::RecordNotFound
+        render json: { errors: "Section not found" }, status: :not_found
+      rescue => e
+        render json: { errors: e.message }, status: :internal_server_error
+      end
+
       private
 
       def set_student
@@ -225,6 +285,7 @@ module Api
             code: student.section.code,
             name: student.section.name
           } : nil,
+          section_override: student.section_override,
           week_group: student.week_group,
           slack_matched: student.slack_matched,
           slack_username: student.slack_username,
@@ -247,6 +308,7 @@ module Api
             code: student.section.code,
             name: student.section.name
           },
+          section_override: student.section_override,
           week_group: student.week_group,
           slack_user_id: student.slack_user_id,
           slack_username: student.slack_username,

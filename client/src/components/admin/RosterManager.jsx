@@ -17,9 +17,11 @@ export default function RosterManager() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showChangeSectionModal, setShowChangeSectionModal] = useState(false);
   const [selectedExamNumber, setSelectedExamNumber] = useState(1);
   const [transferFromExam, setTransferFromExam] = useState(1);
   const [transferToWeek, setTransferToWeek] = useState('odd');
+  const [changeSectionTo, setChangeSectionTo] = useState('');
 
   useEffect(() => {
     loadData();
@@ -102,6 +104,33 @@ export default function RosterManager() {
     }
   };
 
+  const openChangeSectionModal = (student) => {
+    setSelectedStudent(student);
+    // Set default to first different section
+    const otherSection = sections.find(s => s.id !== student.section?.id);
+    setChangeSectionTo(otherSection ? otherSection.id.toString() : '');
+    setShowChangeSectionModal(true);
+  };
+
+  const changeSection = async () => {
+    if (!selectedStudent || !changeSectionTo) return;
+
+    if (!confirm(`This will move ${selectedStudent.full_name} to a new section and clear all their exam slots. The section override will be preserved on future roster uploads. Continue?`)) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`/admin/students/${selectedStudent.id}/change_section`, {
+        section_id: changeSectionTo
+      });
+      alert(response.data.message);
+      setShowChangeSectionModal(false);
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.errors || 'Failed to change section');
+    }
+  };
+
   const notifySlack = async () => {
     if (!selectedStudent) return;
 
@@ -128,16 +157,36 @@ export default function RosterManager() {
     return <div className="spinner" />;
   }
 
-  const downloadRosterBySection = async () => {
+  const downloadFilteredRoster = async () => {
     try {
+      // Build params based on current filters
+      const params = {};
+
+      if (selectedSection !== 'all') {
+        params.section_id = selectedSection;
+      }
+      if (selectedWeekGroup !== 'all') {
+        params.week_group = selectedWeekGroup;
+      }
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+      if (constraintFilter !== 'all') {
+        params.constraint_filter = constraintFilter;
+      }
+      if (constraintType !== 'all') {
+        params.constraint_type = constraintType;
+      }
+
       const response = await api.get('/admin/students/export_by_section', {
+        params,
         responseType: 'blob'
       });
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `roster_by_section_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `roster_filtered_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -168,11 +217,11 @@ export default function RosterManager() {
             Roster Management
           </h3>
           <button
-            onClick={downloadRosterBySection}
+            onClick={downloadFilteredRoster}
             className="btn btn-primary"
             style={{ fontSize: '0.875rem' }}
           >
-            📥 Download CSV by Section
+            📥 Download Filtered CSV ({filteredStudents.length} students)
           </button>
         </div>
 
@@ -260,7 +309,6 @@ export default function RosterManager() {
           <thead>
             <tr>
               <th>Name</th>
-              <th>Email</th>
               <th>Section</th>
               <th>Constraints</th>
               <th>Slack</th>
@@ -271,11 +319,22 @@ export default function RosterManager() {
           <tbody>
             {filteredStudents.map((student) => (
               <tr key={student.id} style={{ opacity: student.is_active ? 1 : 0.5 }}>
-                <td>{student.full_name}</td>
-                <td>{student.email}</td>
+                <td>
+                  <div>
+                    <div>{student.full_name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.15rem' }}>
+                      {student.email}
+                    </div>
+                  </div>
+                </td>
                 <td>
                   {student.section ? (
-                    <span className="badge badge-primary">{student.section.name}</span>
+                    <span
+                      className="badge badge-primary"
+                      title={student.section_override ? 'Section manually overridden - will not change on roster uploads' : ''}
+                    >
+                      {student.section_override ? '🔒 ' : ''}{student.section.name.replace(/^Section\s+/i, '')}
+                    </span>
                   ) : (
                     <span style={{ color: 'var(--text-light)' }}>No section</span>
                   )}
@@ -307,16 +366,11 @@ export default function RosterManager() {
                 </td>
                 <td>
                   {student.slack_matched ? (
-                    <div>
-                      <span className="badge badge-success" style={{ marginBottom: '0.25rem' }}>✓ Matched</span>
-                      {student.slack_username && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                          @{student.slack_username}
-                        </div>
-                      )}
-                    </div>
+                    <span className="badge badge-success">
+                      ✓ {student.slack_username ? `@${student.slack_username}` : 'Matched'}
+                    </span>
                   ) : (
-                    <span className="badge badge-warning">Not matched</span>
+                    <span className="badge badge-error">Not matched</span>
                   )}
                 </td>
                 <td>
@@ -348,6 +402,14 @@ export default function RosterManager() {
                       title={student.week_group ? `Transfer from ${student.week_group} week` : 'No week group assigned'}
                     >
                       ↔️ Transfer Week
+                    </button>
+                    <button
+                      onClick={() => openChangeSectionModal(student)}
+                      className="btn btn-primary"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                      title={student.section_override ? 'Section manually overridden' : 'Change section'}
+                    >
+                      {student.section_override ? '🔒 ' : ''}🔄 Change Section
                     </button>
                     <button
                       onClick={() => openNotifyModal(student)}
@@ -519,6 +581,108 @@ export default function RosterManager() {
               <button
                 onClick={() => {
                   setShowTransferModal(false);
+                  setSelectedStudent(null);
+                }}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Section Modal */}
+      {showChangeSectionModal && selectedStudent && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => {
+            setShowChangeSectionModal(false);
+            setSelectedStudent(null);
+          }}
+        >
+          <div
+            className="card"
+            style={{ minWidth: '400px', maxWidth: '500px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+              Change Section
+            </h3>
+            <p style={{ marginBottom: '1rem' }}>
+              Change section for <strong>{selectedStudent.full_name}</strong>
+            </p>
+
+            {selectedStudent.section_override && (
+              <div style={{
+                padding: '0.75rem',
+                backgroundColor: '#fef3c7',
+                border: '1px solid #f59e0b',
+                borderRadius: '0.5rem',
+                marginBottom: '1rem',
+                fontSize: '0.875rem'
+              }}>
+                🔒 This student's section is already manually overridden
+              </div>
+            )}
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                Current Section: {selectedStudent.section?.name || 'None'}
+              </label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                New Section
+              </label>
+              <select
+                className="form-input"
+                value={changeSectionTo}
+                onChange={(e) => setChangeSectionTo(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="">Select Section</option>
+                {sections
+                  .filter(s => s.id !== selectedStudent.section?.id)
+                  .map(section => (
+                    <option key={section.id} value={section.id}>
+                      {section.name} - {section.ta ? section.ta.full_name : 'No TA'}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #ef4444',
+              borderRadius: '0.5rem',
+              marginBottom: '1rem',
+              fontSize: '0.875rem'
+            }}>
+              ⚠️ <strong>Warning:</strong> All exam slots will be cleared. The section override will persist on future roster uploads.
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={changeSection}
+                className="btn btn-primary"
+                disabled={!changeSectionTo}
+              >
+                ✅ Change Section
+              </button>
+              <button
+                onClick={() => {
+                  setShowChangeSectionModal(false);
                   setSelectedStudent(null);
                 }}
                 className="btn btn-outline"
