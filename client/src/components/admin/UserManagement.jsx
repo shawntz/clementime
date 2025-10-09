@@ -83,7 +83,7 @@ export default function UserManagement() {
             className="btn btn-primary"
             onClick={() => setShowCreateModal(true)}
           >
-            + Create Admin User
+            + Admin User
           </button>
         </div>
 
