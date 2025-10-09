@@ -34,12 +34,6 @@ export default function TADashboard() {
         >
           Roster
         </Link>
-        <Link
-          to="/ta/profile"
-          className={`btn ${isActive('/ta/profile') ? 'btn-primary' : 'btn-outline'}`}
-        >
-          Profile & Settings
-        </Link>
       </div>
 
       {/* Routes */}
