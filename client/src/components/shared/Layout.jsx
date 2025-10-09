@@ -111,16 +111,6 @@ export default function Layout({ children, title, showAdminTabs = false }) {
               <div className="hidden lg:flex flex-1 justify-center">
                 <div className="flex gap-2 items-center overflow-x-auto">
               <Link
-                to="/admin"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                  isActive('/admin')
-                    ? 'bg-white text-orange-600'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                Overview
-              </Link>
-              <Link
                 to="/admin/upload"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive('/admin/upload')
@@ -158,17 +148,7 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                     : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
-                Session Manager
-              </Link>
-              <Link
-                to="/admin/slack"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                  isActive('/admin/slack')
-                    ? 'bg-white text-orange-600'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🚀 Slack Control
+                Schedule Management
               </Link>
               <Link
                 to="/admin/users"
@@ -178,7 +158,17 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                     : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
-                User Management
+                Admin Management
+              </Link>
+              <Link
+                to="/admin/slack"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  isActive('/admin/slack')
+                    ? 'bg-white text-orange-600'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                Slack Bot Triggers
               </Link>
               <Link
                 to="/admin/preferences"
@@ -190,16 +180,6 @@ export default function Layout({ children, title, showAdminTabs = false }) {
               >
                 Preferences
               </Link>
-              <Link
-                to="/admin/profile"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                  isActive('/admin/profile')
-                    ? 'bg-white text-orange-600'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                Profile
-              </Link>
                 </div>
               </div>
             )}
@@ -207,7 +187,10 @@ export default function Layout({ children, title, showAdminTabs = false }) {
             {/* Right side - User Info */}
             {user && (
               <div className="flex items-center gap-2 flex-shrink-0">
-                <div className="flex items-center gap-2 bg-white/10 px-2 py-1.5 rounded-lg backdrop-blur-sm">
+                <Link
+                  to={user.role === 'admin' ? '/admin/profile' : '/ta/profile'}
+                  className="flex items-center gap-2 bg-white/10 px-2 py-1.5 rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
+                >
                   <div className="text-right">
                     <div className="text-white text-xs font-medium">{user.full_name}</div>
                     <div className="text-orange-100 text-xs">{user.role === 'admin' ? 'Admin' : 'TA'}</div>
@@ -215,7 +198,7 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                   <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                     {user.full_name?.charAt(0) || '?'}
                   </div>
-                </div>
+                </Link>
                 <button
                   onClick={logout}
                   className="text-white hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors text-xs font-medium"
@@ -253,17 +236,6 @@ export default function Layout({ children, title, showAdminTabs = false }) {
               </div>
 
               <nav className="space-y-2">
-                <Link
-                  to="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive('/admin')
-                      ? 'bg-orange-100 text-orange-600'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Overview
-                </Link>
                 <Link
                   to="/admin/upload"
                   onClick={() => setMobileMenuOpen(false)}
@@ -306,7 +278,7 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  Session Manager
+                  Schedule Management
                 </Link>
                 <Link
                   to="/admin/users"
@@ -317,7 +289,18 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  User Management
+                  Admin Management
+                </Link>
+                <Link
+                  to="/admin/slack"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
+                    isActive('/admin/slack')
+                      ? 'bg-orange-100 text-orange-600'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Slack Bot Triggers
                 </Link>
                 <Link
                   to="/admin/preferences"
@@ -330,17 +313,6 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                 >
                   Preferences
                 </Link>
-                <Link
-                  to="/admin/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive('/admin/profile')
-                      ? 'bg-orange-100 text-orange-600'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Profile
-                </Link>
               </nav>
             </div>
           </div>
@@ -351,6 +323,17 @@ export default function Layout({ children, title, showAdminTabs = false }) {
       <main className="p-6 max-w-7xl mx-auto pb-20">
         {children}
       </main>
+
+      {/* Floating Help Button - Admin Only */}
+      {user?.role === 'admin' && showAdminTabs && (
+        <Link
+          to="/admin"
+          className="fixed bottom-20 right-6 w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-20"
+          title="Help & Getting Started"
+        >
+          <span className="text-2xl font-bold">?</span>
+        </Link>
+      )}
 
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 z-10">
