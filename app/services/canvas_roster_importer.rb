@@ -81,14 +81,21 @@ class CanvasRosterImporter
     is_new_student = student.new_record?
     was_inactive = !student.is_active if student.persisted?
 
-    student.assign_attributes(
+    # Build attributes hash
+    attributes = {
       canvas_id: student_data[:canvas_id],
       sis_login_id: student_data[:sis_login_id],
       email: student_data[:email],
       full_name: student_data[:full_name],
-      section: primary_section,
       is_active: true  # Ensure student is active when in roster
-    )
+    }
+
+    # Only update section if not manually overridden
+    unless student.section_override
+      attributes[:section] = primary_section
+    end
+
+    student.assign_attributes(attributes)
 
     if student.save
       @success_count += 1
