@@ -98,8 +98,29 @@ module Api
       end
 
       def deactivate
-        @student.update(is_active: false)
-        render json: { message: "Student deactivated successfully" }, status: :ok
+        # Check if student has any locked exam slots
+        locked_slots_count = @student.exam_slots.where(is_locked: true).count
+
+        if locked_slots_count > 0
+          return render json: {
+            errors: "Cannot deactivate student: #{locked_slots_count} exam slots are locked (already sent to student). Please unlock them first."
+          }, status: :forbidden
+        end
+
+        ActiveRecord::Base.transaction do
+          # Delete all exam slots to free up time slots for other students
+          @student.exam_slots.destroy_all
+
+          # Deactivate the student
+          @student.update!(is_active: false)
+        end
+
+        render json: {
+          message: "Student deactivated successfully. All exam slots have been freed.",
+          student: student_response(@student)
+        }, status: :ok
+      rescue => e
+        render json: { errors: e.message }, status: :internal_server_error
       end
 
       def clear_all

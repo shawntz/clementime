@@ -14,7 +14,11 @@ module Api
           render json: {
             message: "Canvas roster imported successfully",
             success_count: importer.success_count,
-            sections_created: importer.sections_created
+            added_count: importer.added_count,
+            updated_count: importer.updated_count,
+            dropped_count: importer.dropped_count,
+            sections_created: importer.sections_created,
+            warnings: importer.errors.select { |e| e.start_with?("Warning:") }
           }, status: :ok
         else
           render json: {

@@ -1,13 +1,17 @@
 require "csv"
 
 class CanvasRosterImporter
-  attr_reader :errors, :success_count, :sections_created
+  attr_reader :errors, :success_count, :sections_created, :added_count, :dropped_count, :updated_count
 
   def initialize(file_path_or_content)
     @file_path_or_content = file_path_or_content
     @errors = []
     @success_count = 0
     @sections_created = []
+    @added_count = 0
+    @dropped_count = 0
+    @updated_count = 0
+    @processed_student_ids = Set.new
   end
 
   def import
@@ -15,6 +19,9 @@ class CanvasRosterImporter
     return false unless csv_data
 
     ActiveRecord::Base.transaction do
+      # Get all currently active student IDs before processing
+      @existing_student_ids = Student.where(is_active: true).pluck(:sis_user_id).to_set
+
       csv_data.each_with_index do |row, index|
         next if index < 3 # Skip header rows
 
@@ -23,6 +30,9 @@ class CanvasRosterImporter
         @errors << "Row #{index + 1}: #{e.message}"
         raise ActiveRecord::Rollback
       end
+
+      # Handle students who dropped (not in new roster)
+      handle_dropped_students
     end
 
     @errors.empty?
@@ -68,18 +78,58 @@ class CanvasRosterImporter
 
     # Create or update student
     student = Student.find_or_initialize_by(sis_user_id: student_data[:sis_user_id])
+    is_new_student = student.new_record?
+    was_inactive = !student.is_active if student.persisted?
+
     student.assign_attributes(
       canvas_id: student_data[:canvas_id],
       sis_login_id: student_data[:sis_login_id],
       email: student_data[:email],
       full_name: student_data[:full_name],
-      section: primary_section
+      section: primary_section,
+      is_active: true  # Ensure student is active when in roster
     )
 
     if student.save
       @success_count += 1
+      @processed_student_ids << student.sis_user_id
+
+      # Track what happened
+      if is_new_student
+        @added_count += 1
+      elsif was_inactive
+        @added_count += 1  # Reactivated student counts as added
+      else
+        @updated_count += 1
+      end
     else
       @errors << "Row #{row_number}: #{student.errors.full_messages.join(', ')}"
+    end
+  end
+
+  def handle_dropped_students
+    # Find students who were active but not in the new roster
+    dropped_student_ids = @existing_student_ids - @processed_student_ids
+    return if dropped_student_ids.empty?
+
+    dropped_students = Student.where(sis_user_id: dropped_student_ids, is_active: true)
+
+    dropped_students.each do |student|
+      # Check if student has any locked exam slots
+      locked_slots = student.exam_slots.where(is_locked: true)
+      unlocked_slots = student.exam_slots.where(is_locked: false)
+
+      # Always delete unlocked slots (future exams they won't attend)
+      unlocked_slots.destroy_all
+
+      # Mark student as inactive
+      student.update!(is_active: false)
+      @dropped_count += 1
+
+      # Add warning if they had locked slots that we're keeping
+      if locked_slots.any?
+        @errors << "Warning: #{student.full_name} (#{student.sis_user_id}) dropped but has #{locked_slots.count} locked exam slots (past exams). These slots are retained. #{unlocked_slots.count} future exam slots were cleared."
+      end
     end
   end
 
