@@ -45,6 +45,15 @@ module Api
       end
 
       def clear
+        # Check if there are any locked slots
+        locked_count = ExamSlot.where(is_locked: true).count
+
+        if locked_count > 0
+          return render json: {
+            errors: "Cannot clear schedules: #{locked_count} exam slots are locked. Please unlock them first or use bulk unlock."
+          }, status: :forbidden
+        end
+
         Recording.delete_all
         ExamSlot.delete_all
         Student.update_all(week_group: nil)

@@ -42,11 +42,16 @@ class ScheduleGenerator
     section = student.section
 
     ActiveRecord::Base.transaction do
-      # Mark existing slots as unscheduled but keep them (to maintain gaps)
-      student.exam_slots.update_all(is_scheduled: false)
+      # Mark existing unlocked slots as unscheduled but keep them (to maintain gaps)
+      # Don't touch locked slots - they've already been sent to students
+      student.exam_slots.where(is_locked: false).update_all(is_scheduled: false)
 
-      # Generate new slots
+      # Generate new slots only for unlocked exams
       (1..@total_exams).each do |exam_number|
+        # Skip if this exam slot is locked
+        existing_slot = student.exam_slots.find_by(exam_number: exam_number)
+        next if existing_slot && existing_slot.is_locked
+
         generate_single_student_slot(student, section, exam_number)
       end
     end
@@ -129,6 +134,16 @@ class ScheduleGenerator
     randomized_students.each do |student|
       # Check if student already has a slot for this exam
       existing_slot = student.exam_slots.find_by(exam_number: exam_number)
+
+      # Skip if slot is locked (already sent to student)
+      # But still advance time to avoid overlaps
+      if existing_slot && existing_slot.is_locked
+        if existing_slot.is_scheduled && existing_slot.end_time
+          # Advance past the locked slot's time
+          current_time = [ current_time, existing_slot.end_time + (@exam_buffer_minutes * 60) ].max
+        end
+        next
+      end
 
       # Skip if constraints indicate this slot should remain unscheduled
       if existing_slot && !existing_slot.is_scheduled
@@ -279,6 +294,9 @@ class ScheduleGenerator
       exam_number: exam_number
     )
 
+    # Don't overwrite locked slots
+    return false if slot.is_locked
+
     slot.assign_attributes(
       section: section,
       week_number: week_number,
@@ -297,6 +315,9 @@ class ScheduleGenerator
       student: student,
       exam_number: exam_number
     )
+
+    # Don't overwrite locked slots
+    return false if slot.is_locked
 
     slot.assign_attributes(
       section: section,
