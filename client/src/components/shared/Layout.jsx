@@ -131,16 +131,6 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                 Roster Management
               </Link>
               <Link
-                to="/admin/tas"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                  isActive('/admin/tas')
-                    ? 'bg-white text-orange-600'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                TA Management
-              </Link>
-              <Link
                 to="/admin/sessions"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive('/admin/sessions')
@@ -149,6 +139,16 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                 }`}
               >
                 Schedule Management
+              </Link>
+              <Link
+                to="/admin/tas"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  isActive('/admin/tas')
+                    ? 'bg-white text-orange-600'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                TA Management
               </Link>
               <Link
                 to="/admin/users"
@@ -259,17 +259,6 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                   Roster Management
                 </Link>
                 <Link
-                  to="/admin/tas"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive('/admin/tas')
-                      ? 'bg-orange-100 text-orange-600'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  TA Management
-                </Link>
-                <Link
                   to="/admin/sessions"
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
@@ -279,6 +268,17 @@ export default function Layout({ children, title, showAdminTabs = false }) {
                   }`}
                 >
                   Schedule Management
+                </Link>
+                <Link
+                  to="/admin/tas"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
+                    isActive('/admin/tas')
+                      ? 'bg-orange-100 text-orange-600'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  TA Management
                 </Link>
                 <Link
                   to="/admin/users"
