@@ -135,13 +135,15 @@ export default function RosterManager() {
     if (!selectedStudent) return;
 
     try {
-      await api.post(`/admin/students/${selectedStudent.id}/notify_slack`, {
+      const response = await api.post(`/admin/students/${selectedStudent.id}/notify_slack`, {
         exam_number: selectedExamNumber
       });
-      alert(`Slack notification sent for Oral Exam #${selectedExamNumber}`);
+      alert(response.data.message || `Slack notification sent for Oral Exam #${selectedExamNumber}`);
       setShowNotifyModal(false);
+      loadData(); // Reload data to reflect locked status
     } catch (err) {
-      alert('Failed to send Slack notification');
+      const errorMsg = err.response?.data?.errors || 'Failed to send Slack notification';
+      alert(errorMsg);
     }
   };
 

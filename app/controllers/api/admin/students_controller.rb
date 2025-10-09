@@ -2,7 +2,7 @@ module Api
   module Admin
     class StudentsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group, :change_section ]
+      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group, :change_section, :notify_slack ]
 
       def index
         students = Student.includes(:section, :constraints)
@@ -215,6 +215,95 @@ module Api
         render json: { errors: e.message }, status: :internal_server_error
       end
 
+      # Send Slack notification to a single student for a specific exam
+      def notify_slack
+        exam_number = params[:exam_number].to_i
+
+        if exam_number < 1 || exam_number > 5
+          return render json: { errors: "Invalid exam number" }, status: :unprocessable_entity
+        end
+
+        # Check if student has Slack matched
+        unless @student.slack_matched
+          return render json: { errors: "Student is not matched with Slack" }, status: :unprocessable_entity
+        end
+
+        # Find the exam slot for this student and exam
+        exam_slot = @student.exam_slots.find_by(exam_number: exam_number)
+
+        unless exam_slot
+          return render json: { errors: "No exam slot found for this exam" }, status: :not_found
+        end
+
+        unless exam_slot.is_scheduled
+          return render json: { errors: "Exam slot is not scheduled yet" }, status: :unprocessable_entity
+        end
+
+        bot_token = SystemConfig.get(SystemConfig::SLACK_BOT_TOKEN)
+        unless bot_token.present?
+          return render json: { errors: "Slack bot token not configured" }, status: :unprocessable_entity
+        end
+
+        begin
+          # Build message for student
+          message = build_student_slack_message(exam_slot)
+
+          # Build list of participants for MPDM
+          participants = []
+
+          # Check if test mode is enabled
+          test_mode = SystemConfig.get("slack_test_mode", false)
+          test_user_id = SystemConfig.get("slack_test_user_id", "")
+          super_admin_slack_id = SystemConfig.get("super_admin_slack_id", "")
+
+          if test_mode && test_user_id.present?
+            # Test mode: send to test user instead of actual student
+            participants << test_user_id
+          else
+            # Normal mode: send to actual student
+            participants << @student.slack_user_id
+          end
+
+          # Add TA if they have a Slack ID
+          ta = exam_slot.section.ta
+          participants << ta.slack_id if ta && ta.slack_id.present?
+
+          # Add super admin if configured
+          participants << super_admin_slack_id if super_admin_slack_id.present?
+
+          # Remove duplicates and nils
+          participants = participants.compact.uniq
+
+          # Create MPDM if multiple participants, otherwise send DM
+          channel = if participants.length > 1
+            create_slack_mpdm(bot_token, participants)
+          else
+            participants.first
+          end
+
+          unless channel
+            raise "Failed to create conversation for #{@student.full_name}"
+          end
+
+          send_slack_message(bot_token, channel, message)
+
+          # Lock the slot after sending (if not already locked)
+          unless exam_slot.is_locked
+            exam_slot.update!(is_locked: true)
+          end
+
+          render json: {
+            message: "Slack notification sent successfully",
+            student: @student.full_name,
+            exam_number: exam_number,
+            locked: exam_slot.is_locked
+          }, status: :ok
+        rescue => e
+          Rails.logger.error("Failed to send Slack notification: #{e.message}")
+          render json: { errors: e.message }, status: :internal_server_error
+        end
+      end
+
       # Change student's section assignment (with override flag)
       def change_section
         new_section = Section.find(params[:section_id])
@@ -340,6 +429,82 @@ module Api
           is_scheduled: slot.is_scheduled,
           formatted_time: slot.formatted_time_range
         }
+      end
+
+      def build_student_slack_message(exam_slot)
+        template = SystemConfig.get("slack_student_message_template", "")
+
+        # Get TA for this section
+        ta = exam_slot.section.ta
+        ta_name = ta ? ta.full_name : "TBA"
+        location = ta && ta.location.present? ? ta.location : "TBA"
+
+        template.gsub("{{student_name}}", exam_slot.student.full_name)
+                .gsub("{{exam_number}}", exam_slot.exam_number.to_s)
+                .gsub("{{week}}", exam_slot.week_number.to_s)
+                .gsub("{{date}}", exam_slot.date ? exam_slot.date.strftime("%A, %B %d, %Y") : "TBA")
+                .gsub("{{time}}", exam_slot.formatted_time_range)
+                .gsub("{{location}}", location)
+                .gsub("{{ta_name}}", ta_name)
+                .gsub("{{course}}", SystemConfig.get("slack_course_name", ""))
+                .gsub("{{term}}", SystemConfig.get("slack_term", ""))
+      end
+
+      def create_slack_mpdm(bot_token, user_ids)
+        require "net/http"
+        require "uri"
+        require "json"
+
+        uri = URI.parse("https://slack.com/api/conversations.open")
+        request = Net::HTTP::Post.new(uri)
+        request["Authorization"] = "Bearer #{bot_token}"
+        request["Content-Type"] = "application/json"
+        request.body = {
+          users: user_ids.join(",")
+        }.to_json
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(request)
+        end
+
+        result = JSON.parse(response.body)
+
+        if result["ok"]
+          result["channel"]["id"]
+        else
+          Rails.logger.error("Failed to create MPDM: #{result['error']}")
+          nil
+        end
+      rescue => e
+        Rails.logger.error("Failed to create MPDM: #{e.message}")
+        nil
+      end
+
+      def send_slack_message(bot_token, channel, message_text)
+        require "net/http"
+        require "uri"
+        require "json"
+
+        uri = URI.parse("https://slack.com/api/chat.postMessage")
+        request = Net::HTTP::Post.new(uri)
+        request["Authorization"] = "Bearer #{bot_token}"
+        request["Content-Type"] = "application/json"
+        request.body = {
+          channel: channel,
+          text: message_text
+        }.to_json
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(request)
+        end
+
+        result = JSON.parse(response.body)
+
+        unless result["ok"]
+          raise "Slack API error: #{result["error"] || "Unknown error"}"
+        end
+
+        result
       end
     end
   end
