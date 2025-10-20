@@ -39,7 +39,9 @@ export default function SystemPreferences() {
     slack_course_name: '',
     slack_term: '',
     grade_form_urls: {},
-    exam_dates: {}  // New: flexible exam dates { 1: '2025-01-15', 2: '2025-01-22', ... }
+    exam_dates: {},  // New: flexible exam dates { 1: '2025-01-15', 2: '2025-01-22', ... }
+    ignored_section_codes: '01',  // Comma-separated list of section codes to ignore
+    balanced_ta_scheduling: false  // Enable balanced distribution across all TAs
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -428,6 +430,71 @@ export default function SystemPreferences() {
                 />
               </div>
             ))}
+          </div>
+
+          {/* Ignored Section Codes */}
+          <div>
+            <label htmlFor="ignored_section_codes" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              Ignored Section Codes
+            </label>
+            <input
+              id="ignored_section_codes"
+              type="text"
+              className="form-input"
+              value={config.ignored_section_codes}
+              onChange={(e) => handleChange('ignored_section_codes', e.target.value)}
+              placeholder="01"
+              style={{ width: '100%', fontFamily: 'monospace' }}
+            />
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+              Section codes to ignore during Canvas roster import (comma-separated, e.g., "01" or "01,00").
+              Typically lecture sections that should not be assigned to students. Default: "01" (Stanford convention).
+            </small>
+            <div style={{
+              marginTop: '0.75rem',
+              padding: '0.75rem',
+              background: '#eff6ff',
+              border: '1px solid #3b82f6',
+              borderRadius: '6px',
+              fontSize: '0.875rem'
+            }}>
+              <strong style={{ color: '#1e40af' }}>Example:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#1e40af' }}>
+                For "F25-PSYCH-10-01 and F25-STATS-60-01 and F25-STATS-60-05", setting this to "01" will ignore both lecture sections (-01) and assign the student to section 05.
+              </p>
+            </div>
+          </div>
+
+          {/* Balanced TA Scheduling */}
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={config.balanced_ta_scheduling}
+                onChange={(e) => handleChange('balanced_ta_scheduling', e.target.checked)}
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              />
+              <span style={{ fontWeight: '600' }}>Enable Balanced TA Scheduling</span>
+            </label>
+            <small style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginTop: '0.5rem', display: 'block', marginLeft: '1.95rem' }}>
+              When enabled, students are distributed evenly across all TAs and odd/even weeks, regardless of their section assignment.
+              This helps balance workload when sections have uneven enrollment numbers.
+            </small>
+            <div style={{
+              marginTop: '0.75rem',
+              marginLeft: '1.95rem',
+              padding: '0.75rem',
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '6px',
+              fontSize: '0.875rem'
+            }}>
+              <strong style={{ color: '#92400e' }}>⚠️ Note:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#92400e' }}>
+                When this is enabled, students will be scheduled with TAs from any section, not just their assigned section.
+                Section assignments are still maintained for grading purposes, but scheduling is distributed across all available TAs.
+              </p>
+            </div>
           </div>
 
           {/* Save Button */}

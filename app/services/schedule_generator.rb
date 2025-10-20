@@ -9,11 +9,18 @@ class ScheduleGenerator
   end
 
   def generate_all_schedules
-    ActiveRecord::Base.transaction do
-      sections = Section.active.includes(:students, :ta)
+    # Check if balanced TA scheduling is enabled
+    balanced_scheduling = SystemConfig.get(SystemConfig::BALANCED_TA_SCHEDULING, false)
 
-      sections.each do |section|
-        generate_section_schedule(section)
+    ActiveRecord::Base.transaction do
+      if balanced_scheduling
+        generate_balanced_ta_schedules
+      else
+        sections = Section.active.includes(:students, :ta)
+
+        sections.each do |section|
+          generate_section_schedule(section)
+        end
       end
     end
 
@@ -63,6 +70,145 @@ class ScheduleGenerator
   end
 
   private
+
+  def generate_balanced_ta_schedules
+    # Get all active students and sections
+    all_students = Student.active.includes(:constraints, :exam_slots, :section)
+    sections_with_tas = Section.active.includes(:ta).where.not(ta_id: nil)
+
+    if sections_with_tas.empty?
+      @errors << "No sections with assigned TAs found. Cannot generate balanced schedule."
+      return
+    end
+
+    # Assign week groups to students who don't have one (respecting constraints)
+    assign_balanced_week_groups(all_students)
+
+    # Group students by week_group
+    odd_students = all_students.select { |s| s.week_group == "odd" }
+    even_students = all_students.select { |s| s.week_group == "even" }
+
+    # Distribute students across TAs for each exam
+    (1..@total_exams).each do |exam_number|
+      # Calculate which weeks this exam falls on
+      base_week = (exam_number - 1) * 2 + 1
+      odd_week = base_week
+      even_week = base_week + 1
+
+      # Distribute odd week students across all TAs
+      distribute_students_to_tas(odd_students, sections_with_tas, exam_number, odd_week)
+
+      # Distribute even week students across all TAs
+      distribute_students_to_tas(even_students, sections_with_tas, exam_number, even_week)
+    end
+  end
+
+  def assign_balanced_week_groups(students)
+    # First, handle students with week_preference constraints
+    students.each do |student|
+      week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
+      if week_constraint
+        if student.week_group != week_constraint.constraint_value
+          student.update!(week_group: week_constraint.constraint_value)
+        end
+      end
+    end
+
+    # Then handle students without week_group assignment
+    # Distribute evenly across odd/even
+    unassigned = students.select { |s| s.week_group.nil? }
+    return if unassigned.empty?
+
+    shuffled = unassigned.shuffle
+    shuffled.each_with_index do |student, index|
+      week_group = index.even? ? "odd" : "even"
+      student.update!(week_group: week_group)
+    end
+  end
+
+  def distribute_students_to_tas(students, sections, exam_number, week_number)
+    return if students.empty? || sections.empty?
+
+    exam_date = calculate_exam_date(week_number)
+
+    # Randomize students for this exam
+    randomized_students = students.shuffle(random: Random.new(exam_number + week_number))
+
+    # Round-robin distribute students across sections
+    section_index = 0
+    section_assignments = Hash.new { |h, k| h[k] = [] }
+
+    randomized_students.each do |student|
+      section = sections[section_index % sections.size]
+      section_assignments[section] << student
+      section_index += 1
+    end
+
+    # Schedule each section's assigned students
+    section_assignments.each do |section, assigned_students|
+      schedule_students_for_section(section, assigned_students, exam_number, week_number, exam_date)
+    end
+  end
+
+  def schedule_students_for_section(section, students, exam_number, week_number, exam_date)
+    current_time = @exam_start_time.dup
+
+    # Shuffle students within the section for time variety
+    students.shuffle.each do |student|
+      # Check if student already has a slot for this exam
+      existing_slot = student.exam_slots.find_by(exam_number: exam_number)
+
+      # Skip if slot is locked (already sent to student)
+      if existing_slot && existing_slot.is_locked
+        if existing_slot.is_scheduled && existing_slot.end_time
+          current_time = [ current_time, existing_slot.end_time + (@exam_buffer_minutes * 60) ].max
+        end
+        next
+      end
+
+      # Skip if constraints indicate this slot should remain unscheduled
+      if existing_slot && !existing_slot.is_scheduled
+        next
+      end
+
+      # Check constraints
+      unless can_schedule_student(student, exam_date, current_time)
+        create_unscheduled_slot(student, section, exam_number, week_number)
+        next
+      end
+
+      # Check if we have time remaining
+      slot_end_time = current_time + (@exam_duration_minutes * 60)
+      if slot_end_time > @exam_end_time
+        create_unscheduled_slot(student, section, exam_number, week_number)
+        next
+      end
+
+      # Create or update the slot
+      slot = ExamSlot.find_or_initialize_by(
+        student: student,
+        exam_number: exam_number
+      )
+
+      slot.assign_attributes(
+        section: section,
+        week_number: week_number,
+        date: exam_date,
+        start_time: current_time,
+        end_time: slot_end_time,
+        is_scheduled: true
+      )
+
+      if slot.save
+        @generated_count += 1
+      else
+        @errors << "Error creating slot for #{student.full_name}: #{slot.errors.full_messages.join(', ')}"
+      end
+
+      # Advance time for next student
+      current_time = slot_end_time + (@exam_buffer_minutes * 60)
+    end
+  end
 
   def load_config
     @exam_day = SystemConfig.get(SystemConfig::EXAM_DAY, "friday")
