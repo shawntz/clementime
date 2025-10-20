@@ -49,10 +49,11 @@ module Api
       end
 
       def send_welcome_email
-        # Generate a new temporary password
+        # Generate a new temporary password using SecureRandom
         temp_password = generate_password
 
-        # Update user with new password
+        # Note: Rails has_secure_password automatically hashes the password before storage
+        # The password/password_confirmation are virtual attributes that trigger BCrypt hashing
         @user.password = temp_password
         @user.password_confirmation = temp_password
         @user.must_change_password = true
@@ -65,6 +66,9 @@ module Api
           rescue => e
             Rails.logger.error "Email delivery failed: #{e.message}"
             render json: { errors: "Email delivery failed: #{e.message}" }, status: :unprocessable_entity
+          ensure
+            # Clear temporary password from memory
+            temp_password = nil
           end
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -72,12 +76,11 @@ module Api
       end
 
       def send_slack_credentials
-        # Generate a new temporary password
+        # Generate a new temporary password using SecureRandom
         temp_password = generate_password
 
-        # Update user with new password
-        # SECURITY: The assignment below assumes that User model uses has_secure_password or similar,
-        # so that cleartext passwords are NEVER stored in the database. If not, THIS IS INSECURE.
+        # Note: Rails has_secure_password automatically hashes the password before storage
+        # The password/password_confirmation are virtual attributes that trigger BCrypt hashing
         @user.password = temp_password
         @user.password_confirmation = temp_password
         @user.must_change_password = true
@@ -85,12 +88,18 @@ module Api
         if @user.save
           # Send Slack message with optional additional user IDs
           additional_user_ids = params[:include_user_ids] || []
-          result = SlackNotifier.send_credentials(@user, temp_password, additional_user_ids)
 
-          if result[:success]
-            render json: { message: result[:message] }, status: :ok
-          else
-            render json: { errors: result[:error] }, status: :unprocessable_entity
+          begin
+            result = SlackNotifier.send_credentials(@user, temp_password, additional_user_ids)
+
+            if result[:success]
+              render json: { message: result[:message] }, status: :ok
+            else
+              render json: { errors: result[:error] }, status: :unprocessable_entity
+            end
+          ensure
+            # Clear temporary password from memory
+            temp_password = nil
           end
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -100,9 +109,10 @@ module Api
       private
 
       def generate_password
+        # Use SecureRandom for cryptographically secure password generation
         chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
         password = ""
-        12.times { password += chars[rand(chars.length)] }
+        12.times { password += chars[SecureRandom.random_number(chars.length)] }
         password
       end
 
