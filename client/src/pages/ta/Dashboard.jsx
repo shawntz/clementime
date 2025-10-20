@@ -90,7 +90,8 @@ function ScheduleView() {
           const oddDayAfter = oddDate ? new Date(oddDate) : null;
           if (oddDayAfter) {
             oddDayAfter.setHours(0, 0, 0, 0);
-            oddDayAfter.setDate(oddDayAfter.getDate() + 1);
+            // Use 3 days buffer to avoid timezone edge cases
+            oddDayAfter.setDate(oddDayAfter.getDate() + 3);
           }
           const oddIsPast = oddDayAfter ? today > oddDayAfter : false;
           console.log(`Week ${oddWeekNum}: examDate=${oddDate}, dayAfter=${oddDayAfter}, today>dayAfter=${oddIsPast}`);
@@ -105,7 +106,8 @@ function ScheduleView() {
           const evenDayAfter = evenDate ? new Date(evenDate) : null;
           if (evenDayAfter) {
             evenDayAfter.setHours(0, 0, 0, 0);
-            evenDayAfter.setDate(evenDayAfter.getDate() + 1);
+            // Use 3 days buffer to avoid timezone edge cases
+            evenDayAfter.setDate(evenDayAfter.getDate() + 3);
           }
           const evenIsPast = evenDayAfter ? today > evenDayAfter : false;
           console.log(`Week ${evenWeekNum}: examDate=${evenDate}, dayAfter=${evenDayAfter}, today>dayAfter=${evenIsPast}`);
