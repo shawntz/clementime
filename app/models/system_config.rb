@@ -74,4 +74,5 @@ class SystemConfig < ApplicationRecord
   QUARTER_START_DATE = "quarter_start_date"
   TOTAL_EXAMS = "total_exams"
   NOTIFICATION_TIME = "notification_time"
+  IGNORED_SECTION_CODES = "ignored_section_codes"
 end

@@ -66,15 +66,36 @@ class CanvasRosterImporter
     section_codes = parse_section_codes(student_data[:section_raw])
     return if section_codes.empty?
 
-    # Filter out lecture sections (-01), we only care about discussion sections
-    discussion_codes = section_codes.reject { |code| code.end_with?("-01") }
+    # Filter out lecture/ignored sections (configurable, default: "01")
+    # This handles cases like: "F25-PSYCH-10-01 and F25-STATS-60-01 and F25-STATS-60-05"
+    # where -01 sections are lectures/waitlist and should be ignored
+    #
+    # The ignored section codes are configurable via SystemConfig.IGNORED_SECTION_CODES
+    # Default: ["01"] (standard for Stanford where -01 is the lecture section)
+    # Example: Set to ["01", "00"] if both -01 and -00 should be ignored
+    #
+    # This filtering ensures we only assign students to their actual discussion sections,
+    # regardless of how many cross-listed lectures they're enrolled in.
+    ignored_codes = SystemConfig.get(SystemConfig::IGNORED_SECTION_CODES, [ "01" ])
+    discussion_codes = section_codes.reject do |code|
+      section_number = code.split("-").last
+      ignored_codes.include?(section_number)
+    end
 
-    # If only enrolled in lecture (no discussion), skip this student
-    return if discussion_codes.empty?
+    # If only enrolled in lecture/ignored sections (no discussion), skip this student
+    if discussion_codes.empty?
+      Rails.logger.info("Skipping student #{student_data[:full_name]} (#{student_data[:sis_user_id]}): All sections (#{section_codes.join(', ')}) are lectures/ignored (filtered by: #{ignored_codes.inspect})")
+      return
+    end
 
     # Create or find sections
-    sections = ensure_sections_exist(discussion_codes)
-    primary_section = sections.first
+    begin
+      sections = ensure_sections_exist(discussion_codes)
+      primary_section = sections.first
+    rescue => e
+      # Add student context to section validation errors
+      raise "Student '#{student_data[:full_name]}' (#{student_data[:sis_user_id]}): #{e.message}"
+    end
 
     # Create or update student
     student = Student.find_or_initialize_by(sis_user_id: student_data[:sis_user_id])
@@ -163,6 +184,11 @@ class CanvasRosterImporter
 
   def ensure_sections_exist(section_codes)
     section_codes.map do |code|
+      # Validate section code format before proceeding
+      unless valid_section_code?(code)
+        raise "Invalid section code format: '#{code}'. Expected format: TERM-COURSE-NUMBER-SECTION (e.g., F25-PSYCH-10-02)"
+      end
+
       # Normalize code to always use PSYCH prefix for cross-listed sections
       normalized_code = normalize_section_code(code)
 
@@ -206,5 +232,30 @@ class CanvasRosterImporter
     else
       code
     end
+  end
+
+  def valid_section_code?(code)
+    # Validate format: TERM-COURSE-NUMBER-SECTION (e.g., F25-PSYCH-10-02 or F25-STATS-60-04)
+    # Pattern: (F|W|S)YY-WORD-DIGITS-DIGITS
+    return false if code.blank?
+
+    parts = code.split("-")
+    return false unless parts.length == 4
+
+    term, course, number, section = parts
+
+    # Term should be like F25, W26, S25 (quarter + year)
+    return false unless term.match?(/^[FWS]\d{2}$/)
+
+    # Course should be alphabetic (PSYCH, STATS, etc.)
+    return false unless course.match?(/^[A-Z]+$/i)
+
+    # Number should be numeric (10, 60, etc.)
+    return false unless number.match?(/^\d+$/)
+
+    # Section should be numeric, possibly with leading zeros (01, 02, 010, etc.)
+    return false unless section.match?(/^\d+$/)
+
+    true
   end
 end

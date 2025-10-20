@@ -34,7 +34,8 @@ module Api
           slack_course_name: SystemConfig.get("slack_course_name", ""),
           slack_term: SystemConfig.get("slack_term", ""),
           grade_form_urls: SystemConfig.get("grade_form_urls", {}),
-          exam_dates: SystemConfig.get("exam_dates", {})
+          exam_dates: SystemConfig.get("exam_dates", {}),
+          ignored_section_codes: format_ignored_section_codes(SystemConfig.get(SystemConfig::IGNORED_SECTION_CODES, [ "01" ]))
         }
 
         render json: config_hash, status: :ok
@@ -168,6 +169,10 @@ module Api
               SystemConfig.set("grade_form_urls", value, config_type: "json")
             when "exam_dates"
               SystemConfig.set("exam_dates", value, config_type: "json")
+            when "ignored_section_codes"
+              # Convert comma-separated string to array for storage
+              codes_array = parse_ignored_section_codes(value)
+              SystemConfig.set(SystemConfig::IGNORED_SECTION_CODES, codes_array, config_type: "json")
             end
           rescue => e
             errors << "#{key}: #{e.message}"
@@ -190,6 +195,20 @@ module Api
       end
 
       private
+
+      # Convert comma-separated string from UI to array for storage
+      def parse_ignored_section_codes(value)
+        return [ "01" ] if value.blank?
+
+        value.to_s.split(",").map(&:strip).reject(&:blank?)
+      end
+
+      # Convert array from storage to comma-separated string for UI
+      def format_ignored_section_codes(codes_array)
+        return "01" if codes_array.blank?
+
+        codes_array.is_a?(Array) ? codes_array.join(",") : codes_array.to_s
+      end
 
       def validate_google_drive_credentials
         uploader = GoogleDriveUploader.new
