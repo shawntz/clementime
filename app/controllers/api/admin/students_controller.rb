@@ -568,8 +568,9 @@ module Api
       def build_student_slack_message(exam_slot)
         template = SystemConfig.get("slack_student_message_template", "")
 
-        # Get TA for this section
-        ta = exam_slot.section.ta
+        # Get TA for this section (with nil safety)
+        section = exam_slot.section
+        ta = section&.ta
         ta_name = ta ? ta.full_name : "TBA"
         location = ta && ta.location.present? ? ta.location : "TBA"
 

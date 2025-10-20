@@ -24,7 +24,10 @@ module Api
 
       # Try to get release date from git tag
       begin
-        tag_date = `git log -1 --format=%ai #{version} 2>/dev/null`.strip
+        # Sanitize version to prevent command injection
+        require "shellwords"
+        safe_version = Shellwords.escape(version)
+        tag_date = `git log -1 --format=%ai #{safe_version} 2>/dev/null`.strip
         release_date = tag_date unless tag_date.empty?
       rescue => e
         Rails.logger.debug("Could not get release date: #{e.message}")
