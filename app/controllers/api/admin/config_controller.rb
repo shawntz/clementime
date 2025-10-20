@@ -173,7 +173,7 @@ module Api
             when "ignored_section_codes"
               # Convert comma-separated string to array for storage
               codes_array = parse_ignored_section_codes(value)
-              SystemConfig.set(SystemConfig::IGNORED_SECTION_CODES, codes_array, config_type: "json")
+              SystemConfig.set("ignored_section_codes", codes_array, config_type: "json")
             when "balanced_ta_scheduling"
               SystemConfig.set(SystemConfig::BALANCED_TA_SCHEDULING, value, config_type: "boolean")
             end
