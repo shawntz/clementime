@@ -105,25 +105,48 @@ class ScheduleGenerator
 
   def assign_balanced_week_groups(students)
     # First, handle students with week_preference constraints
+    # Collect updates needed to avoid N+1 queries
+    constraint_updates = {}
     students.each do |student|
-      week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
-      if week_constraint
-        if student.week_group != week_constraint.constraint_value
-          student.update!(week_group: week_constraint.constraint_value)
-        end
+      # Since constraints are eager-loaded, filter in memory
+      week_constraint = student.constraints.select { |c| c.active? && c.constraint_type == "week_preference" }.first
+      if week_constraint && student.week_group != week_constraint.constraint_value
+        constraint_updates[student.id] = week_constraint.constraint_value
       end
     end
+
+    # Perform bulk update for constrained students
+    constraint_updates.each do |student_id, week_group|
+      Student.where(id: student_id).update_all(week_group: week_group)
+    end
+
+    # Reload week_group for students that were updated
+    students.each { |s| s.reload if constraint_updates.key?(s.id) }
 
     # Then handle students without week_group assignment
     # Distribute evenly across odd/even
     unassigned = students.select { |s| s.week_group.nil? }
     return if unassigned.empty?
 
+    # Collect odd and even student IDs
     shuffled = unassigned.shuffle
+    odd_ids = []
+    even_ids = []
+
     shuffled.each_with_index do |student, index|
-      week_group = index.even? ? "odd" : "even"
-      student.update!(week_group: week_group)
+      if index.even?
+        odd_ids << student.id
+      else
+        even_ids << student.id
+      end
     end
+
+    # Bulk update week groups
+    Student.where(id: odd_ids).update_all(week_group: "odd") if odd_ids.any?
+    Student.where(id: even_ids).update_all(week_group: "even") if even_ids.any?
+
+    # Reload week_group for all unassigned students
+    unassigned.each(&:reload)
   end
 
   def distribute_students_to_tas(students, sections, exam_number, week_number)
@@ -154,7 +177,8 @@ class ScheduleGenerator
     current_time = @exam_start_time.dup
 
     # Shuffle students within the section for time variety
-    students.shuffle.each do |student|
+    # Use deterministic shuffle with seed for reproducibility
+    students.shuffle(random: Random.new(section.id * 1000 + exam_number * 100 + week_number)).each do |student|
       # Check if student already has a slot for this exam
       existing_slot = student.exam_slots.find_by(exam_number: exam_number)
 

@@ -173,7 +173,7 @@ module Api
             when "ignored_section_codes"
               # Convert comma-separated string to array for storage
               codes_array = parse_ignored_section_codes(value)
-              SystemConfig.set("ignored_section_codes", codes_array, config_type: "json")
+              SystemConfig.set(SystemConfig::IGNORED_SECTION_CODES, codes_array, config_type: "json")
             when "balanced_ta_scheduling"
               SystemConfig.set(SystemConfig::BALANCED_TA_SCHEDULING, value, config_type: "boolean")
             end
@@ -203,7 +203,11 @@ module Api
       def parse_ignored_section_codes(value)
         return [ "01" ] if value.blank?
 
-        value.to_s.split(",").map(&:strip).reject(&:blank?)
+        # Split by comma, strip whitespace, remove blanks, and validate format
+        codes = value.to_s.split(",").map(&:strip).reject(&:blank?)
+
+        # Validate that codes contain only alphanumeric characters
+        codes.select { |code| code.match?(/\A[a-zA-Z0-9]+\z/) }
       end
 
       # Convert array from storage to comma-separated string for UI
