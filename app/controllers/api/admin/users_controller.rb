@@ -76,6 +76,8 @@ module Api
         temp_password = generate_password
 
         # Update user with new password
+        # SECURITY: The assignment below assumes that User model uses has_secure_password or similar,
+        # so that cleartext passwords are NEVER stored in the database. If not, THIS IS INSECURE.
         @user.password = temp_password
         @user.password_confirmation = temp_password
         @user.must_change_password = true
