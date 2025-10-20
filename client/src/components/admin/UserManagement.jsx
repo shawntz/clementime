@@ -369,8 +369,12 @@ function CreateAdminModal({ onClose, onSuccess }) {
   const generatePassword = () => {
     const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
     let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars[Math.floor(Math.random() * chars.length)];
+    // Use window.crypto for secure random indices
+    const array = new Uint8Array(12);
+    window.crypto.getRandomValues(array);
+    for (let i = 0; i < array.length; i++) {
+      // Use modulus to get index in range [0, chars.length)
+      password += chars[array[i] % chars.length];
     }
     return password;
   };
