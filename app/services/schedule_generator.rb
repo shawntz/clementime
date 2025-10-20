@@ -5,6 +5,7 @@ class ScheduleGenerator
     @options = options
     @errors = []
     @generated_count = 0
+    @start_exam = options[:start_exam] || 1  # Default to exam 1, or start from specified exam
     load_config
   end
 
@@ -38,8 +39,8 @@ class ScheduleGenerator
     # Assign week groups if not already assigned
     assign_week_groups(students, section)
 
-    # Generate slots for each exam
-    (1..@total_exams).each do |exam_number|
+    # Generate slots for each exam (starting from @start_exam)
+    (@start_exam..@total_exams).each do |exam_number|
       generate_exam_slots(section, students, exam_number)
     end
   end
@@ -51,10 +52,11 @@ class ScheduleGenerator
     ActiveRecord::Base.transaction do
       # Mark existing unlocked slots as unscheduled but keep them (to maintain gaps)
       # Don't touch locked slots - they've already been sent to students
-      student.exam_slots.where(is_locked: false).update_all(is_scheduled: false)
+      # Only affect slots from @start_exam onwards
+      student.exam_slots.where(is_locked: false).where("exam_number >= ?", @start_exam).update_all(is_scheduled: false)
 
-      # Generate new slots only for unlocked exams
-      (1..@total_exams).each do |exam_number|
+      # Generate new slots only for unlocked exams (starting from @start_exam)
+      (@start_exam..@total_exams).each do |exam_number|
         # Skip if this exam slot is locked
         existing_slot = student.exam_slots.find_by(exam_number: exam_number)
         next if existing_slot && existing_slot.is_locked
@@ -88,8 +90,8 @@ class ScheduleGenerator
     odd_students = all_students.select { |s| s.week_group == "odd" }
     even_students = all_students.select { |s| s.week_group == "even" }
 
-    # Distribute students across TAs for each exam
-    (1..@total_exams).each do |exam_number|
+    # Distribute students across TAs for each exam (starting from @start_exam)
+    (@start_exam..@total_exams).each do |exam_number|
       # Calculate which weeks this exam falls on
       base_week = (exam_number - 1) * 2 + 1
       odd_week = base_week
