@@ -379,9 +379,18 @@ function CreateTAModal({ onClose }) {
   // Generate a random temporary password
   const generatePassword = () => {
     const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    const passwordLength = 12;
     let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars[Math.floor(Math.random() * chars.length)];
+    const array = new Uint8Array(passwordLength);
+    window.crypto.getRandomValues(array);
+    for (let i = 0; i < passwordLength; i++) {
+      // To avoid modulo bias, reject values >= 256 - (256 % chars.length)
+      let idx = array[i];
+      // If bias possible, redraw index in a loop
+      while (idx >= 256 - (256 % chars.length)) {
+        idx = window.crypto.getRandomValues(new Uint8Array(1))[0];
+      }
+      password += chars[idx % chars.length];
     }
     return password;
   };
