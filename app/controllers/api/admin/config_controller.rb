@@ -35,7 +35,8 @@ module Api
           slack_term: SystemConfig.get("slack_term", ""),
           grade_form_urls: SystemConfig.get("grade_form_urls", {}),
           exam_dates: SystemConfig.get("exam_dates", {}),
-          ignored_section_codes: format_ignored_section_codes(SystemConfig.get(SystemConfig::IGNORED_SECTION_CODES, [ "01" ]))
+          ignored_section_codes: format_ignored_section_codes(SystemConfig.get(SystemConfig::IGNORED_SECTION_CODES, [ "01" ])),
+          balanced_ta_scheduling: SystemConfig.get(SystemConfig::BALANCED_TA_SCHEDULING, false)
         }
 
         render json: config_hash, status: :ok
@@ -173,6 +174,8 @@ module Api
               # Convert comma-separated string to array for storage
               codes_array = parse_ignored_section_codes(value)
               SystemConfig.set(SystemConfig::IGNORED_SECTION_CODES, codes_array, config_type: "json")
+            when "balanced_ta_scheduling"
+              SystemConfig.set(SystemConfig::BALANCED_TA_SCHEDULING, value, config_type: "boolean")
             end
           rescue => e
             errors << "#{key}: #{e.message}"
@@ -200,7 +203,11 @@ module Api
       def parse_ignored_section_codes(value)
         return [ "01" ] if value.blank?
 
-        value.to_s.split(",").map(&:strip).reject(&:blank?)
+        # Split by comma, strip whitespace, remove blanks, and validate format
+        codes = value.to_s.split(",").map(&:strip).reject(&:blank?)
+
+        # Validate that codes contain only alphanumeric characters
+        codes.select { |code| code.match?(/\A[a-zA-Z0-9]+\z/) }
       end
 
       # Convert array from storage to comma-separated string for UI

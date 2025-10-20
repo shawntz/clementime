@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Api
   class VersionController < ApplicationController
     skip_before_action :authenticate_request, only: [ :show ], raise: false
@@ -24,8 +26,9 @@ module Api
 
       # Try to get release date from git tag
       begin
-        require "shellwords"
-        tag_date = `git log -1 --format=%ai #{Shellwords.shellescape(version)} 2>/dev/null`.strip
+        # Sanitize version to prevent command injection
+        safe_version = Shellwords.escape(version)
+        tag_date = `git log -1 --format=%ai #{safe_version} 2>/dev/null`.strip
         release_date = tag_date unless tag_date.empty?
       rescue => e
         Rails.logger.debug("Could not get release date: #{e.message}")
