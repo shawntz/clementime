@@ -132,7 +132,7 @@ class ScheduleGenerator
     exam_date = calculate_exam_date(week_number)
 
     # Randomize students for this exam
-    randomized_students = students.shuffle(random: Random.new(exam_number + week_number))
+    randomized_students = students.shuffle(random: Random.new(exam_number * 100 + week_number))
 
     # Round-robin distribute students across sections
     section_index = 0
