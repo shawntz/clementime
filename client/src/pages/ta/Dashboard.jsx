@@ -74,6 +74,7 @@ function ScheduleView() {
         const totalExams = response.data.total_exams || 5;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        console.log('=== DEBUG: Today date ===', today);
 
         for (let examNum = 1; examNum <= totalExams; examNum++) {
           const oddKey = `${examNum}_odd`;
@@ -91,11 +92,13 @@ function ScheduleView() {
             oddDayAfter.setHours(0, 0, 0, 0);
             oddDayAfter.setDate(oddDayAfter.getDate() + 1);
           }
+          const oddIsPast = oddDayAfter ? today > oddDayAfter : false;
+          console.log(`Week ${oddWeekNum}: examDate=${oddDate}, dayAfter=${oddDayAfter}, today>dayAfter=${oddIsPast}`);
           weeks.push({
             weekNumber: oddWeekNum,
             examNumber: examNum,
             date: oddDate,
-            isPast: oddDayAfter ? today >= oddDayAfter : false
+            isPast: oddIsPast
           });
 
           // Add even week
@@ -104,11 +107,13 @@ function ScheduleView() {
             evenDayAfter.setHours(0, 0, 0, 0);
             evenDayAfter.setDate(evenDayAfter.getDate() + 1);
           }
+          const evenIsPast = evenDayAfter ? today > evenDayAfter : false;
+          console.log(`Week ${evenWeekNum}: examDate=${evenDate}, dayAfter=${evenDayAfter}, today>dayAfter=${evenIsPast}`);
           weeks.push({
             weekNumber: evenWeekNum,
             examNumber: examNum,
             date: evenDate,
-            isPast: evenDayAfter ? today >= evenDayAfter : false
+            isPast: evenIsPast
           });
         }
 
