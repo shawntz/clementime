@@ -446,12 +446,11 @@ class ScheduleGenerator
     end
 
     # Shuffle within each group and concatenate in priority order
-    random = Random.new(seed)
     [
-      groups[:time_before].shuffle(random: random),
-      groups[:time_after].shuffle(random: random),
-      groups[:other_constraints].shuffle(random: random),
-      groups[:no_constraints].shuffle(random: random)
+      groups[:time_before].shuffle(random: Random.new(seed.hash ^ :time_before.hash)),
+      groups[:time_after].shuffle(random: Random.new(seed.hash ^ :time_after.hash)),
+      groups[:other_constraints].shuffle(random: Random.new(seed.hash ^ :other_constraints.hash)),
+      groups[:no_constraints].shuffle(random: Random.new(seed.hash ^ :no_constraints.hash))
     ].flatten
   end
 
