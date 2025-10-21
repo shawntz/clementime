@@ -176,15 +176,19 @@ class ScheduleGenerator
         next
       end
 
-      # Check constraints
-      unless can_schedule_student(student, exam_date, current_time)
+      # Calculate slot end time first so we can check constraints against it
+      slot_end_time = current_time + (@exam_duration_minutes * 60)
+
+      # Check if we have time remaining
+      if slot_end_time > @exam_end_time
+        Rails.logger.debug("Student #{student.full_name} unscheduled: no time remaining (end=#{slot_end_time.strftime('%H:%M')}, max=#{@exam_end_time.strftime('%H:%M')})")
         create_unscheduled_slot(student, section, exam_number, week_number)
         next
       end
 
-      # Check if we have time remaining
-      slot_end_time = current_time + (@exam_duration_minutes * 60)
-      if slot_end_time > @exam_end_time
+      # Check constraints (pass both start and end time)
+      unless can_schedule_student(student, exam_date, current_time, slot_end_time)
+        Rails.logger.debug("Student #{student.full_name} unscheduled: constraint violation (start=#{current_time.strftime('%H:%M')}, end=#{slot_end_time.strftime('%H:%M')})")
         create_unscheduled_slot(student, section, exam_number, week_number)
         next
       end
@@ -301,15 +305,19 @@ class ScheduleGenerator
         next
       end
 
-      # Check constraints
-      unless can_schedule_student(student, exam_date, current_time)
+      # Calculate slot end time first so we can check constraints against it
+      slot_end_time = current_time + (@exam_duration_minutes * 60)
+
+      # Check if we have time remaining
+      if slot_end_time > @exam_end_time
+        Rails.logger.debug("Student #{student.full_name} unscheduled: no time remaining (end=#{slot_end_time.strftime('%H:%M')}, max=#{@exam_end_time.strftime('%H:%M')})")
         create_unscheduled_slot(student, section, exam_number, week_number)
         next
       end
 
-      # Check if we have time remaining
-      slot_end_time = current_time + (@exam_duration_minutes * 60)
-      if slot_end_time > @exam_end_time
+      # Check constraints (pass both start and end time)
+      unless can_schedule_student(student, exam_date, current_time, slot_end_time)
+        Rails.logger.debug("Student #{student.full_name} unscheduled: constraint violation (start=#{current_time.strftime('%H:%M')}, end=#{slot_end_time.strftime('%H:%M')})")
         create_unscheduled_slot(student, section, exam_number, week_number)
         next
       end
@@ -366,7 +374,7 @@ class ScheduleGenerator
         # Found a gap, use it
         slot_end_time = gap_start + (@exam_duration_minutes * 60)
 
-        if can_schedule_student(student, exam_date, gap_start)
+        if can_schedule_student(student, exam_date, gap_start, slot_end_time)
           create_slot(student, section, exam_number, week_number, exam_date, gap_start, slot_end_time)
           return true
         end
@@ -377,7 +385,7 @@ class ScheduleGenerator
 
     # No gap found, try to append at end
     slot_end_time = current_time + (@exam_duration_minutes * 60)
-    if slot_end_time <= @exam_end_time && can_schedule_student(student, exam_date, current_time)
+    if slot_end_time <= @exam_end_time && can_schedule_student(student, exam_date, current_time, slot_end_time)
       create_slot(student, section, exam_number, week_number, exam_date, current_time, slot_end_time)
       return true
     end
@@ -454,33 +462,58 @@ class ScheduleGenerator
     ].flatten
   end
 
-  def can_schedule_student(student, date, time)
+  def can_schedule_student(student, date, start_time)
     constraints = student.constraints.active
 
     constraints.each do |constraint|
       case constraint.constraint_type
       when "time_before"
+        # Student must be scheduled BEFORE this time (exam should start before this time)
         max_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
-        return false if time > max_time
+        if start_time > max_time
+          Rails.logger.debug("Constraint violation for #{student.full_name}: time_before #{constraint.constraint_value}, start=#{start_time.strftime('%H:%M')}")
+          return false
+        end
       when "time_after"
+        # Student must be scheduled AFTER this time (exam can start after this time)
         min_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
-        return false if time < min_time
+        if start_time < min_time
+          Rails.logger.debug("Constraint violation for #{student.full_name}: time_after #{constraint.constraint_value}, start=#{start_time.strftime('%H:%M')}")
+          return false
+        end
       when "specific_date"
         required_date = Date.parse(constraint.constraint_value)
-        return false if date != required_date
+        if date != required_date
+          Rails.logger.debug("Constraint violation for #{student.full_name}: specific_date #{constraint.constraint_value}, actual=#{date}")
+          return false
+        end
       when "exclude_date"
         excluded_date = Date.parse(constraint.constraint_value)
-        return false if date == excluded_date
+        if date == excluded_date
+          Rails.logger.debug("Constraint violation for #{student.full_name}: exclude_date #{constraint.constraint_value}")
+          return false
+        end
       end
     end
 
+    Rails.logger.debug("Constraint check passed for #{student.full_name}: start=#{start_time.strftime('%H:%M')}")
     true
   rescue => e
     Rails.logger.error("Error checking constraints for student #{student.id}: #{e.message}")
+    Rails.logger.error(e.backtrace.first(5).join("\n"))
     true # Default to allowing if error
   end
 
   def create_slot(student, section, exam_number, week_number, date, start_time, end_time)
+    # Clean up any duplicate slots first (shouldn't happen with unique constraint, but defensive)
+    duplicates = ExamSlot.where(student_id: student.id, exam_number: exam_number)
+    if duplicates.count > 1
+      Rails.logger.warn("Found #{duplicates.count} duplicate slots for student #{student.id}, exam #{exam_number}. Keeping oldest.")
+      # Keep the oldest one (by ID), delete the rest
+      oldest = duplicates.order(:id).first
+      duplicates.where.not(id: oldest.id).destroy_all
+    end
+
     slot = ExamSlot.find_or_initialize_by(
       student: student,
       exam_number: exam_number
@@ -503,6 +536,14 @@ class ScheduleGenerator
   end
 
   def create_unscheduled_slot(student, section, exam_number, week_number)
+    # Clean up any duplicate slots first (shouldn't happen with unique constraint, but defensive)
+    duplicates = ExamSlot.where(student_id: student.id, exam_number: exam_number)
+    if duplicates.count > 1
+      Rails.logger.warn("Found #{duplicates.count} duplicate slots for student #{student.id}, exam #{exam_number}. Keeping oldest.")
+      oldest = duplicates.order(:id).first
+      duplicates.where.not(id: oldest.id).destroy_all
+    end
+
     slot = ExamSlot.find_or_initialize_by(
       student: student,
       exam_number: exam_number
