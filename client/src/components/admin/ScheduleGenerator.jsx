@@ -10,6 +10,8 @@ export default function ScheduleGenerator() {
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState(null);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [startExam, setStartExam] = useState(1);
 
   useEffect(() => {
     loadOverview();
@@ -68,6 +70,35 @@ export default function ScheduleGenerator() {
       loadOverview();
     } catch (err) {
       setError(err.response?.data?.errors?.join(', ') || 'Generation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const regenerateFromExam = async () => {
+    if (startExam < 1) {
+      alert('Please enter a valid exam number (1 or greater)');
+      return;
+    }
+
+    if (!confirm(`Regenerate schedules from Exam ${startExam} onwards? This will preserve all exam schedules before Exam ${startExam} and regenerate the rest.`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setShowRegenerateModal(false);
+
+    try {
+      const response = await api.post('/admin/schedules/generate', {
+        start_exam: startExam
+      });
+      setResult(response.data);
+      loadOverview();
+      alert(response.data.message);
+    } catch (err) {
+      setError(err.response?.data?.errors?.join(', ') || 'Regeneration failed');
     } finally {
       setLoading(false);
     }
@@ -199,6 +230,15 @@ export default function ScheduleGenerator() {
             disabled={loading}
           >
             {loading ? 'Generating...' : '🗓️ Generate All Schedules'}
+          </button>
+          <button
+            onClick={() => setShowRegenerateModal(true)}
+            className="btn btn-primary"
+            disabled={loading}
+            style={{ backgroundColor: '#8b5cf6', borderColor: '#8b5cf6' }}
+            title="Regenerate schedules starting from a specific exam number"
+          >
+            🔄 Regenerate from Exam #
           </button>
           <button
             onClick={scheduleNewStudents}
@@ -496,6 +536,85 @@ export default function ScheduleGenerator() {
             loadOverview();
           }}
         />
+      )}
+
+      {/* Regenerate from Exam Modal */}
+      {showRegenerateModal && (
+        <div
+          onClick={() => setShowRegenerateModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+          <div
+            className="card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '500px', width: '90%' }}>
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+              Regenerate from Exam Number
+            </h3>
+
+            <p style={{ marginBottom: '1rem', color: 'var(--text-light)' }}>
+              This will preserve all exam schedules <strong>before</strong> the specified exam number and regenerate everything from that exam onwards. This is useful when:
+            </p>
+
+            <ul style={{ marginBottom: '1rem', marginLeft: '1.5rem', color: 'var(--text-light)' }}>
+              <li>Enabling balanced TA scheduling midway through the quarter</li>
+              <li>Making major schedule changes for future exams only</li>
+              <li>Preserving already-completed or locked exam schedules</li>
+            </ul>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label className="form-label">Start from Exam #:</label>
+              <input
+                type="number"
+                min="1"
+                className="form-input"
+                value={startExam}
+                onChange={(e) => setStartExam(parseInt(e.target.value) || 1)}
+                placeholder="e.g., 3"
+              />
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+                All exams before Exam #{startExam} will be preserved
+              </div>
+            </div>
+
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: 'var(--warning-light)',
+              borderRadius: '6px',
+              marginBottom: '1rem',
+              fontSize: '0.875rem'
+            }}>
+              <strong>⚠️ Note:</strong> Locked exam slots will always be preserved, regardless of the start exam number.
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={regenerateFromExam}
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? 'Regenerating...' : `Regenerate from Exam ${startExam}`}
+              </button>
+              <button
+                onClick={() => setShowRegenerateModal(false)}
+                className="btn btn-outline"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

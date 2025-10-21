@@ -4,11 +4,25 @@ module Api
       before_action :authorize_admin!
 
       def generate
-        generator = ScheduleGenerator.new
+        # Accept optional start_exam parameter to regenerate from a specific exam number
+        options = {}
+        if params[:start_exam].present?
+          start_exam = params[:start_exam].to_i
+          if start_exam < 1
+            return render json: { errors: [ "start_exam must be 1 or greater" ] }, status: :unprocessable_entity
+          end
+          options[:start_exam] = start_exam
+        end
+
+        generator = ScheduleGenerator.new(options)
 
         if generator.generate_all_schedules
+          message = options[:start_exam] ?
+            "Schedules regenerated successfully from exam #{options[:start_exam]}" :
+            "Schedules generated successfully"
+
           render json: {
-            message: "Schedules generated successfully",
+            message: message,
             generated_count: generator.generated_count
           }, status: :ok
         else
