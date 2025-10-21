@@ -471,7 +471,7 @@ class ScheduleGenerator
       when "time_before"
         # Student must be scheduled BEFORE this time (exam should start before this time)
         max_time = Time.parse("2000-01-01 #{constraint.constraint_value}")
-        if start_time >= max_time
+        if start_time > max_time
           Rails.logger.debug("Constraint violation for #{student.full_name}: time_before #{constraint.constraint_value}, start=#{start_time.strftime('%H:%M')}")
           return false
         end
