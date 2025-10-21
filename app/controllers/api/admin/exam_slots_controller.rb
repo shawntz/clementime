@@ -48,6 +48,17 @@ module Api
           }, status: :forbidden
         end
 
+        # Check for and clean up any duplicate slots for this student/exam combination
+        duplicates = ExamSlot.where(
+          student_id: slot.student_id,
+          exam_number: slot.exam_number
+        ).where.not(id: slot.id)
+
+        if duplicates.any?
+          Rails.logger.warn("Found #{duplicates.count} duplicate slots for student #{slot.student_id}, exam #{slot.exam_number}. Removing duplicates.")
+          duplicates.destroy_all
+        end
+
         slot.update!(
           date: params[:date],
           start_time: Time.parse("2000-01-01 #{params[:start_time]}"),
