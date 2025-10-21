@@ -463,7 +463,7 @@ class ScheduleGenerator
     ].flatten
   end
 
-  def can_schedule_student(student, date, start_time, end_time = nil)
+  def can_schedule_student(student, date, start_time)
     constraints = student.constraints.active
 
     constraints.each do |constraint|
