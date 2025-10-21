@@ -59,16 +59,49 @@ module Api
           duplicates.destroy_all
         end
 
+        new_start_time = Time.parse("2000-01-01 #{params[:start_time]}")
+        new_end_time = Time.parse("2000-01-01 #{params[:end_time]}")
+        new_date = Date.parse(params[:date])
+
+        # Get exam duration and buffer from config
+        exam_duration_minutes = SystemConfig.get(SystemConfig::EXAM_DURATION_MINUTES, 7)
+        exam_buffer_minutes = SystemConfig.get(SystemConfig::EXAM_BUFFER_MINUTES, 1)
+
+        # Find all other unlocked slots in the same section/date/week that are scheduled at or after this time
+        slots_to_adjust = ExamSlot.where(
+          section_id: slot.section_id,
+          exam_number: slot.exam_number,
+          week_number: slot.week_number,
+          date: new_date,
+          is_scheduled: true,
+          is_locked: false
+        ).where("start_time >= ?", new_start_time)
+         .where.not(id: slot.id)
+         .order(:start_time)
+
+        # Update the manually scheduled slot first
         slot.update!(
-          date: params[:date],
-          start_time: Time.parse("2000-01-01 #{params[:start_time]}"),
-          end_time: Time.parse("2000-01-01 #{params[:end_time]}"),
+          date: new_date,
+          start_time: new_start_time,
+          end_time: new_end_time,
           is_scheduled: true
         )
 
+        # Push back all subsequent slots
+        current_time = new_end_time + (exam_buffer_minutes * 60)
+        slots_to_adjust.each do |other_slot|
+          next_end_time = current_time + (exam_duration_minutes * 60)
+          other_slot.update!(
+            start_time: current_time,
+            end_time: next_end_time
+          )
+          current_time = next_end_time + (exam_buffer_minutes * 60)
+        end
+
         render json: {
-          message: "Slot scheduled successfully",
-          slot: slot_response(slot)
+          message: "Slot scheduled successfully. #{slots_to_adjust.count} subsequent slot(s) adjusted.",
+          slot: slot_response(slot),
+          adjusted_count: slots_to_adjust.count
         }, status: :ok
       rescue ActiveRecord::RecordNotFound
         render json: { errors: "Exam slot not found" }, status: :not_found
