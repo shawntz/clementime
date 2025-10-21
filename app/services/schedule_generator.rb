@@ -432,7 +432,7 @@ class ScheduleGenerator
       constraints = student.constraints.to_a # Convert to array to avoid N+1
       has_time_before = constraints.any? { |c| c.constraint_type == "time_before" }
       has_time_after = constraints.any? { |c| c.constraint_type == "time_after" }
-      has_other_constraints = constraints.any? { |c| c.constraint_type.in?(["specific_date", "exclude_date"]) }
+      has_other_constraints = constraints.any? { |c| c.constraint_type.in?([ "specific_date", "exclude_date" ]) }
 
       if has_time_before
         groups[:time_before] << student
