@@ -133,14 +133,14 @@ class ScheduleGenerator
 
     exam_date = calculate_exam_date(week_number)
 
-    # Randomize students for this exam
-    randomized_students = students.shuffle(random: Random.new(exam_number * 100 + week_number))
+    # Prioritize students with time constraints first, shuffling within each priority group
+    ordered_students = prioritize_constrained_students(students, exam_number * 100 + week_number)
 
     # Round-robin distribute students across sections
     section_index = 0
     section_assignments = Hash.new { |h, k| h[k] = [] }
 
-    randomized_students.each do |student|
+    ordered_students.each do |student|
       section = sections[section_index % sections.size]
       section_assignments[section] << student
       section_index += 1
@@ -155,9 +155,11 @@ class ScheduleGenerator
   def schedule_students_for_section(section, students, exam_number, week_number, exam_date)
     current_time = @exam_start_time.dup
 
-    # Shuffle students within the section for time variety
-    # Use deterministic shuffle with seed for reproducibility
-    students.shuffle(random: Random.new(section.id * 1000 + exam_number * 100 + week_number)).each do |student|
+    # Prioritize students with time constraints first, shuffling within each priority group
+    # Use deterministic seed for reproducibility
+    ordered_students = prioritize_constrained_students(students, section.id * 1000 + exam_number * 100 + week_number)
+
+    ordered_students.each do |student|
       # Check if student already has a slot for this exam
       existing_slot = student.exam_slots.find_by(exam_number: exam_number)
 
@@ -277,10 +279,10 @@ class ScheduleGenerator
     exam_date = calculate_exam_date(week_number)
     current_time = @exam_start_time.dup
 
-    # Randomize student order for each exam so they don't always have the same time
-    randomized_students = students.shuffle(random: Random.new(exam_number + week_number))
+    # Prioritize students with time constraints first, shuffling within each priority group
+    ordered_students = prioritize_constrained_students(students, exam_number + week_number)
 
-    randomized_students.each do |student|
+    ordered_students.each do |student|
       # Check if student already has a slot for this exam
       existing_slot = student.exam_slots.find_by(exam_number: exam_number)
 
@@ -409,6 +411,47 @@ class ScheduleGenerator
       "friday" => 5,
       "saturday" => 6
     }[day_name.downcase] || 5
+  end
+
+  def prioritize_constrained_students(students, seed = 0)
+    # Group students by constraint priority and shuffle within each group
+    # Priority order:
+    # 1. Students with time_before constraints (narrowest window at start of day)
+    # 2. Students with time_after constraints (narrowest window at end of day)
+    # 3. Students with other constraints (date-based)
+    # 4. Students without constraints
+
+    groups = {
+      time_before: [],
+      time_after: [],
+      other_constraints: [],
+      no_constraints: []
+    }
+
+    students.each do |student|
+      constraints = student.constraints.to_a # Convert to array to avoid N+1
+      has_time_before = constraints.any? { |c| c.constraint_type == "time_before" }
+      has_time_after = constraints.any? { |c| c.constraint_type == "time_after" }
+      has_other_constraints = constraints.any? { |c| c.constraint_type.in?([ "specific_date", "exclude_date" ]) }
+
+      if has_time_before
+        groups[:time_before] << student
+      elsif has_time_after
+        groups[:time_after] << student
+      elsif has_other_constraints
+        groups[:other_constraints] << student
+      else
+        groups[:no_constraints] << student
+      end
+    end
+
+    # Shuffle within each group and concatenate in priority order
+    [
+      groups[:time_before].shuffle(random: Random.new(seed.hash ^ :time_before.hash)),
+      groups[:time_after].shuffle(random: Random.new(seed.hash ^ :time_after.hash)),
+      groups[:other_constraints].shuffle(random: Random.new(seed.hash ^ :other_constraints.hash)),
+      groups[:no_constraints].shuffle(random: Random.new(seed.hash ^ :no_constraints.hash))
+    ].flatten
   end
 
   def can_schedule_student(student, date, time)
