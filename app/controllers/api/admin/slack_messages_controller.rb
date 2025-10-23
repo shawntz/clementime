@@ -454,12 +454,13 @@ module Api
         cursor = nil
         loop do
           uri = URI.parse("https://slack.com/api/conversations.list")
-          uri.query = URI.encode_www_form({
+          params = {
             types: "private_channel",
             exclude_archived: true,
-            limit: 200,
-            cursor: cursor
-          }.compact)
+            limit: 200
+          }
+          params[:cursor] = cursor unless cursor.nil?
+          uri.query = URI.encode_www_form(params)
 
           request = Net::HTTP::Get.new(uri)
           request["Authorization"] = "Bearer #{bot_token}"
