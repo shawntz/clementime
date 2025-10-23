@@ -486,7 +486,7 @@ module Api
         end
 
         nil
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error "Failed to find channel by name: #{e.message}"
         nil
       end
