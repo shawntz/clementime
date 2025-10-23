@@ -32,19 +32,18 @@ module Api
           next unless ta.slack_id.present?
 
           ta.sections.each do |section|
-            # Get students for this section, exam, and week type
-            students = Student.joins(:exam_slots)
-                             .where(section: section, week_group: week_type)
-                             .where(exam_slots: { exam_number: exam_number, is_scheduled: true })
-                             .distinct
-
-            next if students.empty?
-
-            # Build schedule list with times
+            # Get exam slots for this section (TA), exam, and week type
+            # Note: exam_slots.section_id is the section they're SCHEDULED with (not their enrolled section)
+            # This supports balanced TA scheduling where students can be scheduled with any TA
             exam_slots = ExamSlot.joins(:student)
-                                .where(students: { section: section, week_group: week_type })
-                                .where(exam_number: exam_number, is_scheduled: true)
+                                .where(section: section, exam_number: exam_number, is_scheduled: true)
+                                .where(students: { week_group: week_type })
                                 .order(:start_time)
+
+            next if exam_slots.empty?
+
+            # Get distinct students from the exam slots
+            students = Student.where(id: exam_slots.pluck(:student_id))
 
             schedule_list = exam_slots.map.with_index(1) do |slot, index|
               "#{index}. *#{slot.student.full_name}*\n🕐 #{slot.formatted_time_range}"
