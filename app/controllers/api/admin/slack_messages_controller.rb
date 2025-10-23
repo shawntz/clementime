@@ -32,19 +32,18 @@ module Api
           next unless ta.slack_id.present?
 
           ta.sections.each do |section|
-            # Get students for this section, exam, and week type
-            students = Student.joins(:exam_slots)
-                             .where(section: section, week_group: week_type)
-                             .where(exam_slots: { exam_number: exam_number, is_scheduled: true })
-                             .distinct
-
-            next if students.empty?
-
-            # Build schedule list with times
+            # Get exam slots for this section (TA), exam, and week type
+            # Note: exam_slots.section_id is the section they're SCHEDULED with (not their enrolled section)
+            # This supports balanced TA scheduling where students can be scheduled with any TA
             exam_slots = ExamSlot.joins(:student)
-                                .where(students: { section: section, week_group: week_type })
-                                .where(exam_number: exam_number, is_scheduled: true)
+                                .where(section: section, exam_number: exam_number, is_scheduled: true)
+                                .where(students: { week_group: week_type })
                                 .order(:start_time)
+
+            next if exam_slots.empty?
+
+            # Get distinct students from the exam slots
+            students = Student.where(id: exam_slots.pluck(:student_id))
 
             schedule_list = exam_slots.map.with_index(1) do |slot, index|
               "#{index}. *#{slot.student.full_name}*\n🕐 #{slot.formatted_time_range}"
@@ -372,7 +371,7 @@ module Api
         require "uri"
         require "json"
 
-        # Step 1: Create private channel
+        # Step 1: Try to create private channel
         uri = URI.parse("https://slack.com/api/conversations.create")
         request = Net::HTTP::Post.new(uri)
         request["Authorization"] = "Bearer #{bot_token}"
@@ -388,12 +387,28 @@ module Api
 
         result = JSON.parse(response.body)
 
-        unless result["ok"]
+        channel_id = nil
+
+        if result["ok"]
+          channel_id = result["channel"]["id"]
+          Rails.logger.info "Created new channel: #{channel_name} (#{channel_id})"
+        elsif result["error"] == "name_taken"
+          # Channel already exists, find it
+          Rails.logger.info "Channel already exists: #{channel_name}, looking it up..."
+          channel_id = find_channel_by_name(bot_token, channel_name)
+
+          if channel_id
+            Rails.logger.info "Found existing channel: #{channel_name} (#{channel_id})"
+          else
+            Rails.logger.error "Could not find existing channel: #{channel_name}"
+            return nil
+          end
+        else
           Rails.logger.error "Failed to create channel: #{result["error"]}"
           return nil
         end
 
-        channel_id = result["channel"]["id"]
+        return nil unless channel_id
 
         # Step 2: Invite users to the channel
         if user_ids_to_invite.any?
@@ -413,14 +428,66 @@ module Api
           invite_result = JSON.parse(invite_response.body)
 
           unless invite_result["ok"]
-            Rails.logger.error "Failed to invite users to channel: #{invite_result["error"]}"
-            # Channel was created but invite failed - still return channel_id
+            # Handle expected errors gracefully
+            if invite_result["error"] == "already_in_channel"
+              Rails.logger.info "Users already in channel: #{channel_name}"
+            else
+              Rails.logger.error "Failed to invite users to channel: #{invite_result["error"]}"
+            end
+            # Channel exists, invite may have failed - still return channel_id to send message
           end
         end
 
         channel_id
       rescue => e
         Rails.logger.error "Failed to create private channel: #{e.message}"
+        nil
+      end
+
+      def find_channel_by_name(bot_token, channel_name)
+        require "net/http"
+        require "uri"
+        require "json"
+
+        # Use conversations.list to find the channel
+        # Note: This will paginate through all channels the bot has access to
+        cursor = nil
+        loop do
+          uri = URI.parse("https://slack.com/api/conversations.list")
+          params = {
+            types: "private_channel",
+            exclude_archived: true,
+            limit: 200
+          }
+          params[:cursor] = cursor unless cursor.nil?
+          uri.query = URI.encode_www_form(params)
+
+          request = Net::HTTP::Get.new(uri)
+          request["Authorization"] = "Bearer #{bot_token}"
+
+          response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+            http.request(request)
+          end
+
+          result = JSON.parse(response.body)
+
+          unless result["ok"]
+            Rails.logger.error "Failed to list channels: #{result["error"]}"
+            return nil
+          end
+
+          # Search for the channel by name
+          channel = result["channels"]&.find { |ch| ch["name"] == channel_name }
+          return channel["id"] if channel
+
+          # Check if there are more pages
+          cursor = result["response_metadata"]&.dig("next_cursor")
+          break if cursor.nil? || cursor.empty?
+        end
+
+        nil
+      rescue StandardError => e
+        Rails.logger.error "Failed to find channel by name: #{e.message}"
         nil
       end
 
