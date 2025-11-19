@@ -47,7 +47,7 @@ class ScheduleGenerator
           end
 
         Rails.logger.info("Updated #{updated_count} exam slots for exam #{exam_number} #{week_group} to week #{week_number}, #{new_date}")
-      rescue => e
+      rescue ArgumentError, ActiveRecord::RecordInvalid => e
         Rails.logger.error("Error updating exam dates for #{key}: #{e.message}")
       end
     end
