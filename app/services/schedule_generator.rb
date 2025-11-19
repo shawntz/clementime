@@ -479,7 +479,7 @@ class ScheduleGenerator
 
     # Parse and return the date
     Date.parse(date_str.to_s)
-  rescue => e
+  rescue ArgumentError => e
     Rails.logger.error("Error parsing configured exam date for #{key}: #{e.message}")
     nil
   end
