@@ -10,6 +10,16 @@ class ScheduleGenerator
   end
 
   # Class method to update exam slots when exam dates change in config
+  #
+  # Updates exam slots for students based on the provided exam dates configuration.
+  #
+  # @param exam_dates_config [Hash] A hash mapping exam identifiers to date strings.
+  #   Keys should be in the format "1_odd", "2_even", etc., where the number is the exam number
+  #   and "odd"/"even" refers to the student's week group. Values should be date strings (e.g., "2024-06-15").
+  # @return [Integer] The number of exam slots updated.
+  # @raise [ActiveRecord::RecordInvalid] If a slot update fails validation.
+  # @raise [ArgumentError] If a date string cannot be parsed.
+  # @note This method updates the database (ExamSlot records) and logs info/errors via Rails.logger.
   def self.update_exam_dates_for_students(exam_dates_config)
     return if exam_dates_config.blank?
 
