@@ -189,7 +189,7 @@ module Api
           begin
             updated_count = ScheduleGenerator.update_exam_dates_for_students(config_params["exam_dates"])
             Rails.logger.info("Updated #{updated_count} exam slots after exam_dates config change")
-          rescue => e
+          rescue StandardError => e
             Rails.logger.error("Error updating exam slots: #{e.message}")
             errors << "Failed to update student schedules: #{e.message}"
           end
