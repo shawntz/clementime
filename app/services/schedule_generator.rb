@@ -499,6 +499,18 @@ class ScheduleGenerator
     nil
   end
 
+  # Maps a given date to its corresponding week number in the exam schedule.
+  # 
+  # Parameters:
+  #   date (Date): The date to map. Should be a Date object, and should be on or after
+  #                the first occurrence of @exam_day after @quarter_start_date.
+  #
+  # Returns:
+  #   Integer: The week number (starting from 1) corresponding to the exam schedule.
+  #
+  # Relationship:
+  #   This method is the inverse of `calculate_exam_date`, which maps a week number to its exam date.
+  #   The calculation is based on the first occurrence of @exam_day after @quarter_start_date.
   def calculate_week_from_date(date)
     # Calculate what week number this date represents
     # based on quarter start date and exam day
