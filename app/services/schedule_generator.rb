@@ -497,6 +497,11 @@ class ScheduleGenerator
       current_date += 1
     end
 
+    # Validate that the given date falls on the expected exam day
+    if date.wday != target_day
+      Rails.logger.error("Exam date #{date} does not fall on the expected exam day (#{@exam_day}).")
+      return nil
+    end
     # Calculate how many weeks from first exam_day to the given date
     days_diff = (date - current_date).to_i
     week_number = (days_diff / 7) + 1
