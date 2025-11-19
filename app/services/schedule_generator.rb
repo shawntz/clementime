@@ -40,11 +40,13 @@ class ScheduleGenerator
           .where(exam_number: exam_number)
           .where(students: { week_group: week_group })
           .where(is_locked: false)
-          .find_each do |slot|
-            # Update the slot's date and week_number
-            slot.update!(date: new_date, week_number: week_number)
-            updated_count += 1
-          end
+          # Batch update all matching slots for performance; this bypasses callbacks/history tracking
+          updated = ExamSlot.joins(:student)
+            .where(exam_number: exam_number)
+            .where(students: { week_group: week_group })
+            .where(is_locked: false)
+            .update_all(date: new_date, week_number: week_number)
+          updated_count += updated
 
         Rails.logger.info("Updated #{updated_count} exam slots for exam #{exam_number} #{week_group} to week #{week_number}, #{new_date}")
       rescue ArgumentError, ActiveRecord::RecordInvalid => e
