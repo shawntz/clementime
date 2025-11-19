@@ -9,6 +9,52 @@ class ScheduleGenerator
     load_config
   end
 
+  # Class method to update exam slots when exam dates change in config
+  def self.update_exam_dates_for_students(exam_dates_config)
+    return if exam_dates_config.blank?
+
+    generator = new
+    updated_count = 0
+
+    # Process each configured exam date
+    exam_dates_config.each do |key, date_str|
+      next if date_str.blank?
+
+      # Parse key (format: "1_odd", "2_even", etc.)
+      match = key.match(/^(\d+)_(odd|even)$/)
+      next unless match
+
+      exam_number = match[1].to_i
+      week_group = match[2]
+
+      # Parse the new date
+      begin
+        new_date = Date.parse(date_str.to_s)
+
+        # Calculate week_number from the actual date
+        week_number = generator.send(:calculate_week_from_date, new_date)
+
+        # Find all exam slots for this exam number where students have this week_group
+        # Only update unlocked slots to avoid changing confirmed exams
+        ExamSlot.joins(:student)
+          .where(exam_number: exam_number)
+          .where(students: { week_group: week_group })
+          .where(is_locked: false)
+          .find_each do |slot|
+            # Update the slot's date and week_number
+            slot.update!(date: new_date, week_number: week_number)
+            updated_count += 1
+          end
+
+        Rails.logger.info("Updated #{updated_count} exam slots for exam #{exam_number} #{week_group} to week #{week_number}, #{new_date}")
+      rescue => e
+        Rails.logger.error("Error updating exam dates for #{key}: #{e.message}")
+      end
+    end
+
+    updated_count
+  end
+
   def generate_all_schedules
     # Check if balanced TA scheduling is enabled
     balanced_scheduling = SystemConfig.get(SystemConfig::BALANCED_TA_SCHEDULING, false)
@@ -235,6 +281,9 @@ class ScheduleGenerator
     @quarter_start_date = quarter_start.is_a?(Date) ? quarter_start : Date.parse(quarter_start.to_s)
 
     @total_exams = SystemConfig.get(SystemConfig::TOTAL_EXAMS, 5)
+
+    # Load configured exam dates for overrides
+    @exam_dates = SystemConfig.get("exam_dates", {})
   end
 
   def assign_week_groups(students, section)
@@ -396,7 +445,11 @@ class ScheduleGenerator
   end
 
   def calculate_exam_date(week_number)
-    # Find the Nth occurrence of exam_day after quarter start
+    # First, check if there's a configured date override for this week
+    configured_date = get_configured_exam_date(week_number)
+    return configured_date if configured_date
+
+    # Fall back to calculated date based on quarter start and exam day
     target_day = day_name_to_wday(@exam_day)
     current_date = @quarter_start_date
 
@@ -407,6 +460,46 @@ class ScheduleGenerator
 
     # Advance to target week
     current_date + ((week_number - 1) * 7)
+  end
+
+  def get_configured_exam_date(week_number)
+    return nil if @exam_dates.blank?
+
+    # Determine exam number and week group from week_number
+    # Week 1 = Exam 1 odd, Week 2 = Exam 1 even
+    # Week 3 = Exam 2 odd, Week 4 = Exam 2 even, etc.
+    exam_number = ((week_number - 1) / 2) + 1
+    week_group = week_number.odd? ? "odd" : "even"
+
+    # Look up configured date
+    key = "#{exam_number}_#{week_group}"
+    date_str = @exam_dates[key]
+
+    return nil if date_str.blank?
+
+    # Parse and return the date
+    Date.parse(date_str.to_s)
+  rescue => e
+    Rails.logger.error("Error parsing configured exam date for #{key}: #{e.message}")
+    nil
+  end
+
+  def calculate_week_from_date(date)
+    # Calculate what week number this date represents
+    # based on quarter start date and exam day
+    target_day = day_name_to_wday(@exam_day)
+    current_date = @quarter_start_date
+
+    # Find the first occurrence of exam_day after quarter start
+    until current_date.wday == target_day
+      current_date += 1
+    end
+
+    # Calculate how many weeks from first exam_day to the given date
+    days_diff = (date - current_date).to_i
+    week_number = (days_diff / 7) + 1
+
+    week_number
   end
 
   def day_name_to_wday(day_name)

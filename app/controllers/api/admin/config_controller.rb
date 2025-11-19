@@ -106,6 +106,7 @@ module Api
         config_params = params[:config] || {}
         errors = []
         google_drive_updated = false
+        exam_dates_updated = false
 
         config_params.each do |key, value|
           begin
@@ -170,6 +171,7 @@ module Api
               SystemConfig.set("grade_form_urls", value, config_type: "json")
             when "exam_dates"
               SystemConfig.set("exam_dates", value, config_type: "json")
+              exam_dates_updated = true
             when "ignored_section_codes"
               # Convert comma-separated string to array for storage
               codes_array = parse_ignored_section_codes(value)
@@ -179,6 +181,17 @@ module Api
             end
           rescue => e
             errors << "#{key}: #{e.message}"
+          end
+        end
+
+        # Update student exam slots if exam dates were changed
+        if exam_dates_updated && errors.empty?
+          begin
+            updated_count = ScheduleGenerator.update_exam_dates_for_students(config_params["exam_dates"])
+            Rails.logger.info("Updated #{updated_count} exam slots after exam_dates config change")
+          rescue => e
+            Rails.logger.error("Error updating exam slots: #{e.message}")
+            errors << "Failed to update student schedules: #{e.message}"
           end
         end
 
