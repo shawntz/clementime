@@ -18,39 +18,42 @@ class ScheduleGenerator
 
     # Process each configured exam date
     exam_dates_config.each do |key, date_str|
-      next if date_str.blank?
+    ActiveRecord::Base.transaction do
+      # Process each configured exam date
+      exam_dates_config.each do |key, date_str|
+        next if date_str.blank?
 
-      # Parse key (format: "1_odd", "2_even", etc.)
-      match = key.match(/^(\d+)_(odd|even)$/)
-      next unless match
+        # Parse key (format: "1_odd", "2_even", etc.)
+        match = key.match(/^(\d+)_(odd|even)$/)
+        next unless match
 
-      exam_number = match[1].to_i
-      week_group = match[2]
+        exam_number = match[1].to_i
+        week_group = match[2]
 
-      # Parse the new date
-      begin
-        new_date = Date.parse(date_str.to_s)
+        # Parse the new date
+        begin
+          new_date = Date.parse(date_str.to_s)
 
-        # Calculate week_number from the actual date
-        week_number = generator.send(:calculate_week_from_date, new_date)
+          # Calculate week_number from the actual date
+          week_number = generator.send(:calculate_week_from_date, new_date)
 
-        # Find all exam slots for this exam number where students have this week_group
-        # Only update unlocked slots to avoid changing confirmed exams
-        ExamSlot.joins(:student)
-          .where(exam_number: exam_number)
-          .where(students: { week_group: week_group })
-          .where(is_locked: false)
-          # Batch update all matching slots for performance; this bypasses callbacks/history tracking
-          updated = ExamSlot.joins(:student)
+          # Find all exam slots for this exam number where students have this week_group
+          # Only update unlocked slots to avoid changing confirmed exams
+          ExamSlot.joins(:student)
             .where(exam_number: exam_number)
             .where(students: { week_group: week_group })
             .where(is_locked: false)
-            .update_all(date: new_date, week_number: week_number)
-          updated_count += updated
+            .find_each do |slot|
+              # Update the slot's date and week_number
+              slot.update!(date: new_date, week_number: week_number)
+              updated_count += 1
+            end
 
-        Rails.logger.info("Updated #{updated_count} exam slots for exam #{exam_number} #{week_group} to week #{week_number}, #{new_date}")
-      rescue ArgumentError, ActiveRecord::RecordInvalid => e
-        Rails.logger.error("Error updating exam dates for #{key}: #{e.message}")
+          Rails.logger.info("Updated #{updated_count} exam slots for exam #{exam_number} #{week_group} to week #{week_number}, #{new_date}")
+        rescue => e
+          Rails.logger.error("Error updating exam dates for #{key}: #{e.message}")
+          raise  # Ensure transaction is rolled back on error
+        end
       end
     end
 
