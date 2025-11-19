@@ -21,13 +21,16 @@ class ScheduleGenerator
   # @raise [ArgumentError] If a date string cannot be parsed.
   # @note This method updates the database (ExamSlot records) and logs info/errors via Rails.logger.
   def self.update_exam_dates_for_students(exam_dates_config)
-    return if exam_dates_config.blank?
+    return 0 if exam_dates_config.blank?
+    
+    unless exam_dates_config.is_a?(Hash)
+      Rails.logger.error("exam_dates_config must be a Hash")
+      return 0
+    end
 
     generator = new
     updated_count = 0
 
-    # Process each configured exam date
-    exam_dates_config.each do |key, date_str|
     ActiveRecord::Base.transaction do
       # Process each configured exam date
       exam_dates_config.each do |key, date_str|
@@ -46,6 +49,12 @@ class ScheduleGenerator
 
           # Calculate week_number from the actual date
           week_number = generator.send(:calculate_week_from_date, new_date)
+          
+          # Check if week_number calculation failed
+          if week_number.nil?
+            Rails.logger.error("Failed to calculate week number for date #{new_date} (key: #{key})")
+            next
+          end
 
           # Find all exam slots for this exam number where students have this week_group
           # Only update unlocked slots to avoid changing confirmed exams
@@ -58,8 +67,6 @@ class ScheduleGenerator
               slot.update!(date: new_date, week_number: week_number)
               updated_count += 1
             end
-
-          Rails.logger.info("Updated #{updated_count} exam slots for exam #{exam_number} #{week_group} to week #{week_number}, #{new_date}")
         rescue => e
           Rails.logger.error("Error updating exam dates for #{key}: #{e.message}")
           raise  # Ensure transaction is rolled back on error
@@ -67,6 +74,7 @@ class ScheduleGenerator
       end
     end
 
+    Rails.logger.info("Updated #{updated_count} exam slots after exam_dates config change")
     updated_count
   end
 
