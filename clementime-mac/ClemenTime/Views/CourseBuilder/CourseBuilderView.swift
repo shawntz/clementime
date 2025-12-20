@@ -46,85 +46,106 @@ struct CourseBuilderView: View {
             Divider()
 
             // Content
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Icon Picker
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Choose an Icon")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 24) {
+                // Icon Picker
+                HStack(alignment: .center, spacing: 12) {
+                    Text("Icon")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                        .frame(width: 100, alignment: .leading)
 
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 6), spacing: 12) {
-                            ForEach(iconOptions, id: \.self) { icon in
-                                Button(action: {
-                                    selectedIcon = icon
-                                }) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(selectedIcon == icon ? Color.accentColor : Color(NSColor.controlBackgroundColor))
-                                            .frame(height: 60)
-
-                                        Image(systemName: icon)
-                                            .font(.title)
-                                            .foregroundColor(selectedIcon == icon ? .white : .primary)
+                    Menu {
+                        ForEach(iconOptions, id: \.self) { icon in
+                            Button(action: {
+                                selectedIcon = icon
+                            }) {
+                                HStack {
+                                    Image(systemName: icon)
+                                    if selectedIcon == icon {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.accentColor)
                                     }
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.accentColor.opacity(0.15))
+                                    .frame(width: 50, height: 50)
+
+                                Image(systemName: selectedIcon)
+                                    .font(.title2)
+                                    .foregroundColor(.accentColor)
+                            }
+
+                            Text("Choose Icon")
+                                .foregroundColor(.primary)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(12)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
                     }
-
-                    // Course Name
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Course Name")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-
-                        TextField("e.g., PSYCH 10 / STATS 60", text: $courseName)
-                            .textFieldStyle(.plain)
-                            .font(.title3)
-                            .padding(12)
-                            .background(Color(NSColor.controlBackgroundColor))
-                            .cornerRadius(8)
-                    }
-
-                    // Term
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Term")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-
-                        TextField("e.g., Fall 2025", text: $term)
-                            .textFieldStyle(.plain)
-                            .font(.title3)
-                            .padding(12)
-                            .background(Color(NSColor.controlBackgroundColor))
-                            .cornerRadius(8)
-                    }
-
-                    // Description
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Description (Optional)")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-
-                        TextEditor(text: $courseDescription)
-                            .font(.body)
-                            .frame(height: 100)
-                            .padding(8)
-                            .background(Color(NSColor.controlBackgroundColor))
-                            .cornerRadius(8)
-                    }
-
-                    if let error = errorMessage {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.callout)
-                            .padding(.vertical, 8)
-                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(24)
+
+                // Course Name
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Course Name")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    TextField("e.g., PSYCH 10 / STATS 60", text: $courseName)
+                        .textFieldStyle(.plain)
+                        .font(.title3)
+                        .padding(12)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
+                }
+
+                // Term
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Term")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    TextField("e.g., Fall 2025", text: $term)
+                        .textFieldStyle(.plain)
+                        .font(.title3)
+                        .padding(12)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
+                }
+
+                // Description
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Description (Optional)")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    TextEditor(text: $courseDescription)
+                        .font(.body)
+                        .frame(height: 80)
+                        .padding(8)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
+                }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.callout)
+                        .padding(.vertical, 8)
+                }
             }
+            .padding(24)
 
             Divider()
 
@@ -148,7 +169,7 @@ struct CourseBuilderView: View {
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(width: 600, height: 600)
+        .frame(width: 600, height: 500)
     }
 
     private var isValid: Bool {
