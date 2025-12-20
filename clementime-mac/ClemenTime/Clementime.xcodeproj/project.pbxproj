@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D02D87CB09F2F0A306CB8C7D /* SectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230DF7EBEBD3132EA3B3563F /* SectionsView.swift */; };
+		54F2568EE86D2B737581D66C /* SectionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758B62CBB633544378819392 /* SectionEditorView.swift */; };
 		CD7823602EF66C460083A25A /* CourseBuilderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */; };
 		CD7823612EF66C460083A25A /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */; };
 		CD7823622EF66C460083A25A /* CourseListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235C2EF66C460083A25A /* CourseListViewModel.swift */; };
@@ -91,6 +93,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		230DF7EBEBD3132EA3B3563F /* SectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsView.swift; sourceTree = "<group>"; };
+		758B62CBB633544378819392 /* SectionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorView.swift; sourceTree = "<group>"; };
 		CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseBuilderViewModel.swift; sourceTree = "<group>"; };
 		CD78235C2EF66C460083A25A /* CourseListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseListViewModel.swift; sourceTree = "<group>"; };
 		CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
@@ -301,6 +305,7 @@
 				CD7823BC2EF674000083A25A /* CourseSettings */,
 				CD7823BE2EF674000083A25A /* ExamSessions */,
 				CD7823C02EF674000083A25A /* Schedule */,
+				B43DEC72EA8247804A0E6898 /* Sections */,
 				CD7823C12EF674000083A25A /* Settings */,
 				CD7823C32EF674000083A25A /* Students */,
 			);
@@ -469,6 +474,15 @@
 				CD78235F2EF66C460083A25A /* StudentsViewModel.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		B43DEC72EA8247804A0E6898 /* Sections */ = {
+			isa = PBXGroup;
+			children = (
+				230DF7EBEBD3132EA3B3563F /* SectionsView.swift */,
+				758B62CBB633544378819392 /* SectionEditorView.swift */,
+			);
+			path = Sections;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -679,7 +693,9 @@
 				CD7823B22EF66CC00083A25A /* CoreDataCourseRepository.swift in Sources */,
 				CD7823B32EF66CC00083A25A /* CoreDataExamSessionRepository.swift in Sources */,
 				CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */,
-			);
+			
+				D02D87CB09F2F0A306CB8C7D /* SectionsView.swift in Sources */,
+				54F2568EE86D2B737581D66C /* SectionEditorView.swift in Sources */,);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CDCFA6662EF6594C00F7BBD1 /* Sources */ = {

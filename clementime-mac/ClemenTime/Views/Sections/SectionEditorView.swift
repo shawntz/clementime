@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct SectionEditorView: View {
     let courseId: UUID
@@ -43,7 +44,7 @@ struct SectionEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Section Information") {
+                SwiftUI.Section("Section Information") {
                     TextField("Section Name", text: $sectionName)
                         .textFieldStyle(.plain)
 
@@ -54,7 +55,7 @@ struct SectionEditorView: View {
                         .textFieldStyle(.plain)
                 }
 
-                Section("Exam Schedule") {
+                SwiftUI.Section("Exam Schedule") {
                     DatePicker("Exam Date", selection: $examDate, displayedComponents: .date)
 
                     DatePicker("Start Time", selection: $examStartTime, displayedComponents: .hourAndMinute)
@@ -62,7 +63,7 @@ struct SectionEditorView: View {
                     DatePicker("End Time", selection: $examEndTime, displayedComponents: .hourAndMinute)
                 }
 
-                Section("Assignment") {
+                SwiftUI.Section("Assignment") {
                     Picker("Cohort", selection: $selectedCohortId) {
                         Text("Select Cohort").tag(nil as UUID?)
                         ForEach(cohortViewModel.cohorts) { cohort in

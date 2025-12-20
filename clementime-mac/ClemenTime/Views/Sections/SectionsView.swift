@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct SectionsView: View {
     let course: Course
@@ -163,7 +164,6 @@ struct SectionRow: View {
 
 // MARK: - Sections ViewModel
 
-@MainActor
 class SectionsViewModel: ObservableObject {
     @Published var sections: [Section] = []
     @Published var isLoading = false
@@ -177,6 +177,7 @@ class SectionsViewModel: ObservableObject {
         self.sectionRepository = sectionRepository
     }
 
+    @MainActor
     func loadSections() async {
         isLoading = true
         error = nil
@@ -191,6 +192,7 @@ class SectionsViewModel: ObservableObject {
         isLoading = false
     }
 
+    @MainActor
     func createSection(_ section: Section) async {
         do {
             _ = try await sectionRepository.createSection(section)
@@ -201,6 +203,7 @@ class SectionsViewModel: ObservableObject {
         }
     }
 
+    @MainActor
     func updateSection(_ section: Section) async {
         do {
             try await sectionRepository.updateSection(section)
@@ -211,6 +214,7 @@ class SectionsViewModel: ObservableObject {
         }
     }
 
+    @MainActor
     func deleteSection(_ sectionId: UUID) async {
         do {
             try await sectionRepository.deleteSection(id: sectionId)
