@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import Combine
 
 @main
 struct ClemenTimeApp: App {
@@ -30,11 +31,6 @@ struct ClemenTimeApp: App {
                 }
                 .keyboardShortcut("n", modifiers: .command)
             }
-        }
-
-        // Settings window
-        Settings {
-            SettingsView()
         }
     }
 }
