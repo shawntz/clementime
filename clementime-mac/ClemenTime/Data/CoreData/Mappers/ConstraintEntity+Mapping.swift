@@ -13,8 +13,8 @@ extension ConstraintEntity {
         Constraint(
             id: id ?? UUID(),
             studentId: studentId ?? UUID(),
-            constraintType: ConstraintType(rawValue: constraintType ?? "") ?? .timeBefore,
-            constraintValue: constraintValue ?? "",
+            type: ConstraintType(rawValue: constraintType ?? "") ?? .timeBefore,
+            value: constraintValue ?? "",
             constraintDescription: constraintDescription ?? "",
             isActive: isActive
         )
@@ -23,8 +23,8 @@ extension ConstraintEntity {
     func update(from domain: Constraint) {
         self.id = domain.id
         self.studentId = domain.studentId
-        self.constraintType = domain.constraintType.rawValue
-        self.constraintValue = domain.constraintValue
+        self.constraintType = domain.type.rawValue
+        self.constraintValue = domain.value
         self.constraintDescription = domain.constraintDescription
         self.isActive = domain.isActive
     }

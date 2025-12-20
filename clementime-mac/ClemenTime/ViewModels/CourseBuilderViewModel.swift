@@ -90,7 +90,7 @@ class CourseBuilderViewModel: ObservableObject {
         var currentEvenDate = quarterStartDate
 
         // Find first occurrence of exam day
-        let targetWeekday = examDay.weekdayNumber
+        let targetWeekday = examDay.weekdayIndex
         while currentOddDate.weekdayNumber != targetWeekday {
             currentOddDate = calendar.date(byAdding: .day, value: 1, to: currentOddDate) ?? currentOddDate
         }
@@ -132,7 +132,7 @@ class CourseBuilderViewModel: ObservableObject {
                 examEndTime: TimeComponents(hour: Calendar.current.component(.hour, from: examEndTime),
                                             minute: Calendar.current.component(.minute, from: examEndTime)),
                 examDurationMinutes: examDurationMinutes,
-                bufferMinutes: bufferMinutes,
+                examBufferMinutes: bufferMinutes,
                 balancedTAScheduling: false
             )
 

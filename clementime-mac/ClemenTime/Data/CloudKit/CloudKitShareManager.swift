@@ -7,6 +7,7 @@
 
 import Foundation
 import CloudKit
+import CoreData
 
 class CloudKitShareManager {
     private let container: CKContainer
@@ -38,31 +39,28 @@ class CloudKitShareManager {
             share[CKShare.SystemFieldKey.title] = courseRecord["name"] as? String
         }
 
-        // 3. Set share permissions
+        // 3. Set share permissions (all participants will have read/write)
         share.publicPermission = .none // Private sharing only
 
-        // 4. Lookup participant by email
-        let participants = try await container.fetchParticipants(
-            matching: [CKUserIdentity.LookupInfo(emailAddress: email)],
-            options: []
-        )
-
-        guard let participant = participants.first else {
-            throw CloudKitError.participantNotFound
-        }
-
-        // 5. Add participant with read/write access
-        participant.permission = .readWrite
-        participant.role = .privateUser
-        share.addParticipant(participant)
-
-        // 6. Save share to CloudKit
+        // 4. Save share to CloudKit
+        // Note: In modern CloudKit, we don't manually add participants.
+        // Instead, we save the share and send the URL to the collaborator.
+        // They accept the share by opening the URL.
         let (savedRecords, _) = try await container.privateCloudDatabase.modifyRecords(
             saving: [courseRecord, share],
             deleting: []
         )
 
-        guard let savedShare = savedRecords.first(where: { $0 is CKShare }) as? CKShare else {
+        // Extract the saved share from results
+        var savedShare: CKShare?
+        for (_, result) in savedRecords {
+            if case .success(let record) = result, record is CKShare {
+                savedShare = record as? CKShare
+                break
+            }
+        }
+
+        guard let share = savedShare else {
             throw CloudKitError.shareSaveFailed
         }
 
@@ -70,12 +68,11 @@ class CloudKitShareManager {
         try await createTAUserRecord(
             courseId: courseId,
             email: email,
-            permissions: permissions,
-            shareParticipant: participant
+            permissions: permissions
         )
 
         // 8. Return share URL
-        guard let shareURL = savedShare.url else {
+        guard let shareURL = share.url else {
             throw CloudKitError.shareURLNotFound
         }
 
@@ -85,15 +82,15 @@ class CloudKitShareManager {
     /// Accept a share invitation
     func acceptShare(metadata: CKShare.Metadata) async throws {
         // 1. Accept the share
-        let acceptedShare = try await container.accept(metadata)
+        _ = try await container.accept(metadata)
 
         // 2. Fetch the shared course record
-        guard let rootRecordID = acceptedShare.rootRecordID else {
+        guard let rootRecord = metadata.rootRecord else {
             throw CloudKitError.rootRecordNotFound
         }
 
         let sharedDatabase = container.sharedCloudDatabase
-        let courseRecord = try await sharedDatabase.record(for: rootRecordID)
+        let courseRecord = try await sharedDatabase.record(for: rootRecord.recordID)
 
         // 3. The course will automatically sync to Core Data via NSPersistentCloudKitContainer
         // No manual Core Data creation needed - CloudKit sync handles it
@@ -150,8 +147,7 @@ class CloudKitShareManager {
     private func createTAUserRecord(
         courseId: UUID,
         email: String,
-        permissions: [Permission],
-        shareParticipant: CKShare.Participant
+        permissions: [Permission]
     ) async throws {
         let taUserId = UUID()
         let recordID = CKRecord.ID(recordName: taUserId.uuidString)
@@ -161,8 +157,8 @@ class CloudKitShareManager {
         let nameParts = email.components(separatedBy: "@").first?
             .components(separatedBy: ".") ?? ["Unknown"]
 
-        taUserRecord["id"] = taUserId
-        taUserRecord["courseId"] = courseId
+        taUserRecord["id"] = taUserId.uuidString
+        taUserRecord["courseId"] = courseId.uuidString
         taUserRecord["email"] = email
         taUserRecord["firstName"] = nameParts.first?.capitalized ?? "Unknown"
         taUserRecord["lastName"] = nameParts.count > 1 ? nameParts[1].capitalized : "User"

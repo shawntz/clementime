@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData
+@preconcurrency import CoreData
 
 class CoreDataTAUserRepository: TAUserRepository {
     private let persistentContainer: NSPersistentCloudKitContainer

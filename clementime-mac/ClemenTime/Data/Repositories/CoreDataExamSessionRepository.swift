@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData
+@preconcurrency import CoreData
 
 class CoreDataExamSessionRepository: ExamSessionRepository {
     private let persistentContainer: NSPersistentCloudKitContainer

@@ -71,8 +71,9 @@ struct CourseSettings: Codable, Hashable {
     }
 
     // Encode/decode to JSON string for Core Data storage
-    func toJSON() -> String {
+    func encode() -> String {
         let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(self),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
@@ -82,6 +83,7 @@ struct CourseSettings: Codable, Hashable {
 
     static func decode(from json: String) -> CourseSettings {
         let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
         guard let data = json.data(using: .utf8),
               let settings = try? decoder.decode(CourseSettings.self, from: data) else {
             return CourseSettings()

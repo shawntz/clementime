@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData
+@preconcurrency import CoreData
 
 class CoreDataRecordingRepository: RecordingRepository {
     private let persistentContainer: NSPersistentCloudKitContainer

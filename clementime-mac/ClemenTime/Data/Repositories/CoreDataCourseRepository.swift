@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData
+@preconcurrency import CoreData
 import CloudKit
 
 class CoreDataCourseRepository: CourseRepository {

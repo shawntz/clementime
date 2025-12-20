@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData
+@preconcurrency import CoreData
 
 class CoreDataStudentRepository: StudentRepository {
     private let persistentContainer: NSPersistentCloudKitContainer
@@ -21,7 +21,7 @@ class CoreDataStudentRepository: StudentRepository {
         request.predicate = NSPredicate(format: "courseId == %@ AND isActive == YES", courseId as CVarArg)
         request.sortDescriptors = [NSSortDescriptor(key: "fullName", ascending: true)]
 
-        return try await context.perform {
+        return try await context.perform(schedule: .immediate) {
             let entities = try context.fetch(request)
             return entities.map { $0.toDomain() }
         }
@@ -33,7 +33,7 @@ class CoreDataStudentRepository: StudentRepository {
         request.predicate = NSPredicate(format: "sectionId == %@ AND isActive == YES", sectionId as CVarArg)
         request.sortDescriptors = [NSSortDescriptor(key: "fullName", ascending: true)]
 
-        return try await context.perform {
+        return try await context.perform(schedule: .immediate) {
             let entities = try context.fetch(request)
             return entities.map { $0.toDomain() }
         }
@@ -45,7 +45,7 @@ class CoreDataStudentRepository: StudentRepository {
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         request.fetchLimit = 1
 
-        return try await context.perform {
+        return try await context.perform(schedule: .immediate) {
             guard let entity = try context.fetch(request).first else {
                 return nil
             }
@@ -59,7 +59,7 @@ class CoreDataStudentRepository: StudentRepository {
         request.predicate = NSPredicate(format: "sisUserId == %@ AND courseId == %@", sisUserId, courseId as CVarArg)
         request.fetchLimit = 1
 
-        return try await context.perform {
+        return try await context.perform(schedule: .immediate) {
             guard let entity = try context.fetch(request).first else {
                 return nil
             }
@@ -70,7 +70,7 @@ class CoreDataStudentRepository: StudentRepository {
     func createStudent(_ student: Student) async throws -> Student {
         let context = persistentContainer.newBackgroundContext()
 
-        return try await context.perform {
+        return try await context.perform(schedule: .enqueued) {
             let entity = StudentEntity.create(from: student, in: context)
             try context.save()
             return entity.toDomain()
@@ -80,7 +80,7 @@ class CoreDataStudentRepository: StudentRepository {
     func updateStudent(_ student: Student) async throws {
         let context = persistentContainer.newBackgroundContext()
 
-        try await context.perform {
+        try await context.perform(schedule: .enqueued) {
             let request = NSFetchRequest<StudentEntity>(entityName: "StudentEntity")
             request.predicate = NSPredicate(format: "id == %@", student.id as CVarArg)
             request.fetchLimit = 1
@@ -97,7 +97,7 @@ class CoreDataStudentRepository: StudentRepository {
     func deleteStudent(id: UUID) async throws {
         let context = persistentContainer.newBackgroundContext()
 
-        try await context.perform {
+        try await context.perform(schedule: .enqueued) {
             let request = NSFetchRequest<StudentEntity>(entityName: "StudentEntity")
             request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
             request.fetchLimit = 1
@@ -114,7 +114,7 @@ class CoreDataStudentRepository: StudentRepository {
     func importStudents(from csvURL: URL, courseId: UUID) async throws -> ImportResult {
         let context = persistentContainer.newBackgroundContext()
 
-        return try await context.perform {
+        return try await context.perform(schedule: .enqueued) {
             // Read CSV file
             let csvData = try String(contentsOf: csvURL, encoding: .utf8)
             let lines = csvData.components(separatedBy: .newlines).filter { !$0.isEmpty }
@@ -134,16 +134,21 @@ class CoreDataStudentRepository: StudentRepository {
                 throw RepositoryError.invalidData
             }
 
-            var created = 0
-            var updated = 0
-            var errors: [String] = []
+            var successCount = 0
+            var failureCount = 0
+            var errors: [ImportResult.ImportError] = []
 
             // Process each row
             for (index, line) in lines.enumerated() where index > 0 {
                 let fields = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
 
                 guard fields.count > max(sisIdIndex, nameIndex, emailIndex, sectionIndex) else {
-                    errors.append("Line \(index): Invalid field count")
+                    errors.append(ImportResult.ImportError(
+                        row: index + 1,
+                        studentName: nil,
+                        reason: "Invalid field count"
+                    ))
+                    failureCount += 1
                     continue
                 }
 
@@ -163,7 +168,12 @@ class CoreDataStudentRepository: StudentRepository {
                 sectionRequest.fetchLimit = 1
 
                 guard let section = try context.fetch(sectionRequest).first else {
-                    errors.append("Line \(index): Section '\(sectionCode)' not found")
+                    errors.append(ImportResult.ImportError(
+                        row: index + 1,
+                        studentName: fullName,
+                        reason: "Section '\(sectionCode)' not found"
+                    ))
+                    failureCount += 1
                     continue
                 }
 
@@ -173,7 +183,7 @@ class CoreDataStudentRepository: StudentRepository {
                     existingStudent.email = email
                     existingStudent.sectionId = section.id ?? UUID()
                     existingStudent.cohortId = section.cohortId ?? UUID()
-                    updated += 1
+                    successCount += 1
                 } else {
                     // Create new student
                     let student = Student(
@@ -189,16 +199,15 @@ class CoreDataStudentRepository: StudentRepository {
                         isActive: true
                     )
                     _ = StudentEntity.create(from: student, in: context)
-                    created += 1
+                    successCount += 1
                 }
             }
 
             try context.save()
 
             return ImportResult(
-                totalRows: lines.count - 1,
-                created: created,
-                updated: updated,
+                successCount: successCount,
+                failureCount: failureCount,
                 errors: errors
             )
         }

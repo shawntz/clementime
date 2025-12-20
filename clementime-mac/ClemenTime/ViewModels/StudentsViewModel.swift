@@ -68,9 +68,14 @@ class StudentsViewModel: ObservableObject {
             let result = try await studentRepository.importStudents(from: url, courseId: course.id)
 
             if !result.errors.isEmpty {
-                error = "Import completed with errors:\n" + result.errors.joined(separator: "\n")
-            } else {
-                successMessage = "Successfully imported \(result.created) new students and updated \(result.updated) existing students"
+                let errorMessages = result.errors.map { error in
+                    "Row \(error.row): \(error.reason)" + (error.studentName != nil ? " (\(error.studentName!))" : "")
+                }
+                error = "Import completed with \(result.failureCount) errors:\n" + errorMessages.joined(separator: "\n")
+            }
+
+            if result.successCount > 0 {
+                successMessage = "Successfully imported \(result.successCount) students"
             }
 
             await loadStudents()

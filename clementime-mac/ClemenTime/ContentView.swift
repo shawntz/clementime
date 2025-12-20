@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
@@ -68,7 +69,7 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $selectedCourse) {
-            Section("My Courses") {
+            SwiftUI.Section("My Courses") {
                 ForEach(viewModel.courses) { course in
                     NavigationLink(value: course) {
                         CourseRow(course: course)
@@ -76,7 +77,7 @@ struct SidebarView: View {
                 }
             }
 
-            Section("Shared with Me") {
+            SwiftUI.Section("Shared with Me") {
                 ForEach(viewModel.sharedCourses) { course in
                     NavigationLink(value: course) {
                         CourseRow(course: course, isShared: true)

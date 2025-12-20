@@ -78,6 +78,7 @@ class GenerateScheduleUseCase {
         var generatedCount = 0
         var unscheduledCount = 0
         var errors: [String] = []
+        var unscheduledStudentIds: [UUID] = []
 
         for examNumber in examNumbers {
             // Find the exam session for this exam number
@@ -108,13 +109,15 @@ class GenerateScheduleUseCase {
                 generatedCount += result.scheduled
                 unscheduledCount += result.unscheduled
                 errors.append(contentsOf: result.errors)
+                unscheduledStudentIds.append(contentsOf: result.unscheduledStudentIds)
             }
         }
 
         return ScheduleResult(
             scheduledCount: generatedCount,
             unscheduledCount: unscheduledCount,
-            errors: errors
+            errors: errors,
+            unscheduledStudents: unscheduledStudentIds
         )
     }
 
@@ -130,10 +133,10 @@ class GenerateScheduleUseCase {
         for var student in students {
             // Check if student has a week_preference constraint
             if let studentConstraints = constraints[student.id],
-               let weekPreference = studentConstraints.first(where: { $0.constraintType == .weekPreference }) {
+               let weekPreference = studentConstraints.first(where: { $0.type == .weekPreference }) {
                 // Find cohort matching the preference
                 if let preferredCohort = cohorts.first(where: {
-                    $0.weekType.rawValue == weekPreference.constraintValue
+                    $0.weekType.rawValue == weekPreference.value
                 }) {
                     if student.cohortId != preferredCohort.id {
                         student.cohortId = preferredCohort.id
@@ -161,10 +164,11 @@ class GenerateScheduleUseCase {
         course: Course,
         constraints: [UUID: [Constraint]],
         sections: [Section]
-    ) async throws -> (scheduled: Int, unscheduled: Int, errors: [String]) {
+    ) async throws -> (scheduled: Int, unscheduled: Int, errors: [String], unscheduledStudentIds: [UUID]) {
         var scheduled = 0
         var unscheduled = 0
         var errors: [String] = []
+        var unscheduledStudentIds: [UUID] = []
 
         // Group students by section
         let studentsBySection = Dictionary(grouping: students) { $0.sectionId }
@@ -235,6 +239,7 @@ class GenerateScheduleUseCase {
                         courseId: course.id
                     )
                     unscheduled += 1
+                    unscheduledStudentIds.append(student.id)
                     continue
                 }
 
@@ -258,6 +263,7 @@ class GenerateScheduleUseCase {
                         courseId: course.id
                     )
                     unscheduled += 1
+                    unscheduledStudentIds.append(student.id)
                     continue
                 }
 
@@ -286,7 +292,7 @@ class GenerateScheduleUseCase {
             }
         }
 
-        return (scheduled, unscheduled, errors)
+        return (scheduled, unscheduled, errors, unscheduledStudentIds)
     }
 
     private func prioritizeStudents(
@@ -303,10 +309,10 @@ class GenerateScheduleUseCase {
         for student in students {
             let studentConstraints = constraints[student.id] ?? []
 
-            let hasTimeBefore = studentConstraints.contains { $0.constraintType == .timeBefore }
-            let hasTimeAfter = studentConstraints.contains { $0.constraintType == .timeAfter }
+            let hasTimeBefore = studentConstraints.contains { $0.type == .timeBefore }
+            let hasTimeAfter = studentConstraints.contains { $0.type == .timeAfter }
             let hasOther = studentConstraints.contains {
-                $0.constraintType == .specificDate || $0.constraintType == .excludeDate
+                $0.type == .specificDate || $0.type == .excludeDate
             }
 
             if hasTimeBefore {
@@ -335,10 +341,10 @@ class GenerateScheduleUseCase {
         endTime: Date
     ) -> Bool {
         for constraint in constraints where constraint.isActive {
-            switch constraint.constraintType {
+            switch constraint.type {
             case .timeBefore:
                 // Student must start BEFORE this time
-                let maxTime = parseConstraintTime(constraint.constraintValue)
+                let maxTime = parseConstraintTime(constraint.value)
                 let startTimeComponents = Calendar.current.dateComponents([.hour, .minute], from: startTime)
                 let maxTimeComponents = parseTime(maxTime)
 
@@ -350,7 +356,7 @@ class GenerateScheduleUseCase {
 
             case .timeAfter:
                 // Student must start AFTER this time
-                let minTime = parseConstraintTime(constraint.constraintValue)
+                let minTime = parseConstraintTime(constraint.value)
                 let startTimeComponents = Calendar.current.dateComponents([.hour, .minute], from: startTime)
                 let minTimeComponents = parseTime(minTime)
 
@@ -362,7 +368,7 @@ class GenerateScheduleUseCase {
 
             case .specificDate:
                 // Student must be scheduled on this specific date
-                if let requiredDate = parseConstraintDate(constraint.constraintValue) {
+                if let requiredDate = parseConstraintDate(constraint.value) {
                     let calendar = Calendar.current
                     if !calendar.isDate(date, inSameDayAs: requiredDate) {
                         return false
@@ -371,7 +377,7 @@ class GenerateScheduleUseCase {
 
             case .excludeDate:
                 // Student cannot be scheduled on this date
-                if let excludedDate = parseConstraintDate(constraint.constraintValue) {
+                if let excludedDate = parseConstraintDate(constraint.value) {
                     let calendar = Calendar.current
                     if calendar.isDate(date, inSameDayAs: excludedDate) {
                         return false

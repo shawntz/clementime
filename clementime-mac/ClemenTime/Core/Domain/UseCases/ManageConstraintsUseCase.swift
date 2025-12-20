@@ -43,8 +43,8 @@ class ManageConstraintsUseCase {
         let constraint = Constraint(
             id: UUID(),
             studentId: student.id,
-            constraintType: input.constraintType,
-            constraintValue: input.constraintValue,
+            type: input.constraintType,
+            value: input.constraintValue,
             constraintDescription: input.constraintDescription,
             isActive: true
         )
@@ -59,10 +59,10 @@ class ManageConstraintsUseCase {
         }
 
         // 2. Validate new value format
-        try validateConstraintValue(type: constraint.constraintType, value: input.constraintValue)
+        try validateConstraintValue(type: constraint.type, value: input.constraintValue)
 
         // 3. Update constraint
-        constraint.constraintValue = input.constraintValue
+        constraint.value = input.constraintValue
         constraint.constraintDescription = input.constraintDescription
         constraint.isActive = input.isActive
 
