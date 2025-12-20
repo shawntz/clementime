@@ -14,6 +14,50 @@ class PersistenceController: ObservableObject {
 
     let container: NSPersistentCloudKitContainer
 
+    // MARK: - Cloud Kit Share Manager
+
+    lazy var shareManager: CloudKitShareManager = {
+        CloudKitShareManager(persistentContainer: container)
+    }()
+
+    // MARK: - Repositories
+
+    lazy var courseRepository: CourseRepository = {
+        CoreDataCourseRepository(persistentContainer: container, shareManager: shareManager)
+    }()
+
+    lazy var studentRepository: StudentRepository = {
+        CoreDataStudentRepository(persistentContainer: container)
+    }()
+
+    lazy var scheduleRepository: ScheduleRepository = {
+        CoreDataScheduleRepository(persistentContainer: container)
+    }()
+
+    lazy var cohortRepository: CohortRepository = {
+        CoreDataCohortRepository(persistentContainer: container)
+    }()
+
+    lazy var sectionRepository: SectionRepository = {
+        CoreDataSectionRepository(persistentContainer: container)
+    }()
+
+    lazy var examSessionRepository: ExamSessionRepository = {
+        CoreDataExamSessionRepository(persistentContainer: container)
+    }()
+
+    lazy var constraintRepository: ConstraintRepository = {
+        CoreDataConstraintRepository(persistentContainer: container)
+    }()
+
+    lazy var recordingRepository: RecordingRepository = {
+        CoreDataRecordingRepository(persistentContainer: container)
+    }()
+
+    lazy var taUserRepository: TAUserRepository = {
+        CoreDataTAUserRepository(persistentContainer: container)
+    }()
+
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "Clementime")
 
