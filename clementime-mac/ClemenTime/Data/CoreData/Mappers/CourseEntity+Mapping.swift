@@ -11,7 +11,13 @@ import CoreData
 extension CourseEntity {
     /// Convert Core Data entity to domain model
     func toDomain() -> Course {
-        Course(
+        // Decode metadata from JSON
+        var metadata: [String: String] = [:]
+        if let metadataJSON = metadataJSON, let data = metadataJSON.data(using: .utf8) {
+            metadata = (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
+        }
+
+        return Course(
             id: id ?? UUID(),
             name: name ?? "",
             term: term ?? "",
@@ -20,7 +26,8 @@ extension CourseEntity {
             totalExams: Int(totalExams),
             isActive: isActive,
             createdBy: createdByUserId ?? UUID(),
-            settings: CourseSettings.decode(from: settingsJSON ?? "{}")
+            settings: CourseSettings.decode(from: settingsJSON ?? "{}"),
+            metadata: metadata
         )
     }
 
@@ -35,6 +42,14 @@ extension CourseEntity {
         self.isActive = domain.isActive
         self.createdByUserId = domain.createdBy
         self.settingsJSON = domain.settings.encode()
+
+        // Encode metadata to JSON
+        if let data = try? JSONEncoder().encode(domain.metadata),
+           let json = String(data: data, encoding: .utf8) {
+            self.metadataJSON = json
+        } else {
+            self.metadataJSON = "{}"
+        }
     }
 
     /// Create new Core Data entity from domain model

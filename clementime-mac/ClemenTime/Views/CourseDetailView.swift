@@ -34,18 +34,36 @@ struct CourseDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Course Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 16) {
+                // Course Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.accentColor.opacity(0.15))
+                        .frame(width: 60, height: 60)
+
+                    Image(systemName: course.metadata["icon"] ?? "book.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(.accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
                     Text(course.name)
                         .font(.title)
                         .fontWeight(.bold)
+
+                    if let description = course.metadata["description"], !description.isEmpty {
+                        Text(description)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
 
                     HStack(spacing: 12) {
                         Label(course.term, systemImage: "calendar")
                         Label(course.examDay.rawValue.capitalized, systemImage: "clock")
                         Label("\(course.totalExams) Exams", systemImage: "doc.text")
                     }
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(.secondary)
                 }
 

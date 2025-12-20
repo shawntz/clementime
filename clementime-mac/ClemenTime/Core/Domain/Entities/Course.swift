@@ -17,6 +17,7 @@ struct Course: Identifiable, Codable, Hashable {
     var isActive: Bool
     var createdBy: UUID // User ID of creator
     var settings: CourseSettings
+    var metadata: [String: String]
 
     init(
         id: UUID = UUID(),
@@ -27,7 +28,8 @@ struct Course: Identifiable, Codable, Hashable {
         totalExams: Int = 5,
         isActive: Bool = true,
         createdBy: UUID,
-        settings: CourseSettings = CourseSettings()
+        settings: CourseSettings = CourseSettings(),
+        metadata: [String: String] = [:]
     ) {
         self.id = id
         self.name = name
@@ -38,6 +40,7 @@ struct Course: Identifiable, Codable, Hashable {
         self.isActive = isActive
         self.createdBy = createdBy
         self.settings = settings
+        self.metadata = metadata
     }
 }
 

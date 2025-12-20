@@ -118,7 +118,18 @@ struct CourseRow: View {
     var isShared: Bool = false
 
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            // Course Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 40, height: 40)
+
+                Image(systemName: course.metadata["icon"] ?? "book.fill")
+                    .font(.title3)
+                    .foregroundColor(.accentColor)
+            }
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(course.name)
                     .font(.headline)

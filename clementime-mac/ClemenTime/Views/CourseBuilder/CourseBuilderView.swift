@@ -11,75 +11,144 @@ struct CourseBuilderView: View {
     @Environment(\.dismiss) var dismiss
     @State private var courseName = ""
     @State private var term = ""
-    @State private var quarterStartDate = Date()
-    @State private var examDay: DayOfWeek = .friday
-    @State private var totalExams = 5
+    @State private var courseDescription = ""
+    @State private var selectedIcon = "book.fill"
     @State private var isCreating = false
     @State private var errorMessage: String?
 
+    let iconOptions = [
+        "book.fill", "graduationcap.fill", "brain.head.profile",
+        "function", "chart.bar.fill", "network",
+        "atom", "flask.fill", "cross.case.fill",
+        "doc.text.fill", "folder.fill", "calendar"
+    ]
+
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Course Information")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        TextField("Course Name (e.g., PSYCH 10 / STATS 60)", text: $courseName)
-                            .textFieldStyle(.roundedBorder)
-
-                        TextField("Term (e.g., Fall 2025)", text: $term)
-                            .textFieldStyle(.roundedBorder)
-
-                        DatePicker("Quarter Start Date", selection: $quarterStartDate, displayedComponents: .date)
-
-                        Picker("Exam Day", selection: $examDay) {
-                            ForEach(DayOfWeek.allCases) { day in
-                                Text(day.rawValue.capitalized).tag(day)
-                            }
-                        }
-                        .pickerStyle(.menu)
-
-                        Stepper("Total Exams: \(totalExams)", value: $totalExams, in: 1...20)
-                    }
-                }
-
-                Divider()
-
-                Text("You can configure exam times, cohorts, and scheduling details after creating the course.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                }
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Create New Course")
+                    .font(.title)
+                    .fontWeight(.bold)
 
                 Spacer()
+
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
             }
             .padding()
-            .navigationTitle("Create New Course")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+            .background(Color(NSColor.controlBackgroundColor))
 
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create Course") {
-                        createCourse()
+            Divider()
+
+            // Content
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Icon Picker
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Choose an Icon")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 6), spacing: 12) {
+                            ForEach(iconOptions, id: \.self) { icon in
+                                Button(action: {
+                                    selectedIcon = icon
+                                }) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(selectedIcon == icon ? Color.accentColor : Color(NSColor.controlBackgroundColor))
+                                            .frame(height: 60)
+
+                                        Image(systemName: icon)
+                                            .font(.title)
+                                            .foregroundColor(selectedIcon == icon ? .white : .primary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
-                    .disabled(!isValid || isCreating)
-                    .buttonStyle(.borderedProminent)
+
+                    // Course Name
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Course Name")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        TextField("e.g., PSYCH 10 / STATS 60", text: $courseName)
+                            .textFieldStyle(.plain)
+                            .font(.title3)
+                            .padding(12)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(8)
+                    }
+
+                    // Term
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Term")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        TextField("e.g., Fall 2025", text: $term)
+                            .textFieldStyle(.plain)
+                            .font(.title3)
+                            .padding(12)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(8)
+                    }
+
+                    // Description
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Description (Optional)")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        TextEditor(text: $courseDescription)
+                            .font(.body)
+                            .frame(height: 100)
+                            .padding(8)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(8)
+                    }
+
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.callout)
+                            .padding(.vertical, 8)
+                    }
                 }
+                .padding(24)
             }
+
+            Divider()
+
+            // Footer
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Create Course") {
+                    createCourse()
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(!isValid || isCreating)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
+            .padding()
+            .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(width: 500, height: 400)
+        .frame(width: 600, height: 600)
     }
 
     private var isValid: Bool {
@@ -87,6 +156,16 @@ struct CourseBuilderView: View {
     }
 
     private func createCourse() {
+        guard !courseName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Please enter a course name"
+            return
+        }
+
+        guard !term.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Please enter a term"
+            return
+        }
+
         isCreating = true
         errorMessage = nil
 
@@ -101,16 +180,25 @@ struct CourseBuilderView: View {
                     balancedTAScheduling: false
                 )
 
+                // Store icon and description in metadata
+                var metadata: [String: String] = [
+                    "icon": selectedIcon
+                ]
+                if !courseDescription.isEmpty {
+                    metadata["description"] = courseDescription
+                }
+
                 let course = Course(
                     id: UUID(),
-                    name: courseName,
-                    term: term,
-                    quarterStartDate: quarterStartDate,
-                    examDay: examDay,
-                    totalExams: totalExams,
+                    name: courseName.trimmingCharacters(in: .whitespaces),
+                    term: term.trimmingCharacters(in: .whitespaces),
+                    quarterStartDate: Date(), // Default to today
+                    examDay: .friday, // Default to Friday
+                    totalExams: 5, // Default to 5 exams
                     isActive: true,
                     createdBy: UUID(), // TODO: Get current user ID
-                    settings: settings
+                    settings: settings,
+                    metadata: metadata
                 )
 
                 // Save course

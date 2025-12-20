@@ -24,6 +24,7 @@
           <attribute name="examDay" optional="YES" attributeType="String"/>
           <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+          <attribute name="metadataJSON" optional="YES" attributeType="String"/>
           <attribute name="name" optional="YES" attributeType="String"/>
           <attribute name="quarterStartDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
           <attribute name="settingsJSON" optional="YES" attributeType="String"/>
