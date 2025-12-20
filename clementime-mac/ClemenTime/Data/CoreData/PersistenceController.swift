@@ -16,8 +16,10 @@ class PersistenceController: ObservableObject {
 
     // MARK: - Cloud Kit Share Manager
 
-    lazy var shareManager: CloudKitShareManager = {
-        CloudKitShareManager(persistentContainer: container)
+    // TEMPORARY: Disable CloudKit share manager until entitlements are configured
+    lazy var shareManager: CloudKitShareManager? = {
+        // Return nil when CloudKit is disabled
+        return nil
     }()
 
     // MARK: - Repositories

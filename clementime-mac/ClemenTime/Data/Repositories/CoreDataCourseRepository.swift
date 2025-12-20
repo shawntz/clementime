@@ -11,9 +11,9 @@ import CloudKit
 
 class CoreDataCourseRepository: CourseRepository {
     private let persistentContainer: NSPersistentCloudKitContainer
-    private let shareManager: CloudKitShareManager
+    private let shareManager: CloudKitShareManager?
 
-    init(persistentContainer: NSPersistentCloudKitContainer, shareManager: CloudKitShareManager) {
+    init(persistentContainer: NSPersistentCloudKitContainer, shareManager: CloudKitShareManager?) {
         self.persistentContainer = persistentContainer
         self.shareManager = shareManager
     }
@@ -89,10 +89,16 @@ class CoreDataCourseRepository: CourseRepository {
     }
 
     func shareCourse(_ courseId: UUID, with email: String, permissions: [Permission]) async throws -> URL {
+        guard let shareManager = shareManager else {
+            throw RepositoryError.cloudKitNotAvailable
+        }
         return try await shareManager.shareCourse(courseId, with: email, permissions: permissions)
     }
 
     func acceptShare(metadata: Any) async throws {
+        guard let shareManager = shareManager else {
+            throw RepositoryError.cloudKitNotAvailable
+        }
         guard let shareMetadata = metadata as? CKShare.Metadata else {
             throw RepositoryError.invalidData
         }
@@ -106,4 +112,5 @@ enum RepositoryError: Error {
     case notImplemented
     case invalidData
     case saveFailed
+    case cloudKitNotAvailable
 }
