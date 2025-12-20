@@ -50,10 +50,15 @@
 		CD7823B12EF66CC00083A25A /* CoreDataStudentRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A92EF66CC00083A25A /* CoreDataStudentRepository.swift */; };
 		CD7823B22EF66CC00083A25A /* CoreDataCourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A42EF66CC00083A25A /* CoreDataCourseRepository.swift */; };
 		CD7823B32EF66CC00083A25A /* CoreDataExamSessionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A52EF66CC00083A25A /* CoreDataExamSessionRepository.swift */; };
+		CD7823C52EF674000083A25A /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823BF2EF674000083A25A /* ScheduleView.swift */; };
+		CD7823C62EF674000083A25A /* CourseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823B72EF674000083A25A /* CourseDetailView.swift */; };
+		CD7823C72EF674000083A25A /* ExamSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823BD2EF674000083A25A /* ExamSessionsView.swift */; };
+		CD7823C82EF674000083A25A /* StudentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823C22EF674000083A25A /* StudentsView.swift */; };
+		CD7823C92EF674000083A25A /* CourseSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823BB2EF674000083A25A /* CourseSettingsView.swift */; };
+		CD7823CA2EF674000083A25A /* CourseBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823B92EF674000083A25A /* CourseBuilderView.swift */; };
 		CDCFA6AB2EF6598B00F7BBD1 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CDCFA69F2EF6598B00F7BBD1 /* Info.plist */; };
 		CDCFA6AC2EF6598B00F7BBD1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */; };
 		CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68D2EF6598B00F7BBD1 /* ExamSlot.swift */; };
-		CDCFA6AE2EF6598B00F7BBD1 /* CourseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */; };
 		CDCFA6AF2EF6598B00F7BBD1 /* ExamSlotHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68E2EF6598B00F7BBD1 /* ExamSlotHistory.swift */; };
 		CDCFA6B02EF6598B00F7BBD1 /* Course.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68B2EF6598B00F7BBD1 /* Course.swift */; };
 		CDCFA6B12EF6598B00F7BBD1 /* Constraint.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68A2EF6598B00F7BBD1 /* Constraint.swift */; };
@@ -129,6 +134,12 @@
 		CD7823A82EF66CC00083A25A /* CoreDataSectionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataSectionRepository.swift; sourceTree = "<group>"; };
 		CD7823A92EF66CC00083A25A /* CoreDataStudentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStudentRepository.swift; sourceTree = "<group>"; };
 		CD7823AA2EF66CC00083A25A /* CoreDataTAUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataTAUserRepository.swift; sourceTree = "<group>"; };
+		CD7823B72EF674000083A25A /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
+		CD7823B92EF674000083A25A /* CourseBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseBuilderView.swift; sourceTree = "<group>"; };
+		CD7823BB2EF674000083A25A /* CourseSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSettingsView.swift; sourceTree = "<group>"; };
+		CD7823BD2EF674000083A25A /* ExamSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamSessionsView.swift; sourceTree = "<group>"; };
+		CD7823BF2EF674000083A25A /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
+		CD7823C22EF674000083A25A /* StudentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsView.swift; sourceTree = "<group>"; };
 		CDCFA6582EF6594B00F7BBD1 /* Clementime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clementime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA66A2EF6594C00F7BBD1 /* ClementimeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA6742EF6594C00F7BBD1 /* ClementimeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -147,7 +158,6 @@
 		CDCFA6952EF6598B00F7BBD1 /* PermissionChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionChecker.swift; sourceTree = "<group>"; };
 		CDCFA69F2EF6598B00F7BBD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -220,6 +230,83 @@
 			path = CoreData;
 			sourceTree = "<group>";
 		};
+		CD7823B62EF674000083A25A /* Common */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		CD7823B82EF674000083A25A /* Course */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823B72EF674000083A25A /* CourseDetailView.swift */,
+			);
+			path = Course;
+			sourceTree = "<group>";
+		};
+		CD7823BA2EF674000083A25A /* CourseBuilder */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823B92EF674000083A25A /* CourseBuilderView.swift */,
+			);
+			path = CourseBuilder;
+			sourceTree = "<group>";
+		};
+		CD7823BC2EF674000083A25A /* CourseSettings */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823BB2EF674000083A25A /* CourseSettingsView.swift */,
+			);
+			path = CourseSettings;
+			sourceTree = "<group>";
+		};
+		CD7823BE2EF674000083A25A /* ExamSessions */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823BD2EF674000083A25A /* ExamSessionsView.swift */,
+			);
+			path = ExamSessions;
+			sourceTree = "<group>";
+		};
+		CD7823C02EF674000083A25A /* Schedule */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823BF2EF674000083A25A /* ScheduleView.swift */,
+			);
+			path = Schedule;
+			sourceTree = "<group>";
+		};
+		CD7823C12EF674000083A25A /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		CD7823C32EF674000083A25A /* Students */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823C22EF674000083A25A /* StudentsView.swift */,
+			);
+			path = Students;
+			sourceTree = "<group>";
+		};
+		CD7823C42EF674000083A25A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823B62EF674000083A25A /* Common */,
+				CD7823B82EF674000083A25A /* Course */,
+				CD7823BA2EF674000083A25A /* CourseBuilder */,
+				CD7823BC2EF674000083A25A /* CourseSettings */,
+				CD7823BE2EF674000083A25A /* ExamSessions */,
+				CD7823C02EF674000083A25A /* Schedule */,
+				CD7823C12EF674000083A25A /* Settings */,
+				CD7823C32EF674000083A25A /* Students */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		CDCFA64F2EF6594B00F7BBD1 = {
 			isa = PBXGroup;
 			children = (
@@ -234,8 +321,8 @@
 				CDCFA69F2EF6598B00F7BBD1 /* Info.plist */,
 				CDCFA6A12EF6598B00F7BBD1 /* Resources */,
 				CDCFA6A22EF6598B00F7BBD1 /* Services */,
+				CD7823C42EF674000083A25A /* Views */,
 				CDCFA6A32EF6598B00F7BBD1 /* ViewModels */,
-				CDCFA6AA2EF6598B00F7BBD1 /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -382,54 +469,6 @@
 				CD78235F2EF66C460083A25A /* StudentsViewModel.swift */,
 			);
 			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		CDCFA6A42EF6598B00F7BBD1 /* Common */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Common;
-			sourceTree = "<group>";
-		};
-		CDCFA6A62EF6598B00F7BBD1 /* Course */ = {
-			isa = PBXGroup;
-			children = (
-				CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */,
-			);
-			path = Course;
-			sourceTree = "<group>";
-		};
-		CDCFA6A72EF6598B00F7BBD1 /* Schedule */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Schedule;
-			sourceTree = "<group>";
-		};
-		CDCFA6A82EF6598B00F7BBD1 /* Settings */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
-		CDCFA6A92EF6598B00F7BBD1 /* Students */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Students;
-			sourceTree = "<group>";
-		};
-		CDCFA6AA2EF6598B00F7BBD1 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				CDCFA6A42EF6598B00F7BBD1 /* Common */,
-				CDCFA6A62EF6598B00F7BBD1 /* Course */,
-				CDCFA6A72EF6598B00F7BBD1 /* Schedule */,
-				CDCFA6A82EF6598B00F7BBD1 /* Settings */,
-				CDCFA6A92EF6598B00F7BBD1 /* Students */,
-			);
-			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -579,7 +618,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */,
-				CDCFA6AE2EF6598B00F7BBD1 /* CourseDetailView.swift in Sources */,
 				CDCFA6AF2EF6598B00F7BBD1 /* ExamSlotHistory.swift in Sources */,
 				CDCFA6B02EF6598B00F7BBD1 /* Course.swift in Sources */,
 				CDCFA6B12EF6598B00F7BBD1 /* Constraint.swift in Sources */,
@@ -615,6 +653,12 @@
 				CD7823A02EF66CB20083A25A /* SectionEntity+Mapping.swift in Sources */,
 				CD7823A12EF66CB20083A25A /* ExamSessionEntity+Mapping.swift in Sources */,
 				CD7823812EF66C960083A25A /* AcceptShareUseCase.swift in Sources */,
+				CD7823C52EF674000083A25A /* ScheduleView.swift in Sources */,
+				CD7823C62EF674000083A25A /* CourseDetailView.swift in Sources */,
+				CD7823C72EF674000083A25A /* ExamSessionsView.swift in Sources */,
+				CD7823C82EF674000083A25A /* StudentsView.swift in Sources */,
+				CD7823C92EF674000083A25A /* CourseSettingsView.swift in Sources */,
+				CD7823CA2EF674000083A25A /* CourseBuilderView.swift in Sources */,
 				CD7823822EF66C960083A25A /* ExportScheduleUseCase.swift in Sources */,
 				CD7823862EF66C9D0083A25A /* CloudKitShareManager.swift in Sources */,
 				CD7823832EF66C960083A25A /* CreateCourseUseCase.swift in Sources */,
@@ -791,8 +835,9 @@
 		CDCFA67F2EF6594C00F7BBD1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Clementime.icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -826,8 +871,9 @@
 		CDCFA6802EF6594C00F7BBD1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Clementime.icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;

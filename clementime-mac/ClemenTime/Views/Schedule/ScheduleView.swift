@@ -11,13 +11,34 @@ struct ScheduleView: View {
     let course: Course
     @StateObject private var viewModel: ScheduleViewModel
     @State private var showGenerateConfirmation = false
+    @State private var selectedSlot: ExamSlot.ID?
 
     init(course: Course) {
         self.course = course
         // TODO: Inject dependencies properly via DI container
+        let persistence = PersistenceController.shared
         self._viewModel = StateObject(wrappedValue: ScheduleViewModel(
             course: course,
-            scheduleRepository: PersistenceController.shared.scheduleRepository,
+            scheduleRepository: persistence.scheduleRepository,
+            studentRepository: persistence.studentRepository,
+            sectionRepository: persistence.sectionRepository,
+            examSessionRepository: persistence.examSessionRepository,
+            generateScheduleUseCase: GenerateScheduleUseCase(
+                courseRepository: persistence.courseRepository,
+                cohortRepository: persistence.cohortRepository,
+                studentRepository: persistence.studentRepository,
+                sectionRepository: persistence.sectionRepository,
+                examSessionRepository: persistence.examSessionRepository,
+                constraintRepository: persistence.constraintRepository,
+                scheduleRepository: persistence.scheduleRepository
+            ),
+            exportScheduleUseCase: ExportScheduleUseCase(
+                courseRepository: persistence.courseRepository,
+                studentRepository: persistence.studentRepository,
+                sectionRepository: persistence.sectionRepository,
+                scheduleRepository: persistence.scheduleRepository,
+                examSessionRepository: persistence.examSessionRepository
+            ),
             permissionChecker: PermissionChecker.mock
         ))
     }
@@ -40,7 +61,7 @@ struct ScheduleView: View {
             }
         }
         .task {
-            await viewModel.loadSchedule()
+            await viewModel.loadData()
         }
         .alert("Generate Schedule", isPresented: $showGenerateConfirmation) {
             Button("Cancel", role: .cancel) {}
@@ -52,12 +73,12 @@ struct ScheduleView: View {
         } message: {
             Text("This will regenerate all exam slots. Any manual changes will be lost. Continue?")
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+        .alert("Error", isPresented: .constant(viewModel.error != nil)) {
             Button("OK") {
-                viewModel.errorMessage = nil
+                viewModel.error = nil
             }
         } message: {
-            if let error = viewModel.errorMessage {
+            if let error = viewModel.error {
                 Text(error)
             }
         }
@@ -77,21 +98,13 @@ struct ScheduleView: View {
     private var toolbar: some View {
         HStack(spacing: 16) {
             // Exam filter
-            Picker("Exam", selection: $viewModel.selectedExam) {
+            Picker("Exam", selection: $viewModel.selectedExamNumber) {
                 ForEach(1...course.totalExams, id: \.self) { examNum in
                     Text("Exam \(examNum)").tag(examNum)
                 }
             }
             .pickerStyle(.menu)
             .frame(width: 120)
-
-            // Week type filter
-            Picker("Week", selection: $viewModel.selectedWeekType) {
-                Text("Odd Week").tag(WeekType.odd)
-                Text("Even Week").tag(WeekType.even)
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 200)
 
             Spacer()
 
@@ -103,7 +116,7 @@ struct ScheduleView: View {
             // Actions
             Button(action: {
                 Task {
-                    await viewModel.exportCSV()
+                    await viewModel.exportSchedule(examNumber: viewModel.selectedExamNumber)
                 }
             }) {
                 Label("Export CSV", systemImage: "square.and.arrow.up")
@@ -151,7 +164,7 @@ struct ScheduleView: View {
     // MARK: - Schedule Table
 
     private var scheduleTable: some View {
-        Table(viewModel.filteredSlots) {
+        Table(viewModel.filteredSlots, selection: $selectedSlot) {
             TableColumn("Time") { slot in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(slot.formattedTimeRange)
@@ -224,9 +237,9 @@ struct ScheduleView: View {
                     Button(action: {
                         Task {
                             if slot.isLocked {
-                                await viewModel.unlockSlot(slot.id)
+                                await viewModel.unlockSlot(slot)
                             } else {
-                                await viewModel.lockSlot(slot.id)
+                                await viewModel.lockSlot(slot)
                             }
                         }
                     }) {
@@ -295,24 +308,6 @@ struct StatBadge: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-    }
-}
-
-// MARK: - Extensions
-
-extension ExamSlot {
-    var formattedTimeRange: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        let start = formatter.string(from: startTime)
-        let end = formatter.string(from: endTime)
-        return "\(start) - \(end)"
-    }
-
-    var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
     }
 }
 

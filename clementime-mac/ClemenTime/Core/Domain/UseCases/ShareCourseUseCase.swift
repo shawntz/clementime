@@ -32,7 +32,7 @@ class ShareCourseUseCase {
 
     func execute(input: ShareCourseInput) async throws -> ShareCourseOutput {
         // 1. Validate course exists
-        guard let course = try await courseRepository.fetchCourse(id: input.courseId) else {
+        guard (try await courseRepository.fetchCourse(id: input.courseId)) != nil else {
             throw UseCaseError.courseNotFound
         }
 

@@ -132,10 +132,14 @@ struct ExamSessionCard: View {
                 Spacer()
 
                 Menu {
-                    Button(action: {}) {
+                    Button {
+                        // TODO: Edit session
+                    } label: {
                         Label("Edit", systemImage: "pencil")
                     }
-                    Button(action: {}, role: .destructive) {
+                    Button(role: .destructive) {
+                        // TODO: Delete session
+                    } label: {
                         Label("Delete", systemImage: "trash")
                     }
                 } label: {

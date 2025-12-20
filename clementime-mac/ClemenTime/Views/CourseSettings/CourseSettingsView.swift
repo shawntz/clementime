@@ -138,7 +138,6 @@ struct InviteCollaboratorView: View {
             }
             .formStyle(.grouped)
             .navigationTitle("Invite Collaborator")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

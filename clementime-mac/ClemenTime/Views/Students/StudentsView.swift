@@ -13,7 +13,7 @@ struct StudentsView: View {
     @StateObject private var viewModel: StudentsViewModel
     @State private var showImportPicker = false
     @State private var showAddStudent = false
-    @State private var selectedStudent: Student?
+    @State private var selectedStudent: Student.ID?
 
     init(course: Course) {
         self.course = course
@@ -206,7 +206,7 @@ struct StudentsView: View {
             TableColumn("Actions") { student in
                 HStack(spacing: 8) {
                     Button(action: {
-                        selectedStudent = student
+                        selectedStudent = student.id
                         // TODO: Show edit sheet
                     }) {
                         Image(systemName: "pencil")
