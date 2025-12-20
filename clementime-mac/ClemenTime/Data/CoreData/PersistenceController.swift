@@ -69,12 +69,11 @@ class PersistenceController: ObservableObject {
                 fatalError("Failed to retrieve persistent store description")
             }
 
-            // Enable CloudKit sync
-            description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
-                containerIdentifier: "iCloud.com.shawnschwartz.clementime"
-            )
+            // TEMPORARY: Disable CloudKit sync until entitlements are configured
+            // TODO: Re-enable after setting up CloudKit in Xcode capabilities
+            description.cloudKitContainerOptions = nil
 
-            // Enable remote change notifications
+            // Enable history tracking for future CloudKit sync
             description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
             description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
