@@ -1,2 +1,156 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24411" systemVersion="25C5037j" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier=""/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24411" systemVersion="25C5037j" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+      <entity name="CohortEntity" representedClassName="CohortEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="colorHex" attributeType="String"/>
+          <attribute name="courseId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="name" attributeType="String"/>
+          <attribute name="sortOrder" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+          <attribute name="weekType" attributeType="String"/>
+          <relationship name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="cohorts" inverseEntity="CourseEntity"/>
+          <relationship name="sections" toMany="YES" deletionRule="Nullify" destinationEntity="SectionEntity" inverseName="cohort" inverseEntity="SectionEntity"/>
+          <relationship name="students" toMany="YES" deletionRule="Nullify" destinationEntity="StudentEntity" inverseName="cohort" inverseEntity="StudentEntity"/>
+      </entity>
+      <entity name="ConstraintEntity" representedClassName="ConstraintEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="constraintDescription" attributeType="String"/>
+          <attribute name="constraintType" attributeType="String"/>
+          <attribute name="constraintValue" attributeType="String"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+          <attribute name="studentId" attributeType="UUID" usesScalarValueType="NO"/>
+          <relationship name="student" maxCount="1" deletionRule="Nullify" destinationEntity="StudentEntity" inverseName="constraints" inverseEntity="StudentEntity"/>
+      </entity>
+      <entity name="CourseEntity" representedClassName="CourseEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="createdByUserId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="examDay" attributeType="String"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+          <attribute name="name" attributeType="String"/>
+          <attribute name="quarterStartDate" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="settingsJSON" attributeType="String"/>
+          <attribute name="term" attributeType="String"/>
+          <attribute name="totalExams" attributeType="Integer 16" defaultValueString="5" usesScalarValueType="YES"/>
+          <relationship name="cohorts" toMany="YES" deletionRule="Cascade" destinationEntity="CohortEntity" inverseName="course" inverseEntity="CohortEntity"/>
+          <relationship name="examSessions" toMany="YES" deletionRule="Cascade" destinationEntity="ExamSessionEntity" inverseName="course" inverseEntity="ExamSessionEntity"/>
+          <relationship name="examSlots" toMany="YES" deletionRule="Nullify" destinationEntity="ExamSlotEntity" inverseName="course" inverseEntity="ExamSlotEntity"/>
+          <relationship name="sections" toMany="YES" deletionRule="Cascade" destinationEntity="SectionEntity" inverseName="course" inverseEntity="SectionEntity"/>
+          <relationship name="students" toMany="YES" deletionRule="Cascade" destinationEntity="StudentEntity" inverseName="course" inverseEntity="StudentEntity"/>
+          <relationship name="taUsers" toMany="YES" deletionRule="Cascade" destinationEntity="TAUserEntity" inverseName="course" inverseEntity="TAUserEntity"/>
+      </entity>
+      <entity name="ExamSessionEntity" representedClassName="ExamSessionEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="bufferMinutes" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+          <attribute name="courseId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="durationMinutes" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+          <attribute name="endTime" attributeType="String"/>
+          <attribute name="evenWeekDate" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="examNumber" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="oddWeekDate" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="startTime" attributeType="String"/>
+          <attribute name="theme" optional="YES" attributeType="String"/>
+          <relationship name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="examSessions" inverseEntity="CourseEntity"/>
+          <relationship name="examSlots" toMany="YES" deletionRule="Cascade" destinationEntity="ExamSlotEntity" inverseName="examSession" inverseEntity="ExamSlotEntity"/>
+      </entity>
+      <entity name="ExamSlotEntity" representedClassName="ExamSlotEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="courseId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="endTime" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="examSessionId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isLocked" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+          <attribute name="isScheduled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+          <attribute name="notes" optional="YES" attributeType="String"/>
+          <attribute name="sectionId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="startTime" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="studentId" attributeType="UUID" usesScalarValueType="NO"/>
+          <relationship name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="examSlots" inverseEntity="CourseEntity"/>
+          <relationship name="examSession" maxCount="1" deletionRule="Nullify" destinationEntity="ExamSessionEntity" inverseName="examSlots" inverseEntity="ExamSessionEntity"/>
+          <relationship name="histories" toMany="YES" deletionRule="Cascade" destinationEntity="ExamSlotHistoryEntity" inverseName="examSlot" inverseEntity="ExamSlotHistoryEntity"/>
+          <relationship name="recording" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="RecordingEntity" inverseName="examSlot" inverseEntity="RecordingEntity"/>
+          <relationship name="section" maxCount="1" deletionRule="Nullify" destinationEntity="SectionEntity" inverseName="examSlots" inverseEntity="SectionEntity"/>
+          <relationship name="student" maxCount="1" deletionRule="Nullify" destinationEntity="StudentEntity" inverseName="examSlots" inverseEntity="StudentEntity"/>
+      </entity>
+      <entity name="ExamSlotHistoryEntity" representedClassName="ExamSlotHistoryEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="changedAt" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="changedBy" attributeType="String"/>
+          <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="endTime" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="examNumber" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+          <attribute name="examSlotId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isScheduled" attributeType="Boolean" usesScalarValueType="YES"/>
+          <attribute name="reason" attributeType="String"/>
+          <attribute name="sectionId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="startTime" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="studentId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="weekNumber" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+          <relationship name="examSlot" maxCount="1" deletionRule="Nullify" destinationEntity="ExamSlotEntity" inverseName="histories" inverseEntity="ExamSlotEntity"/>
+          <relationship name="section" maxCount="1" deletionRule="Nullify" destinationEntity="SectionEntity" inverseName="examSlotHistories" inverseEntity="SectionEntity"/>
+          <relationship name="student" maxCount="1" deletionRule="Nullify" destinationEntity="StudentEntity" inverseName="examSlotHistories" inverseEntity="StudentEntity"/>
+      </entity>
+      <entity name="RecordingEntity" representedClassName="RecordingEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="duration" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+          <attribute name="examSlotId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="fileSize" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+          <attribute name="iCloudAssetName" optional="YES" attributeType="String"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="localFileURL" optional="YES" attributeType="String"/>
+          <attribute name="recordedAt" attributeType="Date" usesScalarValueType="NO"/>
+          <attribute name="studentId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="taUserId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="uploadedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+          <relationship name="examSlot" maxCount="1" deletionRule="Nullify" destinationEntity="ExamSlotEntity" inverseName="recording" inverseEntity="ExamSlotEntity"/>
+          <relationship name="student" maxCount="1" deletionRule="Nullify" destinationEntity="StudentEntity" inverseName="recordings" inverseEntity="StudentEntity"/>
+          <relationship name="taUser" maxCount="1" deletionRule="Nullify" destinationEntity="TAUserEntity" inverseName="recordings" inverseEntity="TAUserEntity"/>
+      </entity>
+      <entity name="SectionEntity" representedClassName="SectionEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="assignedTAId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="code" attributeType="String"/>
+          <attribute name="cohortId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="courseId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+          <attribute name="location" attributeType="String"/>
+          <attribute name="name" attributeType="String"/>
+          <relationship name="assignedTA" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TAUserEntity" inverseName="sections" inverseEntity="TAUserEntity"/>
+          <relationship name="cohort" maxCount="1" deletionRule="Nullify" destinationEntity="CohortEntity" inverseName="sections" inverseEntity="CohortEntity"/>
+          <relationship name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="sections" inverseEntity="CourseEntity"/>
+          <relationship name="examSlotHistories" toMany="YES" deletionRule="Nullify" destinationEntity="ExamSlotHistoryEntity" inverseName="section" inverseEntity="ExamSlotHistoryEntity"/>
+          <relationship name="examSlots" toMany="YES" deletionRule="Cascade" destinationEntity="ExamSlotEntity" inverseName="section" inverseEntity="ExamSlotEntity"/>
+          <relationship name="students" toMany="YES" deletionRule="Cascade" destinationEntity="StudentEntity" inverseName="section" inverseEntity="StudentEntity"/>
+      </entity>
+      <entity name="StudentEntity" representedClassName="StudentEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="cohortId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="courseId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="email" attributeType="String"/>
+          <attribute name="fullName" attributeType="String"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+          <attribute name="sectionId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="sisUserId" attributeType="String"/>
+          <attribute name="slackUserId" optional="YES" attributeType="String"/>
+          <attribute name="slackUsername" optional="YES" attributeType="String"/>
+          <relationship name="cohort" maxCount="1" deletionRule="Nullify" destinationEntity="CohortEntity" inverseName="students" inverseEntity="CohortEntity"/>
+          <relationship name="constraints" toMany="YES" deletionRule="Cascade" destinationEntity="ConstraintEntity" inverseName="student" inverseEntity="ConstraintEntity"/>
+          <relationship name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="students" inverseEntity="CourseEntity"/>
+          <relationship name="examSlotHistories" toMany="YES" deletionRule="Nullify" destinationEntity="ExamSlotHistoryEntity" inverseName="student" inverseEntity="ExamSlotHistoryEntity"/>
+          <relationship name="examSlots" toMany="YES" deletionRule="Cascade" destinationEntity="ExamSlotEntity" inverseName="student" inverseEntity="ExamSlotEntity"/>
+          <relationship name="recordings" toMany="YES" deletionRule="Cascade" destinationEntity="RecordingEntity" inverseName="student" inverseEntity="RecordingEntity"/>
+          <relationship name="section" maxCount="1" deletionRule="Nullify" destinationEntity="SectionEntity" inverseName="students" inverseEntity="SectionEntity"/>
+      </entity>
+      <entity name="TAUserEntity" representedClassName="TAUserEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="courseId" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="email" attributeType="String"/>
+          <attribute name="firstName" attributeType="String"/>
+          <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+          <attribute name="lastName" attributeType="String"/>
+          <attribute name="location" attributeType="String"/>
+          <attribute name="permissionsJSON" attributeType="String"/>
+          <attribute name="role" attributeType="String"/>
+          <attribute name="slackId" optional="YES" attributeType="String"/>
+          <attribute name="username" attributeType="String"/>
+          <relationship name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="taUsers" inverseEntity="CourseEntity"/>
+          <relationship name="recordings" toMany="YES" deletionRule="Nullify" destinationEntity="RecordingEntity" inverseName="taUser" inverseEntity="RecordingEntity"/>
+          <relationship name="sections" toMany="YES" deletionRule="Nullify" destinationEntity="SectionEntity" inverseName="assignedTA" inverseEntity="SectionEntity"/>
+      </entity>
+  </model>

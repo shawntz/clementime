@@ -7,12 +7,15 @@
 
 import Foundation
 import CoreData
+import CloudKit
 
 class CoreDataCourseRepository: CourseRepository {
     private let persistentContainer: NSPersistentCloudKitContainer
+    private let shareManager: CloudKitShareManager
 
-    init(persistentContainer: NSPersistentCloudKitContainer) {
+    init(persistentContainer: NSPersistentCloudKitContainer, shareManager: CloudKitShareManager) {
         self.persistentContainer = persistentContainer
+        self.shareManager = shareManager
     }
 
     func fetchCourses() async throws -> [Course] {
@@ -86,15 +89,14 @@ class CoreDataCourseRepository: CourseRepository {
     }
 
     func shareCourse(_ courseId: UUID, with email: String, permissions: [Permission]) async throws -> URL {
-        // TODO: Implement CloudKit sharing
-        // This will be implemented in the CloudKitShareManager
-        throw RepositoryError.notImplemented
+        return try await shareManager.shareCourse(courseId, with: email, permissions: permissions)
     }
 
     func acceptShare(metadata: Any) async throws {
-        // TODO: Implement CloudKit share acceptance
-        // This will be implemented in the CloudKitShareManager
-        throw RepositoryError.notImplemented
+        guard let shareMetadata = metadata as? CKShare.Metadata else {
+            throw RepositoryError.invalidData
+        }
+        try await shareManager.acceptShare(metadata: shareMetadata)
     }
 }
 

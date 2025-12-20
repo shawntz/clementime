@@ -6,6 +6,27 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CDCFA6AB2EF6598B00F7BBD1 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CDCFA69F2EF6598B00F7BBD1 /* Info.plist */; };
+		CDCFA6AC2EF6598B00F7BBD1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */; };
+		CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68D2EF6598B00F7BBD1 /* ExamSlot.swift */; };
+		CDCFA6AE2EF6598B00F7BBD1 /* CourseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */; };
+		CDCFA6AF2EF6598B00F7BBD1 /* ExamSlotHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68E2EF6598B00F7BBD1 /* ExamSlotHistory.swift */; };
+		CDCFA6B02EF6598B00F7BBD1 /* Course.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68B2EF6598B00F7BBD1 /* Course.swift */; };
+		CDCFA6B12EF6598B00F7BBD1 /* Constraint.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68A2EF6598B00F7BBD1 /* Constraint.swift */; };
+		CDCFA6B22EF6598B00F7BBD1 /* Section.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6902EF6598B00F7BBD1 /* Section.swift */; };
+		CDCFA6B32EF6598B00F7BBD1 /* PermissionChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6952EF6598B00F7BBD1 /* PermissionChecker.swift */; };
+		CDCFA6B42EF6598B00F7BBD1 /* Student.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6912EF6598B00F7BBD1 /* Student.swift */; };
+		CDCFA6B52EF6598B00F7BBD1 /* TAUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6922EF6598B00F7BBD1 /* TAUser.swift */; };
+		CDCFA6B62EF6598B00F7BBD1 /* Cohort.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */; };
+		CDCFA6B72EF6598B00F7BBD1 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA69B2EF6598B00F7BBD1 /* PersistenceController.swift */; };
+		CDCFA6B82EF6598B00F7BBD1 /* Recording.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68F2EF6598B00F7BBD1 /* Recording.swift */; };
+		CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */; };
+		CDCFA6BA2EF6598B00F7BBD1 /* ClemenTimeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */; };
+		CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */; };
+		CDCFA6BF2EF65A4300F7BBD1 /* Clementime.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6BD2EF65A4300F7BBD1 /* Clementime.xcdatamodeld */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		CDCFA66B2EF6594C00F7BBD1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +48,24 @@
 		CDCFA6582EF6594B00F7BBD1 /* Clementime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clementime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA66A2EF6594C00F7BBD1 /* ClementimeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA6742EF6594C00F7BBD1 /* ClementimeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClemenTimeApp.swift; sourceTree = "<group>"; };
+		CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cohort.swift; sourceTree = "<group>"; };
+		CDCFA68A2EF6598B00F7BBD1 /* Constraint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constraint.swift; sourceTree = "<group>"; };
+		CDCFA68B2EF6598B00F7BBD1 /* Course.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Course.swift; sourceTree = "<group>"; };
+		CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamSession.swift; sourceTree = "<group>"; };
+		CDCFA68D2EF6598B00F7BBD1 /* ExamSlot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamSlot.swift; sourceTree = "<group>"; };
+		CDCFA68E2EF6598B00F7BBD1 /* ExamSlotHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamSlotHistory.swift; sourceTree = "<group>"; };
+		CDCFA68F2EF6598B00F7BBD1 /* Recording.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recording.swift; sourceTree = "<group>"; };
+		CDCFA6902EF6598B00F7BBD1 /* Section.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Section.swift; sourceTree = "<group>"; };
+		CDCFA6912EF6598B00F7BBD1 /* Student.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Student.swift; sourceTree = "<group>"; };
+		CDCFA6922EF6598B00F7BBD1 /* TAUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TAUser.swift; sourceTree = "<group>"; };
+		CDCFA6952EF6598B00F7BBD1 /* PermissionChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionChecker.swift; sourceTree = "<group>"; };
+		CDCFA69B2EF6598B00F7BBD1 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		CDCFA69F2EF6598B00F7BBD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
+		CDCFA6BE2EF65A4300F7BBD1 /* Clementime.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Clementime.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +118,15 @@
 				CDCFA66D2EF6594C00F7BBD1 /* ClementimeTests */,
 				CDCFA6772EF6594C00F7BBD1 /* ClementimeUITests */,
 				CDCFA6592EF6594B00F7BBD1 /* Products */,
+				CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */,
+				CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */,
+				CDCFA6992EF6598B00F7BBD1 /* Core */,
+				CDCFA69E2EF6598B00F7BBD1 /* Data */,
+				CDCFA69F2EF6598B00F7BBD1 /* Info.plist */,
+				CDCFA6A12EF6598B00F7BBD1 /* Resources */,
+				CDCFA6A22EF6598B00F7BBD1 /* Services */,
+				CDCFA6A32EF6598B00F7BBD1 /* ViewModels */,
+				CDCFA6AA2EF6598B00F7BBD1 /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -90,6 +138,167 @@
 				CDCFA6742EF6594C00F7BBD1 /* ClementimeUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CDCFA6932EF6598B00F7BBD1 /* Entities */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */,
+				CDCFA68A2EF6598B00F7BBD1 /* Constraint.swift */,
+				CDCFA68B2EF6598B00F7BBD1 /* Course.swift */,
+				CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */,
+				CDCFA68D2EF6598B00F7BBD1 /* ExamSlot.swift */,
+				CDCFA68E2EF6598B00F7BBD1 /* ExamSlotHistory.swift */,
+				CDCFA68F2EF6598B00F7BBD1 /* Recording.swift */,
+				CDCFA6902EF6598B00F7BBD1 /* Section.swift */,
+				CDCFA6912EF6598B00F7BBD1 /* Student.swift */,
+				CDCFA6922EF6598B00F7BBD1 /* TAUser.swift */,
+			);
+			path = Entities;
+			sourceTree = "<group>";
+		};
+		CDCFA6942EF6598B00F7BBD1 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		CDCFA6962EF6598B00F7BBD1 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6952EF6598B00F7BBD1 /* PermissionChecker.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		CDCFA6972EF6598B00F7BBD1 /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = UseCases;
+			sourceTree = "<group>";
+		};
+		CDCFA6982EF6598B00F7BBD1 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6932EF6598B00F7BBD1 /* Entities */,
+				CDCFA6942EF6598B00F7BBD1 /* Repositories */,
+				CDCFA6962EF6598B00F7BBD1 /* Services */,
+				CDCFA6972EF6598B00F7BBD1 /* UseCases */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		CDCFA6992EF6598B00F7BBD1 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6982EF6598B00F7BBD1 /* Domain */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		CDCFA69A2EF6598B00F7BBD1 /* CloudKit */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = CloudKit;
+			sourceTree = "<group>";
+		};
+		CDCFA69C2EF6598B00F7BBD1 /* CoreData */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA69B2EF6598B00F7BBD1 /* PersistenceController.swift */,
+				CDCFA6BD2EF65A4300F7BBD1 /* Clementime.xcdatamodeld */,
+			);
+			path = CoreData;
+			sourceTree = "<group>";
+		};
+		CDCFA69D2EF6598B00F7BBD1 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		CDCFA69E2EF6598B00F7BBD1 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA69A2EF6598B00F7BBD1 /* CloudKit */,
+				CDCFA69C2EF6598B00F7BBD1 /* CoreData */,
+				CDCFA69D2EF6598B00F7BBD1 /* Repositories */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		CDCFA6A12EF6598B00F7BBD1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CDCFA6A22EF6598B00F7BBD1 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		CDCFA6A32EF6598B00F7BBD1 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		CDCFA6A42EF6598B00F7BBD1 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		CDCFA6A62EF6598B00F7BBD1 /* Course */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */,
+			);
+			path = Course;
+			sourceTree = "<group>";
+		};
+		CDCFA6A72EF6598B00F7BBD1 /* Schedule */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Schedule;
+			sourceTree = "<group>";
+		};
+		CDCFA6A82EF6598B00F7BBD1 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		CDCFA6A92EF6598B00F7BBD1 /* Students */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Students;
+			sourceTree = "<group>";
+		};
+		CDCFA6AA2EF6598B00F7BBD1 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6A42EF6598B00F7BBD1 /* Common */,
+				CDCFA6A62EF6598B00F7BBD1 /* Course */,
+				CDCFA6A72EF6598B00F7BBD1 /* Schedule */,
+				CDCFA6A82EF6598B00F7BBD1 /* Settings */,
+				CDCFA6A92EF6598B00F7BBD1 /* Students */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +421,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CDCFA6AB2EF6598B00F7BBD1 /* Info.plist in Resources */,
+				CDCFA6AC2EF6598B00F7BBD1 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,6 +447,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */,
+				CDCFA6BF2EF65A4300F7BBD1 /* Clementime.xcdatamodeld in Sources */,
+				CDCFA6AE2EF6598B00F7BBD1 /* CourseDetailView.swift in Sources */,
+				CDCFA6AF2EF6598B00F7BBD1 /* ExamSlotHistory.swift in Sources */,
+				CDCFA6B02EF6598B00F7BBD1 /* Course.swift in Sources */,
+				CDCFA6B12EF6598B00F7BBD1 /* Constraint.swift in Sources */,
+				CDCFA6B22EF6598B00F7BBD1 /* Section.swift in Sources */,
+				CDCFA6B32EF6598B00F7BBD1 /* PermissionChecker.swift in Sources */,
+				CDCFA6B42EF6598B00F7BBD1 /* Student.swift in Sources */,
+				CDCFA6B52EF6598B00F7BBD1 /* TAUser.swift in Sources */,
+				CDCFA6B62EF6598B00F7BBD1 /* Cohort.swift in Sources */,
+				CDCFA6B72EF6598B00F7BBD1 /* PersistenceController.swift in Sources */,
+				CDCFA6B82EF6598B00F7BBD1 /* Recording.swift in Sources */,
+				CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */,
+				CDCFA6BA2EF6598B00F7BBD1 /* ClemenTimeApp.swift in Sources */,
+				CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -573,6 +800,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		CDCFA6BD2EF65A4300F7BBD1 /* Clementime.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				CDCFA6BE2EF65A4300F7BBD1 /* Clementime.xcdatamodel */,
+			);
+			currentVersion = CDCFA6BE2EF65A4300F7BBD1 /* Clementime.xcdatamodel */;
+			path = Clementime.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = CDCFA6502EF6594B00F7BBD1 /* Project object */;
 }
