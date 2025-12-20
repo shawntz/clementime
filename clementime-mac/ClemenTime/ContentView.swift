@@ -65,6 +65,7 @@ struct WelcomeView: View {
 
 struct SidebarView: View {
     @Binding var selectedCourse: Course?
+    @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = CoursesViewModel()
 
     var body: some View {
@@ -89,7 +90,7 @@ struct SidebarView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(action: {
-                    viewModel.createNewCourse()
+                    appState.showCourseCreator = true
                 }) {
                     Label("New Course", systemImage: "plus")
                 }
@@ -107,6 +108,14 @@ struct SidebarView: View {
         }
         .task {
             await viewModel.loadCourses()
+        }
+        .onChange(of: appState.showCourseCreator) { oldValue, newValue in
+            // Refresh courses when modal is dismissed
+            if oldValue == true && newValue == false {
+                Task {
+                    await viewModel.refresh()
+                }
+            }
         }
     }
 }
@@ -150,24 +159,42 @@ struct CourseRow: View {
     }
 }
 
-// MARK: - Placeholder ViewModels (will be implemented later)
+// MARK: - Courses ViewModel
 
 class CoursesViewModel: ObservableObject {
     @Published var courses: [Course] = []
     @Published var sharedCourses: [Course] = []
     @Published var isLoading = false
+    @Published var error: String?
 
+    private let courseRepository: CourseRepository
+
+    init(courseRepository: CourseRepository = PersistenceController.shared.courseRepository) {
+        self.courseRepository = courseRepository
+    }
+
+    @MainActor
     func loadCourses() async {
-        // TODO: Implement course loading from Core Data/CloudKit
         isLoading = true
-        // Placeholder: await courseRepository.fetchCourses()
+        error = nil
+
+        do {
+            let fetchedCourses = try await courseRepository.fetchCourses()
+            courses = fetchedCourses
+            sharedCourses = [] // TODO: Implement shared courses when CloudKit is enabled
+        } catch {
+            self.error = "Failed to load courses: \(error.localizedDescription)"
+            print("Error loading courses: \(error)")
+        }
+
         isLoading = false
     }
 
     func createNewCourse() {
-        // TODO: Show course creator
+        // This is handled by AppState.showCourseCreator
     }
 
+    @MainActor
     func refresh() async {
         await loadCourses()
     }
