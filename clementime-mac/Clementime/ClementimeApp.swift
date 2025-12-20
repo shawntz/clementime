@@ -1,8 +1,8 @@
 //
-//  ClemenTimeApp.swift
-//  ClemenTime
+//  ClementimeApp.swift
+//  Clementime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import SwiftUI
@@ -10,7 +10,7 @@ import CoreData
 import Combine
 
 @main
-struct ClemenTimeApp: App {
+struct ClementimeApp: App {
     // Core Data persistence controller
     @StateObject private var persistenceController = PersistenceController.shared
 

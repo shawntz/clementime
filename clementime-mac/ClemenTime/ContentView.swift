@@ -1,8 +1,8 @@
 //
 //  ContentView.swift
-//  ClemenTime
+//  Clementime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import SwiftUI
@@ -36,15 +36,15 @@ struct WelcomeView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 172))
+                .font(.system(size: 120))
                 .foregroundColor(.accentColor)
 
-            Text("Welcome to ClemenTime")
+            Text("🍊 Welcome to Clementime")
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
-            Text("Manage oral exam schedules with ease")
-                .font(.title3)
+            Text("Manage oral exam scheduling with ease")
+                .font(.title2)
                 .foregroundColor(.secondary)
 
             Button(action: {
@@ -85,7 +85,7 @@ struct SidebarView: View {
                 }
             }
         }
-        .navigationTitle("ClemenTime")
+        .navigationTitle("Clementime")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(action: {

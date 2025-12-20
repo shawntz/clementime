@@ -69,7 +69,7 @@
 		CDCFA6B62EF6598B00F7BBD1 /* Cohort.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */; };
 		CDCFA6B82EF6598B00F7BBD1 /* Recording.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68F2EF6598B00F7BBD1 /* Recording.swift */; };
 		CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */; };
-		CDCFA6BA2EF6598B00F7BBD1 /* ClemenTimeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */; };
+		CDCFA6BA2EF6598B00F7BBD1 /* ClementimeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */; };
 		CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */; };
 /* End PBXBuildFile section */
 
@@ -143,7 +143,7 @@
 		CDCFA6582EF6594B00F7BBD1 /* Clementime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clementime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA66A2EF6594C00F7BBD1 /* ClementimeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA6742EF6594C00F7BBD1 /* ClementimeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClemenTimeApp.swift; sourceTree = "<group>"; };
+		CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClementimeApp.swift; sourceTree = "<group>"; };
 		CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cohort.swift; sourceTree = "<group>"; };
 		CDCFA68A2EF6598B00F7BBD1 /* Constraint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constraint.swift; sourceTree = "<group>"; };
@@ -314,7 +314,7 @@
 				CDCFA66D2EF6594C00F7BBD1 /* ClementimeTests */,
 				CDCFA6772EF6594C00F7BBD1 /* ClementimeUITests */,
 				CDCFA6592EF6594B00F7BBD1 /* Products */,
-				CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */,
+				CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */,
 				CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */,
 				CDCFA6992EF6598B00F7BBD1 /* Core */,
 				CDCFA69E2EF6598B00F7BBD1 /* Data */,
@@ -668,7 +668,7 @@
 				CD7823762EF66C8A0083A25A /* CourseRepository.swift in Sources */,
 				CD7823642EF66C460083A25A /* StudentsViewModel.swift in Sources */,
 				CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */,
-				CDCFA6BA2EF6598B00F7BBD1 /* ClemenTimeApp.swift in Sources */,
+				CDCFA6BA2EF6598B00F7BBD1 /* ClementimeApp.swift in Sources */,
 				CD7823AB2EF66CC00083A25A /* CoreDataRecordingRepository.swift in Sources */,
 				CD7823AC2EF66CC00083A25A /* CoreDataTAUserRepository.swift in Sources */,
 				CD7823AD2EF66CC00083A25A /* CoreDataSectionRepository.swift in Sources */,

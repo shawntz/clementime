@@ -1,8 +1,8 @@
 //
 //  StudentsView.swift
-//  ClemenTime
+//  Clementime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import SwiftUI

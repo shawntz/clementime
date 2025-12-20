@@ -1,8 +1,8 @@
 //
 //  PersistenceController.swift
-//  ClemenTime
+//  Clementime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import CoreData
@@ -66,10 +66,24 @@ class PersistenceController: ObservableObject {
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         } else {
-            // Configure CloudKit container
+            // Configure persistent store location
             guard let description = container.persistentStoreDescriptions.first else {
                 fatalError("Failed to retrieve persistent store description")
             }
+
+            // Set store URL to Application Support directory (sandboxed location)
+            let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            let storeDirectory = appSupportURL.appendingPathComponent("com.shawnschwartz.clementime", isDirectory: true)
+
+            // Create directory if it doesn't exist
+            if !FileManager.default.fileExists(atPath: storeDirectory.path) {
+                try? FileManager.default.createDirectory(at: storeDirectory, withIntermediateDirectories: true)
+            }
+
+            let storeURL = storeDirectory.appendingPathComponent("Clementime.sqlite")
+            description.url = storeURL
+
+            print("Core Data store location: \(storeURL.path)")
 
             // TEMPORARY: Disable CloudKit sync until entitlements are configured
             // TODO: Re-enable after setting up CloudKit in Xcode capabilities
