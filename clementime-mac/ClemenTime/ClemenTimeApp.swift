@@ -22,6 +22,7 @@ struct ClemenTimeApp: App {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(appState)
+                .frame(minWidth: 900, minHeight: 600)
         }
         .commands {
             // Add custom menu commands
@@ -32,6 +33,7 @@ struct ClemenTimeApp: App {
                 .keyboardShortcut("n", modifiers: .command)
             }
         }
+        .defaultSize(width: 1200, height: 800)
     }
 }
 
