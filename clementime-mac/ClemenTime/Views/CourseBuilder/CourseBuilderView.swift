@@ -15,6 +15,7 @@ struct CourseBuilderView: View {
     @State private var selectedIcon = "book.fill"
     @State private var isCreating = false
     @State private var errorMessage: String?
+    @State private var showIconPicker = false
 
     let iconOptions = [
         "book.fill", "graduationcap.fill", "brain.head.profile",
@@ -46,7 +47,7 @@ struct CourseBuilderView: View {
             Divider()
 
             // Content
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 20) {
                 // Icon Picker
                 HStack(alignment: .center, spacing: 12) {
                     Text("Icon")
@@ -54,46 +55,27 @@ struct CourseBuilderView: View {
                         .foregroundColor(.secondary)
                         .frame(width: 100, alignment: .leading)
 
-                    Menu {
-                        ForEach(iconOptions, id: \.self) { icon in
-                            Button(action: {
-                                selectedIcon = icon
-                            }) {
-                                HStack {
-                                    Image(systemName: icon)
-                                    if selectedIcon == icon {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(.accentColor)
-                                    }
-                                }
-                            }
+                    Button(action: {
+                        showIconPicker.toggle()
+                    }) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.accentColor.opacity(0.15))
+                                .frame(width: 50, height: 50)
+
+                            Image(systemName: selectedIcon)
+                                .font(.title2)
+                                .foregroundColor(.accentColor)
                         }
-                    } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.accentColor.opacity(0.15))
-                                    .frame(width: 50, height: 50)
-
-                                Image(systemName: selectedIcon)
-                                    .font(.title2)
-                                    .foregroundColor(.accentColor)
-                            }
-
-                            Text("Choose Icon")
-                                .foregroundColor(.primary)
-
-                            Spacer()
-
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(12)
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
+                    .popover(isPresented: $showIconPicker, arrowEdge: .bottom) {
+                        IconPickerPopover(selectedIcon: $selectedIcon, iconOptions: iconOptions, onSelect: {
+                            showIconPicker = false
+                        })
+                    }
+
+                    Spacer()
                 }
 
                 // Course Name
@@ -132,7 +114,7 @@ struct CourseBuilderView: View {
 
                     TextEditor(text: $courseDescription)
                         .font(.body)
-                        .frame(height: 80)
+                        .frame(height: 60)
                         .padding(8)
                         .background(Color(NSColor.controlBackgroundColor))
                         .cornerRadius(8)
@@ -142,10 +124,10 @@ struct CourseBuilderView: View {
                     Text(error)
                         .foregroundColor(.red)
                         .font(.callout)
-                        .padding(.vertical, 8)
                 }
             }
-            .padding(24)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
 
             Divider()
 
@@ -169,7 +151,7 @@ struct CourseBuilderView: View {
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(width: 600, height: 500)
+        .frame(width: 600, height: 460)
     }
 
     private var isValid: Bool {
@@ -232,6 +214,58 @@ struct CourseBuilderView: View {
                 errorMessage = "Failed to create course: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+// MARK: - Icon Picker Popover
+
+struct IconPickerPopover: View {
+    @Binding var selectedIcon: String
+    let iconOptions: [String]
+    let onSelect: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Choose Icon")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(NSColor.controlBackgroundColor))
+
+            Divider()
+
+            // Icon Grid
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.fixed(44), spacing: 8), count: 6), spacing: 8) {
+                    ForEach(iconOptions, id: \.self) { icon in
+                        Button(action: {
+                            selectedIcon = icon
+                            onSelect()
+                        }) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(selectedIcon == icon ? Color.accentColor : Color(NSColor.controlBackgroundColor))
+                                    .frame(width: 44, height: 44)
+
+                                Image(systemName: icon)
+                                    .font(.title3)
+                                    .foregroundColor(selectedIcon == icon ? .white : .primary)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(12)
+            }
+            .frame(height: 200)
+        }
+        .frame(width: 320)
     }
 }
 
