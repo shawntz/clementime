@@ -14,7 +14,7 @@ class PersistenceController: ObservableObject {
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "Clementime")
+        container = NSPersistentCloudKitContainer(name: "ClemenTime")
 
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")

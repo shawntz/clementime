@@ -55,7 +55,7 @@ For individual files in the root:
 Open `Data/CoreData/PersistenceController.swift` and ensure the data model name matches:
 
 ```swift
-container = NSPersistentCloudKitContainer(name: "ClemenTime")
+container = NSPersistentCloudKitContainer(name: "Clementime")
 ```
 
 ### 4. Create Core Data Model

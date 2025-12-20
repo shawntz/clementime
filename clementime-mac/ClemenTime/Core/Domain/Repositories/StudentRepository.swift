@@ -1,0 +1,34 @@
+//
+//  StudentRepository.swift
+//  ClemenTime
+//
+//  Created by Claude on 2025-12-19.
+//
+
+import Foundation
+
+protocol StudentRepository {
+    /// Fetch all students for a course
+    func fetchStudents(courseId: UUID) async throws -> [Student]
+
+    /// Fetch students for a specific section
+    func fetchStudents(sectionId: UUID) async throws -> [Student]
+
+    /// Fetch a specific student by ID
+    func fetchStudent(id: UUID) async throws -> Student?
+
+    /// Fetch a student by SIS user ID
+    func fetchStudent(sisUserId: String, courseId: UUID) async throws -> Student?
+
+    /// Create a new student
+    func createStudent(_ student: Student) async throws -> Student
+
+    /// Update an existing student
+    func updateStudent(_ student: Student) async throws
+
+    /// Delete a student
+    func deleteStudent(id: UUID) async throws
+
+    /// Import students from CSV
+    func importStudents(from csvURL: URL, courseId: UUID) async throws -> ImportResult
+}
