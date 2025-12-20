@@ -31,7 +31,9 @@ class AcceptShareUseCase {
         try await courseRepository.acceptShare(metadata: input.shareMetadata)
 
         // 2. Extract course ID from share
-        let rootRecord = input.shareMetadata.rootRecord
+        guard let rootRecord = input.shareMetadata.rootRecord else {
+            throw UseCaseError.invalidInput
+        }
         let courseId = UUID(uuidString: rootRecord.recordID.recordName) ?? UUID()
 
         // 3. Wait for course to sync to Core Data
