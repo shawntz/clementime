@@ -106,23 +106,23 @@ class PersistenceController: ObservableObject {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
-        // Observe remote changes
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleRemoteChange(_:)),
-            name: .NSPersistentStoreRemoteChange,
-            object: container.persistentStoreCoordinator
-        )
+        // Note: CloudKit remote change observer disabled until CloudKit is re-enabled
+        // Uncomment when CloudKit sync is configured:
+        // NotificationCenter.default.addObserver(
+        //     self,
+        //     selector: #selector(handleRemoteChange(_:)),
+        //     name: .NSPersistentStoreRemoteChange,
+        //     object: container.persistentStoreCoordinator
+        // )
     }
 
-    @objc
-    private func handleRemoteChange(_ notification: Notification) {
-        // Merge remote changes
-        container.viewContext.perform {
-            // Changes will be automatically merged due to automaticallyMergesChangesFromParent
-            print("Remote changes received from CloudKit")
-        }
-    }
+    // Uncomment when CloudKit sync is configured:
+    // @objc
+    // private func handleRemoteChange(_ notification: Notification) {
+    //     container.viewContext.perform {
+    //         print("Remote changes received from CloudKit")
+    //     }
+    // }
 
     // MARK: - Save Context
 
