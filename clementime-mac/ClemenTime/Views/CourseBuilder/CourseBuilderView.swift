@@ -30,7 +30,7 @@ struct CourseBuilderView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 0) {
             // Header
             HStack {
                 Text("Create New Course")
@@ -54,12 +54,12 @@ struct CourseBuilderView: View {
             // Content
             VStack(alignment: .leading, spacing: 16) {
                 // Icon Picker
-                HStack(alignment: .center, spacing: 12) {
-                    Text("Icon")
+                HStack(spacing: 0) {
+                    Text("")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.secondary)
-                        .frame(width: 80, alignment: .leading)
+//                        .frame(width: 80, alignment: .leading)
 
                     Button(action: {
                         showIconPicker.toggle()
@@ -82,37 +82,43 @@ struct CourseBuilderView: View {
                     }
 
                     Spacer()
-                }
-
-                // Course Name
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Course Name")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-
-                    TextField("e.g., PSYCH 10 / STATS 60", text: $courseName)
-                        .textFieldStyle(.plain)
-                        .font(.body)
-                        .padding(10)
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(6)
-                }
-
-                // Term
-                VStack(alignment: .leading, spacing: 6) {
+                  
+                  // Course Name
+                  VStack(alignment: .leading, spacing: 6) {
+                    Text(" Course Name")
+                      .font(.headline)
+                      .fontWeight(.medium)
+                      .foregroundColor(.secondary)
+                    
+                    TextField("PSYCH 10", text: $courseName)
+                      .textFieldStyle(.plain)
+                      .font(.body)
+                      .padding(10)
+                      .background(Color(NSColor.controlBackgroundColor))
+                      .cornerRadius(6)
+                  }
+                  
+                  Spacer()
+                  
+                  // Term
+                  VStack(alignment: .leading, spacing: 6) {
                     Text("Term")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-
-                    TextField("e.g., Fall 2025", text: $term)
-                        .textFieldStyle(.plain)
-                        .font(.body)
-                        .padding(10)
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(6)
+                      .font(.headline)
+                      .fontWeight(.medium)
+                      .foregroundColor(.secondary)
+                    
+                    TextField("Fall 2025", text: $term)
+                      .textFieldStyle(.plain)
+                      .font(.body)
+                      .padding(10)
+                      .background(Color(NSColor.controlBackgroundColor))
+                      .cornerRadius(6)
+                  }
                 }
+
+                
+
+                
 
                 // Description
                 VStack(alignment: .leading, spacing: 6) {
@@ -142,20 +148,22 @@ struct CourseBuilderView: View {
 
             // Footer
             HStack {
-                Button("Cancel") {
+              Button("Cancel", role: .destructive) {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
-                Spacer()
-
-                Button("Create Course") {
-                    createCourse()
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(!isValid || isCreating)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+              Spacer()
+              
+              Button(
+                "Create Course",
+                systemImage: "checkmark.circle",
+                action: createCourse
+              )
+              .keyboardShortcut(.defaultAction)
+              .disabled(!isValid || isCreating)
+              .buttonStyle(.borderedProminent)
+              .controlSize(.large)
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
@@ -237,7 +245,7 @@ struct IconPickerPopover: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Choose Icon")
+                Text("Choose An Icon")
                     .font(.headline)
                     .foregroundColor(.primary)
 

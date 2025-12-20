@@ -98,6 +98,7 @@ struct InviteCollaboratorView: View {
     @State private var selectedPermissions: Set<PermissionType> = []
     @State private var isInviting = false
     @State private var errorMessage: String?
+    @State private var showErrorAlert = false
 
     var body: some View {
         NavigationStack {
@@ -152,9 +153,10 @@ struct InviteCollaboratorView: View {
                     .disabled(!isValid || isInviting)
                 }
             }
-            .alert("Error", isPresented: .constant(errorMessage != nil)) {
+            .alert("Error", isPresented: $showErrorAlert) {
                 Button("OK") {
                     errorMessage = nil
+                    showErrorAlert = false
                 }
             } message: {
                 if let error = errorMessage {

@@ -9,11 +9,12 @@ import SwiftUI
 
 struct CourseDetailView: View {
     let course: Course
-    @State private var selectedTab: Tab = .schedule
+    @State private var selectedTab: Tab = .sections
 
     enum Tab: String, CaseIterable, Identifiable {
-        case schedule = "Schedule"
+        case sections = "Sections"
         case students = "Students"
+        case schedule = "Schedule"
         case sessions = "Exam Sessions"
         case settings = "Settings"
 
@@ -21,6 +22,7 @@ struct CourseDetailView: View {
 
         var icon: String {
             switch self {
+            case .sections: return "square.grid.2x2"
             case .schedule: return "calendar"
             case .students: return "person.3"
             case .sessions: return "list.bullet"
@@ -31,17 +33,23 @@ struct CourseDetailView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            ScheduleView(course: course)
+            SectionsView(course: course)
                 .tabItem {
-                    Label(Tab.schedule.rawValue, systemImage: Tab.schedule.icon)
+                    Label(Tab.sections.rawValue, systemImage: Tab.sections.icon)
                 }
-                .tag(Tab.schedule)
+                .tag(Tab.sections)
 
             StudentsView(course: course)
                 .tabItem {
                     Label(Tab.students.rawValue, systemImage: Tab.students.icon)
                 }
                 .tag(Tab.students)
+
+            ScheduleView(course: course)
+                .tabItem {
+                    Label(Tab.schedule.rawValue, systemImage: Tab.schedule.icon)
+                }
+                .tag(Tab.schedule)
 
             ExamSessionsView(course: course)
                 .tabItem {
