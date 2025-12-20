@@ -201,26 +201,8 @@ struct CourseBuilderView: View {
                     metadata: metadata
                 )
 
-                // Save course
-                let createUseCase = CreateCourseUseCase(
-                    courseRepository: PersistenceController.shared.courseRepository,
-                    cohortRepository: PersistenceController.shared.cohortRepository,
-                    examSessionRepository: PersistenceController.shared.examSessionRepository
-                )
-
-                let input = CreateCourseInput(
-                    name: course.name,
-                    term: course.term,
-                    quarterStartDate: course.quarterStartDate,
-                    examDay: course.examDay,
-                    totalExams: course.totalExams,
-                    cohorts: [], // Empty - user will configure later
-                    examSessions: [], // Empty - user will configure later
-                    settings: settings,
-                    createdBy: UUID()
-                )
-
-                _ = try await createUseCase.execute(input: input)
+                // Save course directly via repository (simplified creation - user will configure details later)
+                _ = try await PersistenceController.shared.courseRepository.createCourse(course)
 
                 isCreating = false
                 dismiss()

@@ -36,7 +36,7 @@ struct WelcomeView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 72))
+                .font(.system(size: 172))
                 .foregroundColor(.accentColor)
 
             Text("Welcome to ClemenTime")
