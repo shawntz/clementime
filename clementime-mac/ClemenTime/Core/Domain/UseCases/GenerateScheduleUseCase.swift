@@ -112,8 +112,8 @@ class GenerateScheduleUseCase {
         }
 
         return ScheduleResult(
-            totalScheduled: generatedCount,
-            totalUnscheduled: unscheduledCount,
+            scheduledCount: generatedCount,
+            unscheduledCount: unscheduledCount,
             errors: errors
         )
     }

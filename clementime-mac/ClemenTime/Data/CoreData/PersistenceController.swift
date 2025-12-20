@@ -7,6 +7,7 @@
 
 import CoreData
 import CloudKit
+import Combine
 
 class PersistenceController: ObservableObject {
     static let shared = PersistenceController()

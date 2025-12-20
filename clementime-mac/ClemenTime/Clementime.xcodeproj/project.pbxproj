@@ -7,6 +7,49 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CD7823602EF66C460083A25A /* CourseBuilderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */; };
+		CD7823612EF66C460083A25A /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */; };
+		CD7823622EF66C460083A25A /* CourseListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235C2EF66C460083A25A /* CourseListViewModel.swift */; };
+		CD7823632EF66C460083A25A /* ShareCourseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235E2EF66C460083A25A /* ShareCourseViewModel.swift */; };
+		CD7823642EF66C460083A25A /* StudentsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235F2EF66C460083A25A /* StudentsViewModel.swift */; };
+		CD78236E2EF66C8A0083A25A /* ScheduleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236A2EF66C8A0083A25A /* ScheduleRepository.swift */; };
+		CD78236F2EF66C8A0083A25A /* RecordingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823692EF66C8A0083A25A /* RecordingRepository.swift */; };
+		CD7823702EF66C8A0083A25A /* CohortRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823652EF66C8A0083A25A /* CohortRepository.swift */; };
+		CD7823712EF66C8A0083A25A /* ConstraintRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823662EF66C8A0083A25A /* ConstraintRepository.swift */; };
+		CD7823722EF66C8A0083A25A /* SectionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236B2EF66C8A0083A25A /* SectionRepository.swift */; };
+		CD7823732EF66C8A0083A25A /* StudentRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236C2EF66C8A0083A25A /* StudentRepository.swift */; };
+		CD7823742EF66C8A0083A25A /* ExamSessionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823682EF66C8A0083A25A /* ExamSessionRepository.swift */; };
+		CD7823752EF66C8A0083A25A /* TAUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236D2EF66C8A0083A25A /* TAUserRepository.swift */; };
+		CD7823762EF66C8A0083A25A /* CourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823672EF66C8A0083A25A /* CourseRepository.swift */; };
+		CD78237E2EF66C960083A25A /* ManageConstraintsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78237B2EF66C960083A25A /* ManageConstraintsUseCase.swift */; };
+		CD78237F2EF66C960083A25A /* GenerateScheduleUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78237A2EF66C960083A25A /* GenerateScheduleUseCase.swift */; };
+		CD7823802EF66C960083A25A /* ShareCourseUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78237D2EF66C960083A25A /* ShareCourseUseCase.swift */; };
+		CD7823812EF66C960083A25A /* AcceptShareUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823772EF66C960083A25A /* AcceptShareUseCase.swift */; };
+		CD7823822EF66C960083A25A /* ExportScheduleUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823792EF66C960083A25A /* ExportScheduleUseCase.swift */; };
+		CD7823832EF66C960083A25A /* CreateCourseUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823782EF66C960083A25A /* CreateCourseUseCase.swift */; };
+		CD7823842EF66C960083A25A /* RemoveCollaboratorUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78237C2EF66C960083A25A /* RemoveCollaboratorUseCase.swift */; };
+		CD7823862EF66C9D0083A25A /* CloudKitShareManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823852EF66C9D0083A25A /* CloudKitShareManager.swift */; };
+		CD7823962EF66CB20083A25A /* StudentEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78238F2EF66CB20083A25A /* StudentEntity+Mapping.swift */; };
+		CD7823972EF66CB20083A25A /* RecordingEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78238D2EF66CB20083A25A /* RecordingEntity+Mapping.swift */; };
+		CD7823982EF66CB20083A25A /* ExamSlotHistoryEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78238C2EF66CB20083A25A /* ExamSlotHistoryEntity+Mapping.swift */; };
+		CD7823992EF66CB20083A25A /* ConstraintEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823882EF66CB20083A25A /* ConstraintEntity+Mapping.swift */; };
+		CD78239A2EF66CB20083A25A /* Clementime.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CD7823922EF66CB20083A25A /* Clementime.xcdatamodeld */; };
+		CD78239B2EF66CB20083A25A /* TAUserEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823902EF66CB20083A25A /* TAUserEntity+Mapping.swift */; };
+		CD78239C2EF66CB20083A25A /* CourseEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823892EF66CB20083A25A /* CourseEntity+Mapping.swift */; };
+		CD78239D2EF66CB20083A25A /* ExamSlotEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78238B2EF66CB20083A25A /* ExamSlotEntity+Mapping.swift */; };
+		CD78239E2EF66CB20083A25A /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823932EF66CB20083A25A /* PersistenceController.swift */; };
+		CD78239F2EF66CB20083A25A /* CohortEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823872EF66CB20083A25A /* CohortEntity+Mapping.swift */; };
+		CD7823A02EF66CB20083A25A /* SectionEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78238E2EF66CB20083A25A /* SectionEntity+Mapping.swift */; };
+		CD7823A12EF66CB20083A25A /* ExamSessionEntity+Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78238A2EF66CB20083A25A /* ExamSessionEntity+Mapping.swift */; };
+		CD7823AB2EF66CC00083A25A /* CoreDataRecordingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A62EF66CC00083A25A /* CoreDataRecordingRepository.swift */; };
+		CD7823AC2EF66CC00083A25A /* CoreDataTAUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823AA2EF66CC00083A25A /* CoreDataTAUserRepository.swift */; };
+		CD7823AD2EF66CC00083A25A /* CoreDataSectionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A82EF66CC00083A25A /* CoreDataSectionRepository.swift */; };
+		CD7823AE2EF66CC00083A25A /* CoreDataConstraintRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A32EF66CC00083A25A /* CoreDataConstraintRepository.swift */; };
+		CD7823AF2EF66CC00083A25A /* CoreDataCohortRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A22EF66CC00083A25A /* CoreDataCohortRepository.swift */; };
+		CD7823B02EF66CC00083A25A /* CoreDataScheduleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A72EF66CC00083A25A /* CoreDataScheduleRepository.swift */; };
+		CD7823B12EF66CC00083A25A /* CoreDataStudentRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A92EF66CC00083A25A /* CoreDataStudentRepository.swift */; };
+		CD7823B22EF66CC00083A25A /* CoreDataCourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A42EF66CC00083A25A /* CoreDataCourseRepository.swift */; };
+		CD7823B32EF66CC00083A25A /* CoreDataExamSessionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823A52EF66CC00083A25A /* CoreDataExamSessionRepository.swift */; };
 		CDCFA6AB2EF6598B00F7BBD1 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CDCFA69F2EF6598B00F7BBD1 /* Info.plist */; };
 		CDCFA6AC2EF6598B00F7BBD1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */; };
 		CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68D2EF6598B00F7BBD1 /* ExamSlot.swift */; };
@@ -19,12 +62,10 @@
 		CDCFA6B42EF6598B00F7BBD1 /* Student.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6912EF6598B00F7BBD1 /* Student.swift */; };
 		CDCFA6B52EF6598B00F7BBD1 /* TAUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6922EF6598B00F7BBD1 /* TAUser.swift */; };
 		CDCFA6B62EF6598B00F7BBD1 /* Cohort.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */; };
-		CDCFA6B72EF6598B00F7BBD1 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA69B2EF6598B00F7BBD1 /* PersistenceController.swift */; };
 		CDCFA6B82EF6598B00F7BBD1 /* Recording.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68F2EF6598B00F7BBD1 /* Recording.swift */; };
 		CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */; };
 		CDCFA6BA2EF6598B00F7BBD1 /* ClemenTimeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6872EF6598B00F7BBD1 /* ClemenTimeApp.swift */; };
 		CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */; };
-		CDCFA6BF2EF65A4300F7BBD1 /* Clementime.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6BD2EF65A4300F7BBD1 /* Clementime.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +86,49 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseBuilderViewModel.swift; sourceTree = "<group>"; };
+		CD78235C2EF66C460083A25A /* CourseListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseListViewModel.swift; sourceTree = "<group>"; };
+		CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
+		CD78235E2EF66C460083A25A /* ShareCourseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCourseViewModel.swift; sourceTree = "<group>"; };
+		CD78235F2EF66C460083A25A /* StudentsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsViewModel.swift; sourceTree = "<group>"; };
+		CD7823652EF66C8A0083A25A /* CohortRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CohortRepository.swift; sourceTree = "<group>"; };
+		CD7823662EF66C8A0083A25A /* ConstraintRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstraintRepository.swift; sourceTree = "<group>"; };
+		CD7823672EF66C8A0083A25A /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
+		CD7823682EF66C8A0083A25A /* ExamSessionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamSessionRepository.swift; sourceTree = "<group>"; };
+		CD7823692EF66C8A0083A25A /* RecordingRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingRepository.swift; sourceTree = "<group>"; };
+		CD78236A2EF66C8A0083A25A /* ScheduleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleRepository.swift; sourceTree = "<group>"; };
+		CD78236B2EF66C8A0083A25A /* SectionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionRepository.swift; sourceTree = "<group>"; };
+		CD78236C2EF66C8A0083A25A /* StudentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentRepository.swift; sourceTree = "<group>"; };
+		CD78236D2EF66C8A0083A25A /* TAUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TAUserRepository.swift; sourceTree = "<group>"; };
+		CD7823772EF66C960083A25A /* AcceptShareUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcceptShareUseCase.swift; sourceTree = "<group>"; };
+		CD7823782EF66C960083A25A /* CreateCourseUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateCourseUseCase.swift; sourceTree = "<group>"; };
+		CD7823792EF66C960083A25A /* ExportScheduleUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportScheduleUseCase.swift; sourceTree = "<group>"; };
+		CD78237A2EF66C960083A25A /* GenerateScheduleUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateScheduleUseCase.swift; sourceTree = "<group>"; };
+		CD78237B2EF66C960083A25A /* ManageConstraintsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageConstraintsUseCase.swift; sourceTree = "<group>"; };
+		CD78237C2EF66C960083A25A /* RemoveCollaboratorUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoveCollaboratorUseCase.swift; sourceTree = "<group>"; };
+		CD78237D2EF66C960083A25A /* ShareCourseUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCourseUseCase.swift; sourceTree = "<group>"; };
+		CD7823852EF66C9D0083A25A /* CloudKitShareManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitShareManager.swift; sourceTree = "<group>"; };
+		CD7823872EF66CB20083A25A /* CohortEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CohortEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD7823882EF66CB20083A25A /* ConstraintEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ConstraintEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD7823892EF66CB20083A25A /* CourseEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CourseEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD78238A2EF66CB20083A25A /* ExamSessionEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExamSessionEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD78238B2EF66CB20083A25A /* ExamSlotEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExamSlotEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD78238C2EF66CB20083A25A /* ExamSlotHistoryEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExamSlotHistoryEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD78238D2EF66CB20083A25A /* RecordingEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RecordingEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD78238E2EF66CB20083A25A /* SectionEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SectionEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD78238F2EF66CB20083A25A /* StudentEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StudentEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD7823902EF66CB20083A25A /* TAUserEntity+Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TAUserEntity+Mapping.swift"; sourceTree = "<group>"; };
+		CD7823932EF66CB20083A25A /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		CD7823952EF66CB20083A25A /* Clementime.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Clementime.xcdatamodel; sourceTree = "<group>"; };
+		CD7823A22EF66CC00083A25A /* CoreDataCohortRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataCohortRepository.swift; sourceTree = "<group>"; };
+		CD7823A32EF66CC00083A25A /* CoreDataConstraintRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataConstraintRepository.swift; sourceTree = "<group>"; };
+		CD7823A42EF66CC00083A25A /* CoreDataCourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataCourseRepository.swift; sourceTree = "<group>"; };
+		CD7823A52EF66CC00083A25A /* CoreDataExamSessionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataExamSessionRepository.swift; sourceTree = "<group>"; };
+		CD7823A62EF66CC00083A25A /* CoreDataRecordingRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataRecordingRepository.swift; sourceTree = "<group>"; };
+		CD7823A72EF66CC00083A25A /* CoreDataScheduleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataScheduleRepository.swift; sourceTree = "<group>"; };
+		CD7823A82EF66CC00083A25A /* CoreDataSectionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataSectionRepository.swift; sourceTree = "<group>"; };
+		CD7823A92EF66CC00083A25A /* CoreDataStudentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStudentRepository.swift; sourceTree = "<group>"; };
+		CD7823AA2EF66CC00083A25A /* CoreDataTAUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataTAUserRepository.swift; sourceTree = "<group>"; };
 		CDCFA6582EF6594B00F7BBD1 /* Clementime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clementime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA66A2EF6594C00F7BBD1 /* ClementimeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDCFA6742EF6594C00F7BBD1 /* ClementimeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClementimeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,11 +145,9 @@
 		CDCFA6912EF6598B00F7BBD1 /* Student.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Student.swift; sourceTree = "<group>"; };
 		CDCFA6922EF6598B00F7BBD1 /* TAUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TAUser.swift; sourceTree = "<group>"; };
 		CDCFA6952EF6598B00F7BBD1 /* PermissionChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionChecker.swift; sourceTree = "<group>"; };
-		CDCFA69B2EF6598B00F7BBD1 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
 		CDCFA69F2EF6598B00F7BBD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CDCFA6A52EF6598B00F7BBD1 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
-		CDCFA6BE2EF65A4300F7BBD1 /* Clementime.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Clementime.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -111,6 +193,33 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CD7823912EF66CB20083A25A /* Mappers */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823872EF66CB20083A25A /* CohortEntity+Mapping.swift */,
+				CD7823882EF66CB20083A25A /* ConstraintEntity+Mapping.swift */,
+				CD7823892EF66CB20083A25A /* CourseEntity+Mapping.swift */,
+				CD78238A2EF66CB20083A25A /* ExamSessionEntity+Mapping.swift */,
+				CD78238B2EF66CB20083A25A /* ExamSlotEntity+Mapping.swift */,
+				CD78238C2EF66CB20083A25A /* ExamSlotHistoryEntity+Mapping.swift */,
+				CD78238D2EF66CB20083A25A /* RecordingEntity+Mapping.swift */,
+				CD78238E2EF66CB20083A25A /* SectionEntity+Mapping.swift */,
+				CD78238F2EF66CB20083A25A /* StudentEntity+Mapping.swift */,
+				CD7823902EF66CB20083A25A /* TAUserEntity+Mapping.swift */,
+			);
+			path = Mappers;
+			sourceTree = "<group>";
+		};
+		CD7823942EF66CB20083A25A /* CoreData */ = {
+			isa = PBXGroup;
+			children = (
+				CD7823912EF66CB20083A25A /* Mappers */,
+				CD7823922EF66CB20083A25A /* Clementime.xcdatamodeld */,
+				CD7823932EF66CB20083A25A /* PersistenceController.swift */,
+			);
+			path = CoreData;
+			sourceTree = "<group>";
+		};
 		CDCFA64F2EF6594B00F7BBD1 = {
 			isa = PBXGroup;
 			children = (
@@ -160,6 +269,15 @@
 		CDCFA6942EF6598B00F7BBD1 /* Repositories */ = {
 			isa = PBXGroup;
 			children = (
+				CD7823652EF66C8A0083A25A /* CohortRepository.swift */,
+				CD7823662EF66C8A0083A25A /* ConstraintRepository.swift */,
+				CD7823672EF66C8A0083A25A /* CourseRepository.swift */,
+				CD7823682EF66C8A0083A25A /* ExamSessionRepository.swift */,
+				CD7823692EF66C8A0083A25A /* RecordingRepository.swift */,
+				CD78236A2EF66C8A0083A25A /* ScheduleRepository.swift */,
+				CD78236B2EF66C8A0083A25A /* SectionRepository.swift */,
+				CD78236C2EF66C8A0083A25A /* StudentRepository.swift */,
+				CD78236D2EF66C8A0083A25A /* TAUserRepository.swift */,
 			);
 			path = Repositories;
 			sourceTree = "<group>";
@@ -175,6 +293,13 @@
 		CDCFA6972EF6598B00F7BBD1 /* UseCases */ = {
 			isa = PBXGroup;
 			children = (
+				CD7823772EF66C960083A25A /* AcceptShareUseCase.swift */,
+				CD7823782EF66C960083A25A /* CreateCourseUseCase.swift */,
+				CD7823792EF66C960083A25A /* ExportScheduleUseCase.swift */,
+				CD78237A2EF66C960083A25A /* GenerateScheduleUseCase.swift */,
+				CD78237B2EF66C960083A25A /* ManageConstraintsUseCase.swift */,
+				CD78237C2EF66C960083A25A /* RemoveCollaboratorUseCase.swift */,
+				CD78237D2EF66C960083A25A /* ShareCourseUseCase.swift */,
 			);
 			path = UseCases;
 			sourceTree = "<group>";
@@ -201,22 +326,23 @@
 		CDCFA69A2EF6598B00F7BBD1 /* CloudKit */ = {
 			isa = PBXGroup;
 			children = (
+				CD7823852EF66C9D0083A25A /* CloudKitShareManager.swift */,
 			);
 			path = CloudKit;
-			sourceTree = "<group>";
-		};
-		CDCFA69C2EF6598B00F7BBD1 /* CoreData */ = {
-			isa = PBXGroup;
-			children = (
-				CDCFA69B2EF6598B00F7BBD1 /* PersistenceController.swift */,
-				CDCFA6BD2EF65A4300F7BBD1 /* Clementime.xcdatamodeld */,
-			);
-			path = CoreData;
 			sourceTree = "<group>";
 		};
 		CDCFA69D2EF6598B00F7BBD1 /* Repositories */ = {
 			isa = PBXGroup;
 			children = (
+				CD7823A22EF66CC00083A25A /* CoreDataCohortRepository.swift */,
+				CD7823A32EF66CC00083A25A /* CoreDataConstraintRepository.swift */,
+				CD7823A42EF66CC00083A25A /* CoreDataCourseRepository.swift */,
+				CD7823A52EF66CC00083A25A /* CoreDataExamSessionRepository.swift */,
+				CD7823A62EF66CC00083A25A /* CoreDataRecordingRepository.swift */,
+				CD7823A72EF66CC00083A25A /* CoreDataScheduleRepository.swift */,
+				CD7823A82EF66CC00083A25A /* CoreDataSectionRepository.swift */,
+				CD7823A92EF66CC00083A25A /* CoreDataStudentRepository.swift */,
+				CD7823AA2EF66CC00083A25A /* CoreDataTAUserRepository.swift */,
 			);
 			path = Repositories;
 			sourceTree = "<group>";
@@ -224,8 +350,8 @@
 		CDCFA69E2EF6598B00F7BBD1 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				CD7823942EF66CB20083A25A /* CoreData */,
 				CDCFA69A2EF6598B00F7BBD1 /* CloudKit */,
-				CDCFA69C2EF6598B00F7BBD1 /* CoreData */,
 				CDCFA69D2EF6598B00F7BBD1 /* Repositories */,
 			);
 			path = Data;
@@ -249,6 +375,11 @@
 		CDCFA6A32EF6598B00F7BBD1 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */,
+				CD78235C2EF66C460083A25A /* CourseListViewModel.swift */,
+				CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */,
+				CD78235E2EF66C460083A25A /* ShareCourseViewModel.swift */,
+				CD78235F2EF66C460083A25A /* StudentsViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -448,7 +579,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */,
-				CDCFA6BF2EF65A4300F7BBD1 /* Clementime.xcdatamodeld in Sources */,
 				CDCFA6AE2EF6598B00F7BBD1 /* CourseDetailView.swift in Sources */,
 				CDCFA6AF2EF6598B00F7BBD1 /* ExamSlotHistory.swift in Sources */,
 				CDCFA6B02EF6598B00F7BBD1 /* Course.swift in Sources */,
@@ -458,10 +588,52 @@
 				CDCFA6B42EF6598B00F7BBD1 /* Student.swift in Sources */,
 				CDCFA6B52EF6598B00F7BBD1 /* TAUser.swift in Sources */,
 				CDCFA6B62EF6598B00F7BBD1 /* Cohort.swift in Sources */,
-				CDCFA6B72EF6598B00F7BBD1 /* PersistenceController.swift in Sources */,
 				CDCFA6B82EF6598B00F7BBD1 /* Recording.swift in Sources */,
+				CD7823602EF66C460083A25A /* CourseBuilderViewModel.swift in Sources */,
+				CD7823612EF66C460083A25A /* ScheduleViewModel.swift in Sources */,
+				CD7823622EF66C460083A25A /* CourseListViewModel.swift in Sources */,
+				CD7823632EF66C460083A25A /* ShareCourseViewModel.swift in Sources */,
+				CD78236E2EF66C8A0083A25A /* ScheduleRepository.swift in Sources */,
+				CD78236F2EF66C8A0083A25A /* RecordingRepository.swift in Sources */,
+				CD7823702EF66C8A0083A25A /* CohortRepository.swift in Sources */,
+				CD7823712EF66C8A0083A25A /* ConstraintRepository.swift in Sources */,
+				CD7823722EF66C8A0083A25A /* SectionRepository.swift in Sources */,
+				CD7823732EF66C8A0083A25A /* StudentRepository.swift in Sources */,
+				CD78237E2EF66C960083A25A /* ManageConstraintsUseCase.swift in Sources */,
+				CD78237F2EF66C960083A25A /* GenerateScheduleUseCase.swift in Sources */,
+				CD7823802EF66C960083A25A /* ShareCourseUseCase.swift in Sources */,
+				CD7823962EF66CB20083A25A /* StudentEntity+Mapping.swift in Sources */,
+				CD7823972EF66CB20083A25A /* RecordingEntity+Mapping.swift in Sources */,
+				CD7823982EF66CB20083A25A /* ExamSlotHistoryEntity+Mapping.swift in Sources */,
+				CD7823992EF66CB20083A25A /* ConstraintEntity+Mapping.swift in Sources */,
+				CD78239A2EF66CB20083A25A /* Clementime.xcdatamodeld in Sources */,
+				CD78239B2EF66CB20083A25A /* TAUserEntity+Mapping.swift in Sources */,
+				CD78239C2EF66CB20083A25A /* CourseEntity+Mapping.swift in Sources */,
+				CD78239D2EF66CB20083A25A /* ExamSlotEntity+Mapping.swift in Sources */,
+				CD78239E2EF66CB20083A25A /* PersistenceController.swift in Sources */,
+				CD78239F2EF66CB20083A25A /* CohortEntity+Mapping.swift in Sources */,
+				CD7823A02EF66CB20083A25A /* SectionEntity+Mapping.swift in Sources */,
+				CD7823A12EF66CB20083A25A /* ExamSessionEntity+Mapping.swift in Sources */,
+				CD7823812EF66C960083A25A /* AcceptShareUseCase.swift in Sources */,
+				CD7823822EF66C960083A25A /* ExportScheduleUseCase.swift in Sources */,
+				CD7823862EF66C9D0083A25A /* CloudKitShareManager.swift in Sources */,
+				CD7823832EF66C960083A25A /* CreateCourseUseCase.swift in Sources */,
+				CD7823842EF66C960083A25A /* RemoveCollaboratorUseCase.swift in Sources */,
+				CD7823742EF66C8A0083A25A /* ExamSessionRepository.swift in Sources */,
+				CD7823752EF66C8A0083A25A /* TAUserRepository.swift in Sources */,
+				CD7823762EF66C8A0083A25A /* CourseRepository.swift in Sources */,
+				CD7823642EF66C460083A25A /* StudentsViewModel.swift in Sources */,
 				CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */,
 				CDCFA6BA2EF6598B00F7BBD1 /* ClemenTimeApp.swift in Sources */,
+				CD7823AB2EF66CC00083A25A /* CoreDataRecordingRepository.swift in Sources */,
+				CD7823AC2EF66CC00083A25A /* CoreDataTAUserRepository.swift in Sources */,
+				CD7823AD2EF66CC00083A25A /* CoreDataSectionRepository.swift in Sources */,
+				CD7823AE2EF66CC00083A25A /* CoreDataConstraintRepository.swift in Sources */,
+				CD7823AF2EF66CC00083A25A /* CoreDataCohortRepository.swift in Sources */,
+				CD7823B02EF66CC00083A25A /* CoreDataScheduleRepository.swift in Sources */,
+				CD7823B12EF66CC00083A25A /* CoreDataStudentRepository.swift in Sources */,
+				CD7823B22EF66CC00083A25A /* CoreDataCourseRepository.swift in Sources */,
+				CD7823B32EF66CC00083A25A /* CoreDataExamSessionRepository.swift in Sources */,
 				CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -802,12 +974,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		CDCFA6BD2EF65A4300F7BBD1 /* Clementime.xcdatamodeld */ = {
+		CD7823922EF66CB20083A25A /* Clementime.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				CDCFA6BE2EF65A4300F7BBD1 /* Clementime.xcdatamodel */,
+				CD7823952EF66CB20083A25A /* Clementime.xcdatamodel */,
 			);
-			currentVersion = CDCFA6BE2EF65A4300F7BBD1 /* Clementime.xcdatamodel */;
+			currentVersion = CD7823952EF66CB20083A25A /* Clementime.xcdatamodel */;
 			path = Clementime.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

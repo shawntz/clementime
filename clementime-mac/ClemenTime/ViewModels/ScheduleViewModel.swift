@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import AppKit
 
 @MainActor
 class ScheduleViewModel: ObservableObject {
@@ -101,7 +102,7 @@ class ScheduleViewModel: ObservableObject {
             if !result.errors.isEmpty {
                 error = "Generated with some errors:\n" + result.errors.joined(separator: "\n")
             } else {
-                successMessage = "Successfully generated \(result.totalScheduled) exam slots. \(result.totalUnscheduled) students could not be scheduled due to constraints."
+                successMessage = "Successfully generated \(result.scheduledCount) exam slots. \(result.unscheduledCount) students could not be scheduled due to constraints."
             }
 
             // Reload data

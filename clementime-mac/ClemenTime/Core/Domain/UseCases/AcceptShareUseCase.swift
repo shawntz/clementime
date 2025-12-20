@@ -31,11 +31,8 @@ class AcceptShareUseCase {
         try await courseRepository.acceptShare(metadata: input.shareMetadata)
 
         // 2. Extract course ID from share
-        guard let rootRecordID = input.shareMetadata.rootRecordID else {
-            throw UseCaseError.invalidInput
-        }
-
-        let courseId = UUID(uuidString: rootRecordID.recordName) ?? UUID()
+        let rootRecord = input.shareMetadata.rootRecord
+        let courseId = UUID(uuidString: rootRecord.recordID.recordName) ?? UUID()
 
         // 3. Wait for course to sync to Core Data
         // Try fetching with a brief delay to allow sync
@@ -46,8 +43,8 @@ class AcceptShareUseCase {
         }
 
         // 4. Get current user's email from share metadata
-        guard let participantEmail = input.shareMetadata.participantPermission?.rawValue != nil ?
-              getCurrentUserEmail() : nil else {
+        // For now, we'll need to get this from CloudKit's user identity
+        guard let participantEmail = getCurrentUserEmail() else {
             throw UseCaseError.invalidInput
         }
 
