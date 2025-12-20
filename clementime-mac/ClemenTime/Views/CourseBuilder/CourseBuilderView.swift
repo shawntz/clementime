@@ -21,11 +21,16 @@ struct CourseBuilderView: View {
         "book.fill", "graduationcap.fill", "brain.head.profile",
         "function", "chart.bar.fill", "network",
         "atom", "flask.fill", "cross.case.fill",
-        "doc.text.fill", "folder.fill", "calendar"
+        "doc.text.fill", "folder.fill", "calendar",
+        "pencil", "lightbulb.fill", "star.fill",
+        "checkmark.circle.fill", "bell.fill", "flag.fill",
+        "music.note", "paintbrush.fill", "photo.fill",
+        "hammer.fill", "wrench.fill", "cpu",
+        "gamecontroller.fill", "sportscourt.fill", "leaf.fill"
     ]
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             // Header
             HStack {
                 Text("Create New Course")
@@ -47,13 +52,14 @@ struct CourseBuilderView: View {
             Divider()
 
             // Content
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 // Icon Picker
                 HStack(alignment: .center, spacing: 12) {
                     Text("Icon")
-                        .font(.headline)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
-                        .frame(width: 100, alignment: .leading)
+                        .frame(width: 80, alignment: .leading)
 
                     Button(action: {
                         showIconPicker.toggle()
@@ -79,55 +85,58 @@ struct CourseBuilderView: View {
                 }
 
                 // Course Name
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Course Name")
-                        .font(.headline)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
 
                     TextField("e.g., PSYCH 10 / STATS 60", text: $courseName)
                         .textFieldStyle(.plain)
-                        .font(.title3)
-                        .padding(12)
+                        .font(.body)
+                        .padding(10)
                         .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(8)
+                        .cornerRadius(6)
                 }
 
                 // Term
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Term")
-                        .font(.headline)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
 
                     TextField("e.g., Fall 2025", text: $term)
                         .textFieldStyle(.plain)
-                        .font(.title3)
-                        .padding(12)
+                        .font(.body)
+                        .padding(10)
                         .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(8)
+                        .cornerRadius(6)
                 }
 
                 // Description
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Description (Optional)")
-                        .font(.headline)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
 
                     TextEditor(text: $courseDescription)
                         .font(.body)
-                        .frame(height: 60)
-                        .padding(8)
+                        .frame(height: 50)
+                        .padding(6)
                         .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(8)
+                        .cornerRadius(6)
                 }
 
                 if let error = errorMessage {
                     Text(error)
                         .foregroundColor(.red)
-                        .font(.callout)
+                        .font(.caption)
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
 
             Divider()
 
