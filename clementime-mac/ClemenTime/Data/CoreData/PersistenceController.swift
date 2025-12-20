@@ -16,10 +16,8 @@ class PersistenceController: ObservableObject {
 
     // MARK: - Cloud Kit Share Manager
 
-    // TEMPORARY: Disable CloudKit share manager until entitlements are configured
     lazy var shareManager: CloudKitShareManager? = {
-        // Return nil when CloudKit is disabled
-        return nil
+        return CloudKitShareManager(persistentContainer: container)
     }()
 
     // MARK: - Repositories
@@ -85,11 +83,11 @@ class PersistenceController: ObservableObject {
 
             print("Core Data store location: \(storeURL.path)")
 
-            // TEMPORARY: Disable CloudKit sync until entitlements are configured
-            // TODO: Re-enable after setting up CloudKit in Xcode capabilities
-            description.cloudKitContainerOptions = nil
+            // Enable CloudKit sync
+            let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.shawnschwartz.clementime")
+            description.cloudKitContainerOptions = cloudKitOptions
 
-            // Enable history tracking for future CloudKit sync
+            // Enable history tracking for CloudKit sync
             description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
             description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
@@ -106,23 +104,21 @@ class PersistenceController: ObservableObject {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
-        // Note: CloudKit remote change observer disabled until CloudKit is re-enabled
-        // Uncomment when CloudKit sync is configured:
-        // NotificationCenter.default.addObserver(
-        //     self,
-        //     selector: #selector(handleRemoteChange(_:)),
-        //     name: .NSPersistentStoreRemoteChange,
-        //     object: container.persistentStoreCoordinator
-        // )
+        // Observe remote changes from CloudKit
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRemoteChange(_:)),
+            name: .NSPersistentStoreRemoteChange,
+            object: container.persistentStoreCoordinator
+        )
     }
 
-    // Uncomment when CloudKit sync is configured:
-    // @objc
-    // private func handleRemoteChange(_ notification: Notification) {
-    //     container.viewContext.perform {
-    //         print("Remote changes received from CloudKit")
-    //     }
-    // }
+    @objc
+    private func handleRemoteChange(_ notification: Notification) {
+        container.viewContext.perform {
+            print("Remote changes received from CloudKit - data synced")
+        }
+    }
 
     // MARK: - Save Context
 
