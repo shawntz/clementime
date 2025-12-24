@@ -82,7 +82,7 @@ module Api
               },
               exam_number: slot.exam_number,
               week_number: slot.week_number,
-              week_group: slot.student.week_group,
+              cohort: slot.student.cohort,
               date: slot.date,
               start_time: slot.start_time&.strftime("%H:%M"),
               end_time: slot.end_time&.strftime("%H:%M"),

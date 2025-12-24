@@ -107,7 +107,7 @@ export default function TimeSlotManager() {
 
     e.dataTransfer.dropEffect = 'move';
 
-    if (draggedSlot && slot.id !== draggedSlot.id && slot.week_group === draggedSlot.week_group) {
+    if (draggedSlot && slot.id !== draggedSlot.id && slot.cohort === draggedSlot.cohort) {
       setDragOverSlot(slot);
     }
   };
@@ -135,9 +135,9 @@ export default function TimeSlotManager() {
       return;
     }
 
-    // Only allow swapping within the same week group
-    if (draggedSlot.week_group !== targetSlot.week_group) {
-      alert('Can only swap students within the same week group');
+    // Only allow swapping within the same cohort
+    if (draggedSlot.cohort !== targetSlot.cohort) {
+      alert('Can only swap students within the same cohort');
       setDragOverSlot(null);
       return;
     }
@@ -232,7 +232,7 @@ export default function TimeSlotManager() {
             if (timeSlot.occupiedSlots.length > 0 && !isSelected) {
               // Show all students occupying this time slot
               const occupantNames = timeSlot.occupiedSlots.map(s =>
-                `${s.student.full_name} - ${s.week_group}`
+                `${s.student.full_name} - ${s.cohort}`
               ).join(', ');
               label += ` (${occupantNames})`;
             } else if (isSelected) {
@@ -250,9 +250,9 @@ export default function TimeSlotManager() {
     );
   };
 
-  // Group slots by week
-  const oddWeekSlots = slots.filter(s => s.week_group === 'odd');
-  const evenWeekSlots = slots.filter(s => s.week_group === 'even');
+  // Group slots by cohort
+  const oddCohortSlots = slots.filter(s => s.cohort === 'odd');
+  const evenCohortSlots = slots.filter(s => s.cohort === 'even');
 
   return (
     <div>
@@ -270,7 +270,7 @@ export default function TimeSlotManager() {
           fontSize: '0.875rem',
           color: '#1e40af'
         }}>
-          💡 <strong>Drag & Drop:</strong> Drag student cards to swap their time slots. You can only swap students within the same week group (odd with odd, even with even).
+          💡 <strong>Drag & Drop:</strong> Drag student cards to swap their time slots. You can only swap students within the same cohort (Group A with Group A, Group B with Group B).
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -314,16 +314,16 @@ export default function TimeSlotManager() {
         <div className="spinner" />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          {/* Odd Week Slots */}
+          {/* Group A (Odd Weeks) */}
           <div className="card">
             <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-              Odd Weeks ({oddWeekSlots.length} students)
+              Group A ({oddCohortSlots.length} students)
             </h4>
-            {oddWeekSlots.length === 0 ? (
+            {oddCohortSlots.length === 0 ? (
               <p style={{ color: 'var(--text-light)' }}>No students scheduled</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {oddWeekSlots.map(slot => (
+                {oddCohortSlots.map(slot => (
                   <div
                     key={slot.id}
                     draggable={slot.is_scheduled && !slot.is_locked}
@@ -372,16 +372,16 @@ export default function TimeSlotManager() {
             )}
           </div>
 
-          {/* Even Week Slots */}
+          {/* Group B (Even Weeks) */}
           <div className="card">
             <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-              Even Weeks ({evenWeekSlots.length} students)
+              Group B ({evenCohortSlots.length} students)
             </h4>
-            {evenWeekSlots.length === 0 ? (
+            {evenCohortSlots.length === 0 ? (
               <p style={{ color: 'var(--text-light)' }}>No students scheduled</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {evenWeekSlots.map(slot => (
+                {evenCohortSlots.map(slot => (
                   <div
                     key={slot.id}
                     draggable={slot.is_scheduled && !slot.is_locked}

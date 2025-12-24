@@ -41,7 +41,7 @@ class ScheduleGenerator
         next unless match
 
         exam_number = match[1].to_i
-        week_group = match[2]
+        cohort = match[2]
 
         # Parse the new date
         begin
@@ -56,11 +56,11 @@ class ScheduleGenerator
             next
           end
 
-          # Find all exam slots for this exam number where students have this week_group
+          # Find all exam slots for this exam number where students have this cohort
           # Only update unlocked slots to avoid changing confirmed exams
           ExamSlot.joins(:student)
             .where(exam_number: exam_number)
-            .where(students: { week_group: week_group })
+            .where(students: { cohort: cohort })
             .where(is_locked: false)
             .find_each do |slot|
               # Update the slot's date and week_number
@@ -105,8 +105,8 @@ class ScheduleGenerator
   def generate_section_schedule(section)
     students = section.students.active.includes(:constraints, :exam_slots)
 
-    # Assign week groups if not already assigned
-    assign_week_groups(students, section)
+    # Assign cohorts if not already assigned
+    assign_cohorts(students, section)
 
     # Generate slots for each exam (starting from @start_exam)
     (@start_exam..@total_exams).each do |exam_number|
@@ -152,12 +152,12 @@ class ScheduleGenerator
       return
     end
 
-    # Assign week groups to students who don't have one (respecting constraints)
-    assign_balanced_week_groups(all_students)
+    # Assign cohorts to students who don't have one (respecting constraints)
+    assign_balanced_cohorts(all_students)
 
-    # Group students by week_group
-    odd_students = all_students.select { |s| s.week_group == "odd" }
-    even_students = all_students.select { |s| s.week_group == "even" }
+    # Group students by cohort
+    odd_students = all_students.select { |s| s.cohort == "odd" }
+    even_students = all_students.select { |s| s.cohort == "even" }
 
     # Distribute students across TAs for each exam (starting from @start_exam)
     (@start_exam..@total_exams).each do |exam_number|
@@ -174,26 +174,26 @@ class ScheduleGenerator
     end
   end
 
-  def assign_balanced_week_groups(students)
+  def assign_balanced_cohorts(students)
     # First, handle students with week_preference constraints
     students.each do |student|
       week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
       if week_constraint
-        if student.week_group != week_constraint.constraint_value
-          student.update!(week_group: week_constraint.constraint_value)
+        if student.cohort != week_constraint.constraint_value
+          student.update!(cohort: week_constraint.constraint_value)
         end
       end
     end
 
-    # Then handle students without week_group assignment
+    # Then handle students without cohort assignment
     # Distribute evenly across odd/even
-    unassigned = students.select { |s| s.week_group.nil? }
+    unassigned = students.select { |s| s.cohort.nil? }
     return if unassigned.empty?
 
     shuffled = unassigned.shuffle
     shuffled.each_with_index do |student, index|
-      week_group = index.even? ? "odd" : "even"
-      student.update!(week_group: week_group)
+      cohort = index.even? ? "odd" : "even"
+      student.update!(cohort: cohort)
     end
   end
 
@@ -309,28 +309,28 @@ class ScheduleGenerator
     @exam_dates = SystemConfig.get("exam_dates", {})
   end
 
-  def assign_week_groups(students, section)
+  def assign_cohorts(students, section)
     # First, handle all students with week_preference constraints
-    # This overrides any existing week_group assignment
+    # This overrides any existing cohort assignment
     students.each do |student|
       week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
       if week_constraint
-        # Update week group if it doesn't match the constraint
-        if student.week_group != week_constraint.constraint_value
-          student.update!(week_group: week_constraint.constraint_value)
+        # Update cohort if it doesn't match the constraint
+        if student.cohort != week_constraint.constraint_value
+          student.update!(cohort: week_constraint.constraint_value)
         end
       end
     end
 
-    # Then handle students without week_group assignment
-    unassigned = students.select { |s| s.week_group.nil? }
+    # Then handle students without cohort assignment
+    unassigned = students.select { |s| s.cohort.nil? }
     return if unassigned.empty?
 
     # Randomly assign remaining students to odd/even
     shuffled = unassigned.shuffle
     shuffled.each_with_index do |student, index|
-      week_group = index.even? ? "odd" : "even"
-      student.update!(week_group: week_group)
+      cohort = index.even? ? "odd" : "even"
+      student.update!(cohort: cohort)
     end
   end
 
@@ -340,9 +340,9 @@ class ScheduleGenerator
     odd_week = base_week
     even_week = base_week + 1
 
-    # Separate students by week group
-    odd_students = students.select { |s| s.week_group == "odd" }
-    even_students = students.select { |s| s.week_group == "even" }
+    # Separate students by cohort
+    odd_students = students.select { |s| s.cohort == "odd" }
+    even_students = students.select { |s| s.cohort == "even" }
 
     # Generate slots for odd week
     generate_week_slots(section, odd_students, exam_number, odd_week)
@@ -421,9 +421,9 @@ class ScheduleGenerator
   end
 
   def generate_single_student_slot(student, section, exam_number)
-    # Determine which week based on week_group
+    # Determine which week based on cohort
     base_week = (exam_number - 1) * 2 + 1
-    week_number = student.week_group == "odd" ? base_week : base_week + 1
+    week_number = student.cohort == "odd" ? base_week : base_week + 1
 
     exam_date = calculate_exam_date(week_number)
 
