@@ -15,6 +15,9 @@ class SlackMatcher
     csv_data = load_csv_data
     return false unless csv_data
 
+    # Validate CSV format before processing
+    return false unless validate_csv_format(csv_data)
+
     # Skip header row
     csv_data.each_with_index do |row, index|
       next if index == 0
@@ -141,6 +144,36 @@ class SlackMatcher
 
   private
 
+  def validate_csv_format(csv_data)
+    # Check if CSV has at least 2 rows (header + 1 data row)
+    if csv_data.length < 2
+      @errors << "Invalid CSV format: File must have at least 2 rows (1 header row + 1 data row)"
+      @errors << "Expected Slack member list CSV format exported from Slack workspace admin panel."
+      return false
+    end
+
+    # Check if CSV has enough columns by examining the header row
+    header_row = csv_data[0]
+    if header_row.nil? || header_row.length < 8
+      @errors << "Invalid CSV format: Each row must have at least 8 columns"
+      @errors << "Expected Slack member list CSV format with the following columns:"
+      @errors << "  Column 1: username"
+      @errors << "  Column 2: email"
+      @errors << "  Column 3: status"
+      @errors << "  Column 6: user id"
+      @errors << "  Column 7: full name"
+      @errors << "  Column 8: display name"
+      @errors << ""
+      @errors << "To export this file:"
+      @errors << "  1. Go to your Slack workspace admin panel (e.g., yourworkspace.slack.com/admin)"
+      @errors << "  2. Click 'Manage members'"
+      @errors << "  3. Click 'Export full member list'"
+      return false
+    end
+
+    true
+  end
+
   def load_csv_data
     if @file_path_or_content.is_a?(String) && File.exist?(@file_path_or_content)
       CSV.read(@file_path_or_content, headers: false)
@@ -151,6 +184,7 @@ class SlackMatcher
     end
   rescue => e
     @errors << "CSV parsing error: #{e.message}"
+    @errors << "Please ensure the file is a valid CSV file exported from Slack workspace admin panel."
     nil
   end
 
