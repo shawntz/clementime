@@ -62,7 +62,9 @@ class CanvasRosterImporter
       @errors << "  Column 4: SIS Login ID"
       @errors << "  Column 5: Section(s) (e.g., 'F25-PSYCH-10-02')"
       @errors << "  Column 6: SU ID"
+      @errors << ""
       @errors << "Note: The first 3 rows are treated as headers and will be skipped."
+      @errors << "Note: Column numbers are 1-based."
       return false
     end
 

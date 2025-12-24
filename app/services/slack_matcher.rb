@@ -160,6 +160,7 @@ class SlackMatcher
       @errors << "  Column 1: username"
       @errors << "  Column 2: email"
       @errors << "  Column 3: status"
+      @errors << "  Columns 4-5: (other Slack fields - not used)"
       @errors << "  Column 6: user id"
       @errors << "  Column 7: full name"
       @errors << "  Column 8: display name"
@@ -168,6 +169,8 @@ class SlackMatcher
       @errors << "  1. Go to your Slack workspace admin panel (e.g., yourworkspace.slack.com/admin)"
       @errors << "  2. Click 'Manage members'"
       @errors << "  3. Click 'Export full member list'"
+      @errors << ""
+      @errors << "Note: Column numbers are 1-based. The system uses columns 1, 2, 3, 6, 7, and 8."
       return false
     end
 
