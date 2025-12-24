@@ -228,7 +228,7 @@ function SlackCredentialsModal({ user, onClose }) {
       const usersWithSlack = [
         ...adminsRes.data.users.map(u => ({ ...u, type: 'Admin' })),
         ...tasRes.data.users.map(u => ({ ...u, type: 'TA' }))
-      ].filter(u => u.slack_id && u.id !== user.id);
+      ].filter(u => u.slack_id && u.id !== user.id && u.is_active); // Exclude the recipient, users without Slack ID, and inactive users
 
       setAllUsers(usersWithSlack);
     } catch (err) {

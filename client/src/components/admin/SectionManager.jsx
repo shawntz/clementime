@@ -26,7 +26,8 @@ export default function SectionManager() {
         return true;
       });
       setSections(filteredSections);
-      setTas(tasRes.data.users);
+      // Filter out inactive TAs
+      setTas(tasRes.data.users.filter(ta => ta.is_active));
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {

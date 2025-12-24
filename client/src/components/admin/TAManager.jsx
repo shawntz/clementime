@@ -18,7 +18,8 @@ export default function TAManager() {
         api.get('/admin/users?role=ta'),
         api.get('/admin/sections')
       ]);
-      setTas(tasRes.data.users);
+      // Filter out inactive TAs
+      setTas(tasRes.data.users.filter(ta => ta.is_active));
       setSections(sectionsRes.data.sections.filter(s => {
         const parts = s.code.split('-');
         return parts.length >= 4 && parseInt(parts[3]) !== 1;
@@ -239,7 +240,7 @@ function SlackCredentialsModal({ user, onClose }) {
       const usersWithSlack = [
         ...adminsRes.data.users.map(u => ({ ...u, type: 'Admin' })),
         ...tasRes.data.users.map(u => ({ ...u, type: 'TA' }))
-      ].filter(u => u.slack_id && u.id !== user.id); // Exclude the recipient and users without Slack ID
+      ].filter(u => u.slack_id && u.id !== user.id && u.is_active); // Exclude the recipient, users without Slack ID, and inactive users
 
       setAllUsers(usersWithSlack);
     } catch (err) {
