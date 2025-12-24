@@ -488,14 +488,14 @@ class ScheduleGenerator
   def get_configured_exam_date(week_number)
     return nil if @exam_dates.blank?
 
-    # Determine exam number and week group from week_number
+    # Determine exam number and cohort from week_number
     # Week 1 = Exam 1 odd, Week 2 = Exam 1 even
     # Week 3 = Exam 2 odd, Week 4 = Exam 2 even, etc.
     exam_number = ((week_number - 1) / 2) + 1
-    week_group = week_number.odd? ? "odd" : "even"
+    cohort = week_number.odd? ? "odd" : "even"
 
     # Look up configured date
-    key = "#{exam_number}_#{week_group}"
+    key = "#{exam_number}_#{cohort}"
     date_str = @exam_dates[key]
 
     return nil if date_str.blank?
