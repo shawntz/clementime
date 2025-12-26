@@ -185,7 +185,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Import signing certificate
-        if: ${{ secrets.MACOS_CERTIFICATE != '' }}
+        if: ${{ secrets.MACOS_CERTIFICATE }}
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
@@ -255,7 +255,7 @@ jobs:
           fi
 
       - name: Notarize app
-        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID != '' }}
+        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
         env:
           APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
@@ -304,7 +304,7 @@ jobs:
             }
 
       - name: Sign and notarize DMG
-        if: ${{ secrets.MACOS_SIGNING_IDENTITY != '' }}
+        if: ${{ secrets.MACOS_SIGNING_IDENTITY }}
         env:
           CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
@@ -342,7 +342,7 @@ jobs:
             "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
 
       - name: Sign PKG
-        if: ${{ secrets.MACOS_INSTALLER_IDENTITY != '' }}
+        if: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
         env:
           INSTALLER_SIGN_IDENTITY: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
         run: |
@@ -355,7 +355,7 @@ jobs:
              "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
 
       - name: Notarize PKG
-        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID != '' }}
+        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
         env:
           APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
