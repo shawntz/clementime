@@ -46,6 +46,12 @@
         border-radius: 3px;
         font-family: monospace;
       }
+      .warning {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin: 20px 0;
+      }
     </style>
   </head>
   <body>
@@ -59,16 +65,24 @@
         <p>Your account has been created for the Clementime Oral Exam Management system.</p>
 
         <div class="credentials">
-          <h3>Your Login Credentials</h3>
+          <h3>Your Account Information</h3>
           <p><strong>Username:</strong> <code><%= @user.username %></code></p>
-          <p><strong>Temporary Password:</strong> <code><%= @temporary_password %></code></p>
         </div>
 
-        <p><strong>⚠️ Important:</strong> You will be required to change your password on first login.</p>
+        <p><strong>Next Step:</strong> Click the button below to set your password:</p>
 
-        <a href="<%= @login_url %>" class="button">Login to Clementime</a>
+        <a href="<%= @reset_url %>" class="button">Set Your Password</a>
+
+        <div class="warning">
+          <p><strong>⚠️ Important:</strong> This link will expire in 2 hours. You must set your password before the link expires.</p>
+        </div>
 
         <p style="margin-top: 30px; font-size: 14px; color: #666;">
+          If the button doesn't work, copy and paste this link into your browser:<br>
+          <%= @reset_url %>
+        </p>
+
+        <p style="margin-top: 20px; font-size: 14px; color: #666;">
           If you have any questions, please contact your system administrator.
         </p>
       </div>

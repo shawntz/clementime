@@ -51,9 +51,8 @@ module Api
       def send_welcome_email
         # Generate a one-time, time-limited token the user can use to set their password.
         # This avoids generating or storing a clear-text password.
-        token = @user.respond_to?(:generate_password_reset_token!) ?
-                  @user.generate_password_reset_token! :
-                  nil
+        @user.generate_password_reset_token!
+        token = @user.reset_password_token
 
         @user.must_change_password = true
 
