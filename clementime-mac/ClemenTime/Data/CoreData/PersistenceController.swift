@@ -148,7 +148,102 @@ class PersistenceController: ObservableObject {
         let context = controller.container.viewContext
 
         // Create sample data for previews
-        // TODO: Add sample course, students, etc.
+        let sampleCourseId = UUID()
+        let sampleUserId = UUID()
+
+        // Create sample course
+        let courseEntity = CourseEntity(context: context)
+        courseEntity.id = sampleCourseId
+        courseEntity.name = "PSYCH 10"
+        courseEntity.term = "Fall 2025"
+        courseEntity.quarterStartDate = Date()
+        courseEntity.quarterEndDate = Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date()
+        courseEntity.totalExams = 5
+        courseEntity.isActive = true
+        courseEntity.createdByUserId = sampleUserId
+        courseEntity.settingsJSON = "{\"balancedTAScheduling\":false}"
+        courseEntity.metadataJSON = "{}"
+
+        // Create default "All Students" cohort
+        let allStudentsCohort = CohortEntity(context: context)
+        allStudentsCohort.id = UUID()
+        allStudentsCohort.courseId = sampleCourseId
+        allStudentsCohort.name = "All Students"
+        allStudentsCohort.colorHex = "#007AFF"
+        allStudentsCohort.sortOrder = 0
+        allStudentsCohort.isDefault = true
+
+        // Create sample cohorts
+        let cohortA = CohortEntity(context: context)
+        cohortA.id = UUID()
+        cohortA.courseId = sampleCourseId
+        cohortA.name = "Cohort A"
+        cohortA.colorHex = "#FF5733"
+        cohortA.sortOrder = 1
+        cohortA.isDefault = false
+
+        let cohortB = CohortEntity(context: context)
+        cohortB.id = UUID()
+        cohortB.courseId = sampleCourseId
+        cohortB.name = "Cohort B"
+        cohortB.colorHex = "#33C1FF"
+        cohortB.sortOrder = 2
+        cohortB.isDefault = false
+
+        // Create sample sections
+        let section1 = SectionEntity(context: context)
+        section1.id = UUID()
+        section1.courseId = sampleCourseId
+        section1.code = "F25-PSYCH-10-01"
+        section1.name = "Section 01"
+        section1.location = "Building 420, Room 040"
+        section1.weekday = 2 // Monday
+        section1.startTime = "13:30"
+        section1.endTime = "14:50"
+        section1.isActive = true
+
+        let section2 = SectionEntity(context: context)
+        section2.id = UUID()
+        section2.courseId = sampleCourseId
+        section2.code = "F25-PSYCH-10-02"
+        section2.name = "Section 02"
+        section2.location = "Building 420, Room 045"
+        section2.weekday = 4 // Wednesday
+        section2.startTime = "15:30"
+        section2.endTime = "16:50"
+        section2.isActive = true
+
+        // Create sample exam sessions
+        let examSession1 = ExamSessionEntity(context: context)
+        examSession1.id = UUID()
+        examSession1.courseId = sampleCourseId
+        examSession1.examNumber = 1
+        examSession1.weekStartDate = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+        examSession1.theme = "Foundational Questions"
+        examSession1.durationMinutes = 7
+        examSession1.bufferMinutes = 1
+
+        let examSession2 = ExamSessionEntity(context: context)
+        examSession2.id = UUID()
+        examSession2.courseId = sampleCourseId
+        examSession2.examNumber = 2
+        examSession2.weekStartDate = Calendar.current.date(byAdding: .day, value: 21, to: Date()) ?? Date()
+        examSession2.theme = "Methods & Ethics"
+        examSession2.durationMinutes = 7
+        examSession2.bufferMinutes = 1
+
+        // Create sample students
+        for i in 1...15 {
+            let student = StudentEntity(context: context)
+            student.id = UUID()
+            student.courseId = sampleCourseId
+            student.sectionId = i % 2 == 0 ? section1.id : section2.id
+            student.cohortId = i % 2 == 0 ? cohortA.id : cohortB.id
+            student.sisUserId = "student\(i)"
+            student.email = "student\(i)@stanford.edu"
+            student.fullName = "Student \(i)"
+            student.isActive = true
+        }
 
         controller.save()
         return controller

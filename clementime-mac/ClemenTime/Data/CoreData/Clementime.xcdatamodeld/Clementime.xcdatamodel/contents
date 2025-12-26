@@ -3,6 +3,7 @@
           <attribute name="colorHex" optional="YES" attributeType="String"/>
           <attribute name="courseId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="isDefault" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
           <attribute name="name" optional="YES" attributeType="String"/>
           <attribute name="sortOrder" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
           <attribute name="weekType" optional="YES" attributeType="String"/>
@@ -26,6 +27,7 @@
           <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
           <attribute name="metadataJSON" optional="YES" attributeType="String"/>
           <attribute name="name" optional="YES" attributeType="String"/>
+          <attribute name="quarterEndDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
           <attribute name="quarterStartDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
           <attribute name="settingsJSON" optional="YES" attributeType="String"/>
           <attribute name="term" optional="YES" attributeType="String"/>
@@ -38,16 +40,16 @@
           <relationship optional="YES" name="taUsers" toMany="YES" deletionRule="Cascade" destinationEntity="TAUserEntity" inverseName="course" inverseEntity="TAUserEntity"/>
       </entity>
       <entity name="ExamSessionEntity" representedClassName="ExamSessionEntity" syncable="YES" codeGenerationType="class">
+          <attribute name="assignedCohortId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="bufferMinutes" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
           <attribute name="courseId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="durationMinutes" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
-          <attribute name="endTime" optional="YES" attributeType="String"/>
           <attribute name="evenWeekDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
           <attribute name="examNumber" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
           <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="oddWeekDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-          <attribute name="startTime" optional="YES" attributeType="String"/>
           <attribute name="theme" optional="YES" attributeType="String"/>
+          <attribute name="weekStartDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
           <relationship optional="YES" name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="examSessions" inverseEntity="CourseEntity"/>
           <relationship optional="YES" name="examSlots" toMany="YES" deletionRule="Cascade" destinationEntity="ExamSlotEntity" inverseName="examSession" inverseEntity="ExamSlotEntity"/>
       </entity>
@@ -108,10 +110,14 @@
           <attribute name="code" optional="YES" attributeType="String"/>
           <attribute name="cohortId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="courseId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+          <attribute name="endTime" optional="YES" attributeType="String"/>
           <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
           <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
           <attribute name="location" optional="YES" attributeType="String"/>
           <attribute name="name" optional="YES" attributeType="String"/>
+          <attribute name="shouldIgnoreForMatching" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+          <attribute name="startTime" optional="YES" attributeType="String"/>
+          <attribute name="weekday" attributeType="Integer 16" defaultValueString="6" usesScalarValueType="YES"/>
           <relationship optional="YES" name="assignedTA" maxCount="1" deletionRule="Nullify" destinationEntity="TAUserEntity" inverseName="sections" inverseEntity="TAUserEntity"/>
           <relationship optional="YES" name="cohort" maxCount="1" deletionRule="Nullify" destinationEntity="CohortEntity" inverseName="sections" inverseEntity="CohortEntity"/>
           <relationship optional="YES" name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="sections" inverseEntity="CourseEntity"/>
@@ -130,6 +136,7 @@
           <attribute name="sisUserId" optional="YES" attributeType="String"/>
           <attribute name="slackUserId" optional="YES" attributeType="String"/>
           <attribute name="slackUsername" optional="YES" attributeType="String"/>
+          <attribute name="unmatchedSectionCode" optional="YES" attributeType="String"/>
           <relationship optional="YES" name="cohort" maxCount="1" deletionRule="Nullify" destinationEntity="CohortEntity" inverseName="students" inverseEntity="CohortEntity"/>
           <relationship optional="YES" name="constraints" toMany="YES" deletionRule="Cascade" destinationEntity="ConstraintEntity" inverseName="student" inverseEntity="ConstraintEntity"/>
           <relationship optional="YES" name="course" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="students" inverseEntity="CourseEntity"/>
