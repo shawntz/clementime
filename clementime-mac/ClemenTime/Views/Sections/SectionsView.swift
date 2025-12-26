@@ -96,12 +96,12 @@ struct SectionsView: View {
     }
 
     private var sectionsList: some View {
-        List {
-            ForEach(viewModel.sections) { section in
-                SectionRow(section: section, onTap: {
+        List(viewModel.sections) { section in
+            SectionRow(section: section)
+                .contentShape(Rectangle())
+                .onTapGesture {
                     selectedSection = section
-                })
-            }
+                }
         }
         .listStyle(.inset)
     }
@@ -111,54 +111,51 @@ struct SectionsView: View {
 
 struct SectionRow: View {
     let section: Section
-    let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 16) {
-                // Section Icon
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.accentColor.opacity(0.15))
-                        .frame(width: 44, height: 44)
+        HStack(spacing: 16) {
+            // Section Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
 
-                    Image(systemName: "square.grid.2x2")
-                        .font(.title3)
-                        .foregroundColor(.accentColor)
-                }
+                Image(systemName: "square.grid.2x2")
+                    .font(.title3)
+                    .foregroundColor(.accentColor)
+            }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(section.name)
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(section.name)
+                    .font(.headline)
 
-                    HStack(spacing: 12) {
-                        if !section.location.isEmpty {
-                            Label(section.location, systemImage: "mappin.circle")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                HStack(spacing: 12) {
+                    if !section.location.isEmpty {
+                        Label(section.location, systemImage: "mappin.circle")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
 
-                        if section.hasAssignedTA {
-                            Label("TA Assigned", systemImage: "person.fill")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        } else {
-                            Label("No TA", systemImage: "person.fill.xmark")
-                                .font(.caption)
-                                .foregroundColor(.orange)
-                        }
+                    if section.hasAssignedTA {
+                        Label("TA Assigned", systemImage: "person.fill")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    } else {
+                        Label("No TA", systemImage: "person.fill.xmark")
+                            .font(.caption)
+                            .foregroundColor(.orange)
                     }
                 }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
-            .padding(.vertical, 8)
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
 }
 
@@ -232,7 +229,7 @@ class SectionsViewModel: ObservableObject {
         name: "PSYCH 10",
         term: "Fall 2025",
         quarterStartDate: Date(),
-        examDay: .friday,
+        quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
         totalExams: 5,
         isActive: true,
         createdBy: UUID(),
