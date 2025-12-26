@@ -269,7 +269,6 @@ jobs:
               CODE_SIGN_STYLE=Manual \
               CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
               DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
-              PROVISIONING_PROFILE_SPECIFIER="Clementime Dist" \
               CODE_SIGNING_REQUIRED=YES \
               CODE_SIGNING_ALLOWED=YES
           else
