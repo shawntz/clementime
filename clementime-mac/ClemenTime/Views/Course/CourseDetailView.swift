@@ -14,8 +14,8 @@ struct CourseDetailView: View {
     enum Tab: String, CaseIterable, Identifiable {
         case sections = "Sections"
         case students = "Students"
-        case schedule = "Schedule"
         case sessions = "Exam Sessions"
+        case schedule = "Schedule"
         case settings = "Settings"
 
         var id: String { rawValue }
@@ -45,17 +45,17 @@ struct CourseDetailView: View {
                 }
                 .tag(Tab.students)
 
-            ScheduleView(course: course)
-                .tabItem {
-                    Label(Tab.schedule.rawValue, systemImage: Tab.schedule.icon)
-                }
-                .tag(Tab.schedule)
-
             ExamSessionsView(course: course)
                 .tabItem {
                     Label(Tab.sessions.rawValue, systemImage: Tab.sessions.icon)
                 }
                 .tag(Tab.sessions)
+
+            ScheduleView(course: course)
+                .tabItem {
+                    Label(Tab.schedule.rawValue, systemImage: Tab.schedule.icon)
+                }
+                .tag(Tab.schedule)
 
             CourseSettingsView(course: course)
                 .tabItem {
