@@ -6,40 +6,79 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
+
+// MARK: - Helper for Current User ID
+private extension UserDefaults {
+    var currentUserId: UUID {
+        let key = "com.shawnschwartz.clementime.currentUserId"
+        if let uuidString = string(forKey: key),
+           let uuid = UUID(uuidString: uuidString) {
+            return uuid
+        }
+        let newId = UUID()
+        set(newId.uuidString, forKey: key)
+        return newId
+    }
+}
 
 struct ScheduleView: View {
     let course: Course
     @StateObject private var viewModel: ScheduleViewModel
     @State private var showGenerateConfirmation = false
     @State private var selectedSlot: ExamSlot.ID?
+    @State private var showPDFExportSheet = false
 
     init(course: Course) {
         self.course = course
-        // TODO: Inject dependencies properly via DI container
+
+        // Use shared persistence controller for repositories
         let persistence = PersistenceController.shared
+
+        // Create use cases with repositories
+        let generateScheduleUseCase = GenerateScheduleUseCase(
+            courseRepository: persistence.courseRepository,
+            cohortRepository: persistence.cohortRepository,
+            studentRepository: persistence.studentRepository,
+            sectionRepository: persistence.sectionRepository,
+            examSessionRepository: persistence.examSessionRepository,
+            constraintRepository: persistence.constraintRepository,
+            scheduleRepository: persistence.scheduleRepository
+        )
+
+        let exportScheduleUseCase = ExportScheduleUseCase(
+            courseRepository: persistence.courseRepository,
+            studentRepository: persistence.studentRepository,
+            sectionRepository: persistence.sectionRepository,
+            scheduleRepository: persistence.scheduleRepository,
+            examSessionRepository: persistence.examSessionRepository
+        )
+
+        // Create default admin user for permission checking
+        let currentUser = TAUser(
+            id: UserDefaults.standard.currentUserId,
+            courseId: course.id,
+            firstName: "Admin",
+            lastName: "User",
+            email: "admin@example.com",
+            username: "admin",
+            role: .admin,
+            customPermissions: Permission.allPermissions(),
+            location: "",
+            slackId: nil,
+            isActive: true
+        )
+        let permissionChecker = PermissionChecker(currentUser: currentUser, course: course)
+
         self._viewModel = StateObject(wrappedValue: ScheduleViewModel(
             course: course,
             scheduleRepository: persistence.scheduleRepository,
             studentRepository: persistence.studentRepository,
             sectionRepository: persistence.sectionRepository,
             examSessionRepository: persistence.examSessionRepository,
-            generateScheduleUseCase: GenerateScheduleUseCase(
-                courseRepository: persistence.courseRepository,
-                cohortRepository: persistence.cohortRepository,
-                studentRepository: persistence.studentRepository,
-                sectionRepository: persistence.sectionRepository,
-                examSessionRepository: persistence.examSessionRepository,
-                constraintRepository: persistence.constraintRepository,
-                scheduleRepository: persistence.scheduleRepository
-            ),
-            exportScheduleUseCase: ExportScheduleUseCase(
-                courseRepository: persistence.courseRepository,
-                studentRepository: persistence.studentRepository,
-                sectionRepository: persistence.sectionRepository,
-                scheduleRepository: persistence.scheduleRepository,
-                examSessionRepository: persistence.examSessionRepository
-            ),
-            permissionChecker: PermissionChecker.mock
+            generateScheduleUseCase: generateScheduleUseCase,
+            exportScheduleUseCase: exportScheduleUseCase,
+            permissionChecker: permissionChecker
         ))
     }
 
@@ -91,6 +130,15 @@ struct ScheduleView: View {
                 Text(success)
             }
         }
+        .sheet(isPresented: $showPDFExportSheet) {
+            ScheduleExportSheet(
+                course: course,
+                examNumber: viewModel.selectedExamNumber,
+                slots: viewModel.filteredSlots,
+                students: viewModel.students,
+                sections: viewModel.sections
+            )
+        }
     }
 
     // MARK: - Toolbar
@@ -122,6 +170,14 @@ struct ScheduleView: View {
                 Label("Export CSV", systemImage: "square.and.arrow.up")
             }
             .disabled(!viewModel.canEditSchedule)
+
+            Button(action: {
+                showPDFExportSheet = true
+            }) {
+                Label("Export PDF", systemImage: "doc.richtext")
+            }
+            .disabled(viewModel.filteredSlots.isEmpty)
+            .buttonStyle(.bordered)
 
             Button(action: {
                 showGenerateConfirmation = true
@@ -334,7 +390,7 @@ extension PermissionChecker {
                 name: "Test",
                 term: "Test",
                 quarterStartDate: Date(),
-                examDay: .friday,
+                quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
                 totalExams: 5,
                 isActive: true,
                 createdBy: UUID(),
@@ -350,7 +406,7 @@ extension PermissionChecker {
         name: "PSYCH 10",
         term: "Fall 2025",
         quarterStartDate: Date(),
-        examDay: .friday,
+        quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
         totalExams: 5,
         isActive: true,
         createdBy: UUID(),
