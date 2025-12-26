@@ -22,7 +22,7 @@ extension CourseEntity {
             name: name ?? "",
             term: term ?? "",
             quarterStartDate: quarterStartDate ?? Date(),
-            examDay: DayOfWeek(rawValue: examDay ?? "friday") ?? .friday,
+            quarterEndDate: quarterEndDate ?? Calendar.current.date(byAdding: .day, value: 70, to: quarterStartDate ?? Date()) ?? Date(),
             totalExams: Int(totalExams),
             isActive: isActive,
             createdBy: createdByUserId ?? UUID(),
@@ -37,7 +37,7 @@ extension CourseEntity {
         self.name = domain.name
         self.term = domain.term
         self.quarterStartDate = domain.quarterStartDate
-        self.examDay = domain.examDay.rawValue
+        self.quarterEndDate = domain.quarterEndDate
         self.totalExams = Int16(domain.totalExams)
         self.isActive = domain.isActive
         self.createdByUserId = domain.createdBy

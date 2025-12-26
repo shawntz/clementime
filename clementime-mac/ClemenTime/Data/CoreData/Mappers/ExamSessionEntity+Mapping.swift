@@ -14,11 +14,9 @@ extension ExamSessionEntity {
             id: id ?? UUID(),
             courseId: courseId ?? UUID(),
             examNumber: Int(examNumber),
-            oddWeekDate: oddWeekDate ?? Date(),
-            evenWeekDate: evenWeekDate ?? Date(),
+            weekStartDate: weekStartDate ?? Date(),
+            assignedCohortId: assignedCohortId,
             theme: theme,
-            startTime: startTime ?? "13:30",
-            endTime: endTime ?? "14:50",
             durationMinutes: Int(durationMinutes),
             bufferMinutes: Int(bufferMinutes)
         )
@@ -28,11 +26,9 @@ extension ExamSessionEntity {
         self.id = domain.id
         self.courseId = domain.courseId
         self.examNumber = Int16(domain.examNumber)
-        self.oddWeekDate = domain.oddWeekDate
-        self.evenWeekDate = domain.evenWeekDate
+        self.weekStartDate = domain.weekStartDate
+        self.assignedCohortId = domain.assignedCohortId
         self.theme = domain.theme
-        self.startTime = domain.startTime
-        self.endTime = domain.endTime
         self.durationMinutes = Int16(domain.durationMinutes)
         self.bufferMinutes = Int16(domain.bufferMinutes)
     }

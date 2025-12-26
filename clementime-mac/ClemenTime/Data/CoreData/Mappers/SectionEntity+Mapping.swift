@@ -17,8 +17,11 @@ extension SectionEntity {
             name: name ?? "",
             location: location ?? "",
             assignedTAId: assignedTAId,
-            cohortId: cohortId ?? UUID(),
-            isActive: isActive
+            weekday: Int(weekday),
+            startTime: startTime ?? "13:30",
+            endTime: endTime ?? "14:50",
+            isActive: isActive,
+            shouldIgnoreForMatching: shouldIgnoreForMatching
         )
     }
 
@@ -29,8 +32,11 @@ extension SectionEntity {
         self.name = domain.name
         self.location = domain.location
         self.assignedTAId = domain.assignedTAId
-        self.cohortId = domain.cohortId
+        self.weekday = Int16(domain.weekday)
+        self.startTime = domain.startTime
+        self.endTime = domain.endTime
         self.isActive = domain.isActive
+        self.shouldIgnoreForMatching = domain.shouldIgnoreForMatching
     }
 
     static func create(from domain: Section, in context: NSManagedObjectContext) -> SectionEntity {

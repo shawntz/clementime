@@ -20,7 +20,8 @@ extension StudentEntity {
             cohortId: cohortId ?? UUID(),
             slackUserId: slackUserId,
             slackUsername: slackUsername,
-            isActive: isActive
+            isActive: isActive,
+            unmatchedSectionCode: unmatchedSectionCode
         )
     }
 
@@ -35,6 +36,7 @@ extension StudentEntity {
         self.slackUserId = domain.slackUserId
         self.slackUsername = domain.slackUsername
         self.isActive = domain.isActive
+        self.unmatchedSectionCode = domain.unmatchedSectionCode
     }
 
     static func create(from domain: Student, in context: NSManagedObjectContext) -> StudentEntity {

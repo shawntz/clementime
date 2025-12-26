@@ -14,9 +14,9 @@ extension CohortEntity {
             id: id ?? UUID(),
             courseId: courseId ?? UUID(),
             name: name ?? "",
-            weekType: WeekType(rawValue: weekType ?? "odd") ?? .odd,
             colorHex: colorHex ?? "#007AFF",
-            sortOrder: Int(sortOrder)
+            sortOrder: Int(sortOrder),
+            isDefault: isDefault
         )
     }
 
@@ -24,9 +24,9 @@ extension CohortEntity {
         self.id = domain.id
         self.courseId = domain.courseId
         self.name = domain.name
-        self.weekType = domain.weekType.rawValue
         self.colorHex = domain.colorHex
         self.sortOrder = Int16(domain.sortOrder)
+        self.isDefault = domain.isDefault
     }
 
     static func create(from domain: Cohort, in context: NSManagedObjectContext) -> CohortEntity {
