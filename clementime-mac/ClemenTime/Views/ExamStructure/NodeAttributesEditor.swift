@@ -2,7 +2,7 @@
 //  NodeAttributesEditor.swift
 //  ClemenTime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import SwiftUI
@@ -31,7 +31,7 @@ struct NodeAttributesEditor: View {
         NavigationStack {
             Form {
                 // Basic Information
-                Section("Basic Information") {
+                SwiftUI.Section("Basic Information") {
                     HStack {
                         Image(systemName: editedNode.type.icon)
                             .foregroundColor(.white)
@@ -52,7 +52,7 @@ struct NodeAttributesEditor: View {
                 }
 
                 // Cohort Assignment
-                Section("Cohort Assignment") {
+                SwiftUI.Section("Cohort Assignment") {
                     if availableCohorts.isEmpty {
                         Text("No cohorts configured for this course")
                             .foregroundColor(.secondary)
@@ -74,7 +74,7 @@ struct NodeAttributesEditor: View {
                 }
 
                 // TA Assignments
-                Section("TA Assignments") {
+                SwiftUI.Section("TA Assignments") {
                     if availableTAs.isEmpty {
                         Text("No TAs configured for this course")
                             .foregroundColor(.secondary)
@@ -90,7 +90,7 @@ struct NodeAttributesEditor: View {
                 }
 
                 // Student Proportion
-                Section("Student Proportion") {
+                SwiftUI.Section("Student Proportion") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Proportion of Roster")
@@ -110,7 +110,7 @@ struct NodeAttributesEditor: View {
                 }
 
                 // Rules
-                Section("Scheduling Rules") {
+                SwiftUI.Section("Scheduling Rules") {
                     ForEach(editedNode.rules) { rule in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
@@ -140,7 +140,7 @@ struct NodeAttributesEditor: View {
                 }
 
                 // Metadata
-                Section("Metadata") {
+                SwiftUI.Section("Metadata") {
                     ForEach(Array(editedNode.metadata.keys.sorted()), id: \.self) { key in
                         HStack {
                             Text(key)
@@ -153,7 +153,6 @@ struct NodeAttributesEditor: View {
                     }
                 }
             }
-            .formStyle(.grouped)
             .navigationTitle("Edit Exam Session Node")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -261,7 +260,7 @@ struct AddRuleSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Rule Configuration") {
+                SwiftUI.Section("Rule Configuration") {
                     Picker("Rule Type", selection: $ruleType) {
                         ForEach(ExamRuleType.allCases, id: \.self) { type in
                             Text(type.displayName).tag(type)
@@ -323,7 +322,7 @@ struct AddRuleSheet: View {
             name: "PSYCH 10",
             term: "Fall 2025",
             quarterStartDate: Date(),
-            examDay: .friday,
+            quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
             totalExams: 5,
             isActive: true,
             createdBy: UUID(),
