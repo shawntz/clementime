@@ -112,7 +112,7 @@ module Api
       def generate_password
         # Use SecureRandom for cryptographically secure password generation
         chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
-        Array.new(12) { chars[SecureRandom.random_number(chars.length)] }.join
+        (0...12).map { chars[SecureRandom.random_number(chars.length)] }.join
       end
 
       def set_user
