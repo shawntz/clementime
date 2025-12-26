@@ -51,8 +51,20 @@ module Api
       def send_welcome_email
         # Generate a one-time, time-limited token the user can use to set their password.
         # This avoids generating or storing a clear-text password.
-        @user.generate_password_reset_token!
-        token = @user.reset_password_token
+        begin
+          @user.generate_password_reset_token!
+          token = @user.reset_password_token
+          
+          # Validate that token was successfully generated
+          if token.blank?
+            render json: { errors: "Failed to generate password reset token" }, status: :unprocessable_entity
+            return
+          end
+        rescue => e
+          Rails.logger.error "Token generation failed: #{e.message}"
+          render json: { errors: "Failed to generate password reset token" }, status: :unprocessable_entity
+          return
+        end
 
         @user.must_change_password = true
 
