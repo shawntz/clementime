@@ -111,10 +111,9 @@ module Api
       def generate_password
         # Use SecureRandom for cryptographically secure password generation
         chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
-        password = ""
-        12.times { password += chars[SecureRandom.random_number(chars.length)] }
-        password
+        (0...12).map { chars[SecureRandom.random_number(chars.length)] }.join
       end
+
 
       def set_user
         @user = User.find(params[:id])
