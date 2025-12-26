@@ -15,17 +15,11 @@ class CourseBuilderViewModel: ObservableObject {
     @Published var courseName = ""
     @Published var term = ""
     @Published var quarterStartDate = Date()
-    @Published var examDay: DayOfWeek = .friday
+    @Published var quarterEndDate = Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date() // Default to ~10 weeks
     @Published var totalExams = 5
 
     // Cohorts
     @Published var cohorts: [CohortBuilder] = []
-
-    // Exam times
-    @Published var examStartTime = Date()
-    @Published var examEndTime = Date()
-    @Published var examDurationMinutes = 7
-    @Published var bufferMinutes = 1
 
     // Exam sessions
     @Published var examSessions: [ExamSessionBuilder] = []
@@ -41,11 +35,6 @@ class CourseBuilderViewModel: ObservableObject {
         self.createCourseUseCase = createCourseUseCase
         self.currentUserId = currentUserId
 
-        // Set default exam times
-        let calendar = Calendar.current
-        examStartTime = calendar.date(bySettingHour: 13, minute: 30, second: 0, of: Date()) ?? Date()
-        examEndTime = calendar.date(bySettingHour: 14, minute: 50, second: 0, of: Date()) ?? Date()
-
         // Add default cohorts
         addDefaultCohorts()
 
@@ -60,9 +49,9 @@ class CourseBuilderViewModel: ObservableObject {
         let cohort = CohortBuilder(
             id: UUID(),
             name: "",
-            weekType: .odd,
             colorHex: randomColor(),
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            isDefault: false
         )
         cohorts.append(cohort)
     }
@@ -77,8 +66,9 @@ class CourseBuilderViewModel: ObservableObject {
 
     func addDefaultCohorts() {
         cohorts = [
-            CohortBuilder(id: UUID(), name: "A", weekType: .odd, colorHex: "#007AFF", sortOrder: 0),
-            CohortBuilder(id: UUID(), name: "B", weekType: .even, colorHex: "#34C759", sortOrder: 1)
+            CohortBuilder(id: UUID(), name: "All Students", colorHex: "#6B7280", sortOrder: -1, isDefault: true),
+            CohortBuilder(id: UUID(), name: "A", colorHex: "#007AFF", sortOrder: 0, isDefault: false),
+            CohortBuilder(id: UUID(), name: "B", colorHex: "#34C759", sortOrder: 1, isDefault: false)
         ]
     }
 
@@ -86,33 +76,27 @@ class CourseBuilderViewModel: ObservableObject {
         examSessions.removeAll()
 
         let calendar = Calendar.current
-        var currentOddDate = quarterStartDate
-        var currentEvenDate = quarterStartDate
+        var currentWeekStart = quarterStartDate
 
-        // Find first occurrence of exam day
-        let targetWeekday = examDay.weekdayIndex
-        while currentOddDate.weekdayNumber != targetWeekday {
-            currentOddDate = calendar.date(byAdding: .day, value: 1, to: currentOddDate) ?? currentOddDate
+        // Find first Monday (start of week)
+        while currentWeekStart.weekdayNumber != 2 { // 2 = Monday
+            currentWeekStart = calendar.date(byAdding: .day, value: -1, to: currentWeekStart) ?? currentWeekStart
         }
-        currentEvenDate = calendar.date(byAdding: .day, value: 7, to: currentOddDate) ?? currentOddDate
 
         for examNumber in 1...totalExams {
             let session = ExamSessionBuilder(
                 id: UUID(),
                 examNumber: examNumber,
-                oddWeekDate: currentOddDate,
-                evenWeekDate: currentEvenDate,
+                weekStartDate: currentWeekStart,
+                assignedCohortId: nil, // Default to "All Students"
                 theme: nil,
-                startTime: formatTime(examStartTime),
-                endTime: formatTime(examEndTime),
-                durationMinutes: examDurationMinutes,
-                bufferMinutes: bufferMinutes
+                durationMinutes: 7, // Default duration
+                bufferMinutes: 1 // Default buffer
             )
             examSessions.append(session)
 
-            // Advance dates by 2 weeks
-            currentOddDate = calendar.date(byAdding: .day, value: 14, to: currentOddDate) ?? currentOddDate
-            currentEvenDate = calendar.date(byAdding: .day, value: 14, to: currentEvenDate) ?? currentEvenDate
+            // Advance by 1 week
+            currentWeekStart = calendar.date(byAdding: .day, value: 7, to: currentWeekStart) ?? currentWeekStart
         }
     }
 
@@ -127,12 +111,6 @@ class CourseBuilderViewModel: ObservableObject {
 
         do {
             let settings = CourseSettings(
-                examStartTime: TimeComponents(hour: Calendar.current.component(.hour, from: examStartTime),
-                                              minute: Calendar.current.component(.minute, from: examStartTime)),
-                examEndTime: TimeComponents(hour: Calendar.current.component(.hour, from: examEndTime),
-                                            minute: Calendar.current.component(.minute, from: examEndTime)),
-                examDurationMinutes: examDurationMinutes,
-                examBufferMinutes: bufferMinutes,
                 balancedTAScheduling: false
             )
 
@@ -140,21 +118,19 @@ class CourseBuilderViewModel: ObservableObject {
                 name: courseName,
                 term: term,
                 quarterStartDate: quarterStartDate,
-                examDay: examDay,
+                quarterEndDate: quarterEndDate,
                 totalExams: totalExams,
                 cohorts: cohorts.map { CohortInput(
                     name: $0.name,
-                    weekType: $0.weekType,
                     colorHex: $0.colorHex,
-                    sortOrder: $0.sortOrder
+                    sortOrder: $0.sortOrder,
+                    isDefault: $0.isDefault
                 )},
                 examSessions: examSessions.map { ExamSessionInput(
                     examNumber: $0.examNumber,
-                    oddWeekDate: $0.oddWeekDate,
-                    evenWeekDate: $0.evenWeekDate,
+                    weekStartDate: $0.weekStartDate,
+                    assignedCohortId: $0.assignedCohortId,
                     theme: $0.theme,
-                    startTime: $0.startTime,
-                    endTime: $0.endTime,
                     durationMinutes: $0.durationMinutes,
                     bufferMinutes: $0.bufferMinutes
                 )},
@@ -212,19 +188,17 @@ class CourseBuilderViewModel: ObservableObject {
 struct CohortBuilder: Identifiable {
     let id: UUID
     var name: String
-    var weekType: WeekType
     var colorHex: String
     var sortOrder: Int
+    var isDefault: Bool
 }
 
 struct ExamSessionBuilder: Identifiable {
     let id: UUID
     let examNumber: Int
-    var oddWeekDate: Date
-    var evenWeekDate: Date
+    var weekStartDate: Date
+    var assignedCohortId: UUID?
     var theme: String?
-    var startTime: String
-    var endTime: String
     var durationMinutes: Int
     var bufferMinutes: Int
 }
