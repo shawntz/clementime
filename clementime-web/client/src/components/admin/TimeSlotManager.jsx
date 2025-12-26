@@ -24,7 +24,7 @@ export default function TimeSlotManager() {
   const loadSections = async () => {
     try {
       const response = await api.get('/admin/sections');
-      const filtered = response.data.sections.filter(s => {
+      const filtered = response.data.sections.filter((s) => {
         const parts = s.code.split('-');
         return parts.length >= 4 && parseInt(parts[3]) !== 1;
       });
@@ -41,7 +41,7 @@ export default function TimeSlotManager() {
     setLoading(true);
     try {
       const response = await api.get(`/admin/sections/${selectedSection}/time_slots`, {
-        params: { exam_number: selectedExam }
+        params: { exam_number: selectedExam },
       });
       setSlots(response.data.slots);
     } catch (err) {
@@ -55,13 +55,15 @@ export default function TimeSlotManager() {
     try {
       await api.put(`/admin/exam_slots/${slotId}/update_time`, {
         start_time: newStartTime,
-        end_time: newEndTime
+        end_time: newEndTime,
       });
       loadSlots();
       setEditingSlot(null);
       alert('Time slot updated successfully');
     } catch (err) {
-      alert('Failed to update time slot: ' + (err.response?.data?.errors?.join(', ') || err.message));
+      alert(
+        'Failed to update time slot: ' + (err.response?.data?.errors?.join(', ') || err.message)
+      );
     }
   };
 
@@ -69,7 +71,7 @@ export default function TimeSlotManager() {
     try {
       await api.post('/admin/exam_slots/swap', {
         slot1_id: slot1Id,
-        slot2_id: slot2Id
+        slot2_id: slot2Id,
       });
       loadSlots();
     } catch (err) {
@@ -149,7 +151,7 @@ export default function TimeSlotManager() {
 
   const getAvailableTimeSlots = (currentSlot) => {
     // Get all occupied slots for this exam in this section (excluding current student)
-    const occupiedSlots = slots.filter(s => s.id !== currentSlot.id && s.is_scheduled);
+    const occupiedSlots = slots.filter((s) => s.id !== currentSlot.id && s.is_scheduled);
 
     // Generate all possible time slots based on configuration
     const allTimeSlots = [];
@@ -163,7 +165,7 @@ export default function TimeSlotManager() {
     let endMinute = 0;
 
     // Try to get actual start/end times from scheduled slots
-    const scheduledSlots = slots.filter(s => s.is_scheduled && s.start_time);
+    const scheduledSlots = slots.filter((s) => s.is_scheduled && s.start_time);
     if (scheduledSlots.length > 0) {
       // Find earliest start time
       const earliestSlot = scheduledSlots.reduce((earliest, slot) => {
@@ -192,12 +194,12 @@ export default function TimeSlotManager() {
         const endTimeStr = slotEndTime.toTimeString().substring(0, 5);
 
         // Find ALL slots (both odd and even) occupying this time
-        const occupyingSlotsAtTime = occupiedSlots.filter(s => s.start_time === timeStr);
+        const occupyingSlotsAtTime = occupiedSlots.filter((s) => s.start_time === timeStr);
 
         allTimeSlots.push({
           start: timeStr,
           end: endTimeStr,
-          occupiedSlots: occupyingSlotsAtTime // Array of all students at this time
+          occupiedSlots: occupyingSlotsAtTime, // Array of all students at this time
         });
       }
       currentTime = new Date(slotEndTime.getTime() + buffer * 60000);
@@ -231,9 +233,9 @@ export default function TimeSlotManager() {
 
             if (timeSlot.occupiedSlots.length > 0 && !isSelected) {
               // Show all students occupying this time slot
-              const occupantNames = timeSlot.occupiedSlots.map(s =>
-                `${s.student.full_name} - ${s.cohort}`
-              ).join(', ');
+              const occupantNames = timeSlot.occupiedSlots
+                .map((s) => `${s.student.full_name} - ${s.cohort}`)
+                .join(', ');
               label += ` (${occupantNames})`;
             } else if (isSelected) {
               label += ' (Current)';
@@ -251,26 +253,27 @@ export default function TimeSlotManager() {
   };
 
   // Group slots by cohort
-  const oddCohortSlots = slots.filter(s => s.cohort === 'odd');
-  const evenCohortSlots = slots.filter(s => s.cohort === 'even');
+  const oddCohortSlots = slots.filter((s) => s.cohort === 'odd');
+  const evenCohortSlots = slots.filter((s) => s.cohort === 'even');
 
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Time Slot Manager
-        </h3>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Time Slot Manager</h3>
 
-        <div style={{
-          padding: '0.75rem',
-          backgroundColor: '#eff6ff',
-          border: '1px solid #3b82f6',
-          borderRadius: '0.5rem',
-          marginBottom: '1rem',
-          fontSize: '0.875rem',
-          color: '#1e40af'
-        }}>
-          💡 <strong>Drag & Drop:</strong> Drag student cards to swap their time slots. You can only swap students within the same cohort (Group A with Group A, Group B with Group B).
+        <div
+          style={{
+            padding: '0.75rem',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #3b82f6',
+            borderRadius: '0.5rem',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+            color: '#1e40af',
+          }}
+        >
+          💡 <strong>Drag & Drop:</strong> Drag student cards to swap their time slots. You can only
+          swap students within the same cohort (Group A with Group A, Group B with Group B).
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -284,7 +287,7 @@ export default function TimeSlotManager() {
               onChange={(e) => setSelectedSection(e.target.value)}
               style={{ width: '100%' }}
             >
-              {sections.map(section => (
+              {sections.map((section) => (
                 <option key={section.id} value={section.id}>
                   {section.name}
                 </option>
@@ -302,8 +305,10 @@ export default function TimeSlotManager() {
               onChange={(e) => setSelectedExam(parseInt(e.target.value))}
               style={{ width: '100%' }}
             >
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>Oral Exam {num}</option>
+              {[1, 2, 3, 4, 5].map((num) => (
+                <option key={num} value={num}>
+                  Oral Exam {num}
+                </option>
               ))}
             </select>
           </div>
@@ -323,7 +328,7 @@ export default function TimeSlotManager() {
               <p style={{ color: 'var(--text-light)' }}>No students scheduled</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {oddCohortSlots.map(slot => (
+                {oddCohortSlots.map((slot) => (
                   <div
                     key={slot.id}
                     draggable={slot.is_scheduled && !slot.is_locked}
@@ -334,17 +339,37 @@ export default function TimeSlotManager() {
                     onDrop={(e) => handleDrop(e, slot)}
                     style={{
                       padding: '1rem',
-                      backgroundColor: slot.is_locked ? '#fef2f2' : (dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)'),
+                      backgroundColor: slot.is_locked
+                        ? '#fef2f2'
+                        : dragOverSlot?.id === slot.id
+                          ? '#dbeafe'
+                          : 'var(--background)',
                       borderRadius: '0.5rem',
-                      border: slot.is_locked ? '2px solid #dc2626' : (dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)'),
-                      cursor: slot.is_locked ? 'not-allowed' : (slot.is_scheduled ? 'grab' : 'default'),
+                      border: slot.is_locked
+                        ? '2px solid #dc2626'
+                        : dragOverSlot?.id === slot.id
+                          ? '2px solid #3b82f6'
+                          : '1px solid var(--border)',
+                      cursor: slot.is_locked
+                        ? 'not-allowed'
+                        : slot.is_scheduled
+                          ? 'grab'
+                          : 'default',
                       transition: 'all 0.2s ease',
                       transform: dragOverSlot?.id === slot.id ? 'scale(1.02)' : 'scale(1)',
-                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
-                      opacity: slot.is_locked ? 0.8 : 1
+                      boxShadow:
+                        dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+                      opacity: slot.is_locked ? 0.8 : 1,
                     }}
                   >
-                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div
+                      style={{
+                        marginBottom: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                    >
                       {slot.is_locked ? (
                         <span style={{ fontSize: '1rem' }}>🔒</span>
                       ) : slot.is_scheduled ? (
@@ -352,7 +377,13 @@ export default function TimeSlotManager() {
                       ) : null}
                       <strong>{slot.student.full_name}</strong>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
+                    <div
+                      style={{
+                        fontSize: '0.875rem',
+                        color: 'var(--text-light)',
+                        marginBottom: '0.5rem',
+                      }}
+                    >
                       Week {slot.week_number} • {slot.date}
                     </div>
                     {slot.is_locked ? (
@@ -381,7 +412,7 @@ export default function TimeSlotManager() {
               <p style={{ color: 'var(--text-light)' }}>No students scheduled</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {evenCohortSlots.map(slot => (
+                {evenCohortSlots.map((slot) => (
                   <div
                     key={slot.id}
                     draggable={slot.is_scheduled && !slot.is_locked}
@@ -392,17 +423,37 @@ export default function TimeSlotManager() {
                     onDrop={(e) => handleDrop(e, slot)}
                     style={{
                       padding: '1rem',
-                      backgroundColor: slot.is_locked ? '#fef2f2' : (dragOverSlot?.id === slot.id ? '#dbeafe' : 'var(--background)'),
+                      backgroundColor: slot.is_locked
+                        ? '#fef2f2'
+                        : dragOverSlot?.id === slot.id
+                          ? '#dbeafe'
+                          : 'var(--background)',
                       borderRadius: '0.5rem',
-                      border: slot.is_locked ? '2px solid #dc2626' : (dragOverSlot?.id === slot.id ? '2px solid #3b82f6' : '1px solid var(--border)'),
-                      cursor: slot.is_locked ? 'not-allowed' : (slot.is_scheduled ? 'grab' : 'default'),
+                      border: slot.is_locked
+                        ? '2px solid #dc2626'
+                        : dragOverSlot?.id === slot.id
+                          ? '2px solid #3b82f6'
+                          : '1px solid var(--border)',
+                      cursor: slot.is_locked
+                        ? 'not-allowed'
+                        : slot.is_scheduled
+                          ? 'grab'
+                          : 'default',
                       transition: 'all 0.2s ease',
                       transform: dragOverSlot?.id === slot.id ? 'scale(1.02)' : 'scale(1)',
-                      boxShadow: dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
-                      opacity: slot.is_locked ? 0.8 : 1
+                      boxShadow:
+                        dragOverSlot?.id === slot.id ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+                      opacity: slot.is_locked ? 0.8 : 1,
                     }}
                   >
-                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div
+                      style={{
+                        marginBottom: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                    >
                       {slot.is_locked ? (
                         <span style={{ fontSize: '1rem' }}>🔒</span>
                       ) : slot.is_scheduled ? (
@@ -410,7 +461,13 @@ export default function TimeSlotManager() {
                       ) : null}
                       <strong>{slot.student.full_name}</strong>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
+                    <div
+                      style={{
+                        fontSize: '0.875rem',
+                        color: 'var(--text-light)',
+                        marginBottom: '0.5rem',
+                      }}
+                    >
                       Week {slot.week_number} • {slot.date}
                     </div>
                     {slot.is_locked ? (

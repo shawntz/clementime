@@ -14,10 +14,10 @@ export default function SectionManager() {
     try {
       const [sectionsRes, tasRes] = await Promise.all([
         api.get('/admin/sections'),
-        api.get('/admin/users?role=ta')
+        api.get('/admin/users?role=ta'),
       ]);
       // Filter out section 01 (lecture sections)
-      const filteredSections = sectionsRes.data.sections.filter(section => {
+      const filteredSections = sectionsRes.data.sections.filter((section) => {
         const parts = section.code.split('-');
         if (parts.length >= 4) {
           const sectionNum = parseInt(parts[3]);
@@ -27,7 +27,7 @@ export default function SectionManager() {
       });
       setSections(filteredSections);
       // Filter out inactive TAs
-      setTas(tasRes.data.users.filter(ta => ta.is_active));
+      setTas(tasRes.data.users.filter((ta) => ta.is_active));
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {
@@ -57,17 +57,12 @@ export default function SectionManager() {
     const sectionNum = parts[3];
 
     // Return both PSYCH-10 and STATS-60 variants
-    return [
-      `${term}-PSYCH-10-${sectionNum}`,
-      `${term}-STATS-60-${sectionNum}`
-    ];
+    return [`${term}-PSYCH-10-${sectionNum}`, `${term}-STATS-60-${sectionNum}`];
   };
 
   return (
     <div className="card">
-      <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-        Section Management
-      </h3>
+      <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Section Management</h3>
 
       <table className="table">
         <thead>
@@ -88,7 +83,9 @@ export default function SectionManager() {
                 <td>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {codes.map((code, idx) => (
-                      <span key={idx} className="badge badge-primary">{code}</span>
+                      <span key={idx} className="badge badge-primary">
+                        {code}
+                      </span>
                     ))}
                   </div>
                 </td>

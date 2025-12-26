@@ -10,7 +10,7 @@ export default function TAProfile() {
     first_name: '',
     last_name: '',
     email: '',
-    location: ''
+    location: '',
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState(null);
@@ -18,7 +18,7 @@ export default function TAProfile() {
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
     new_password: '',
-    password_confirmation: ''
+    password_confirmation: '',
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState(null);
@@ -37,7 +37,7 @@ export default function TAProfile() {
         first_name: response.data.user.first_name,
         last_name: response.data.user.last_name,
         email: response.data.user.email,
-        location: response.data.user.location || ''
+        location: response.data.user.location || '',
       });
     } catch (err) {
       console.error('Failed to load profile', err);
@@ -58,7 +58,7 @@ export default function TAProfile() {
         first_name: profileForm.first_name,
         last_name: profileForm.last_name,
         email: profileForm.email,
-        location: profileForm.location
+        location: profileForm.location,
       });
       setUser(response.data.user);
       setProfileSuccess(true);
@@ -76,7 +76,7 @@ export default function TAProfile() {
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
-      location: user.location || ''
+      location: user.location || '',
     });
     setEditing(false);
     setProfileError(null);
@@ -105,13 +105,13 @@ export default function TAProfile() {
       await api.put('/profile/password', {
         current_password: passwordForm.current_password,
         new_password: passwordForm.new_password,
-        password_confirmation: passwordForm.password_confirmation
+        password_confirmation: passwordForm.password_confirmation,
       });
       setPasswordSuccess(true);
       setPasswordForm({
         current_password: '',
         new_password: '',
-        password_confirmation: ''
+        password_confirmation: '',
       });
     } catch (err) {
       setPasswordError(err.response?.data?.errors?.join(', ') || 'Failed to change password');
@@ -127,16 +127,17 @@ export default function TAProfile() {
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--primary)', margin: 0 }}>
-            Profile Information
-          </h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
+          <h3 style={{ color: 'var(--primary)', margin: 0 }}>Profile Information</h3>
           {!editing && (
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={() => setEditing(true)}
-            >
+            <button type="button" className="btn btn-outline" onClick={() => setEditing(true)}>
               Edit Profile
             </button>
           )}
@@ -148,7 +149,9 @@ export default function TAProfile() {
             <span>{user.full_name}</span>
 
             <strong>Username:</strong>
-            <span><code>{user.username}</code></span>
+            <span>
+              <code>{user.username}</code>
+            </span>
 
             <strong>Email:</strong>
             <span>{user.email}</span>
@@ -162,7 +165,10 @@ export default function TAProfile() {
 
             <strong>Role:</strong>
             <span>
-              <span className="badge badge-primary" style={{ display: 'inline-block', width: 'auto' }}>
+              <span
+                className="badge badge-primary"
+                style={{ display: 'inline-block', width: 'auto' }}
+              >
                 {user.role.toUpperCase()}
               </span>
             </span>
@@ -200,7 +206,9 @@ export default function TAProfile() {
                 onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
                 required
               />
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+              <div
+                style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}
+              >
                 Auto-filled as first.last but can be changed
               </div>
             </div>
@@ -257,9 +265,7 @@ export default function TAProfile() {
       </div>
 
       <div className="card">
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Change Password
-        </h3>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Change Password</h3>
 
         <form onSubmit={handlePasswordChange} style={{ maxWidth: '500px' }}>
           <div style={{ marginBottom: '1rem' }}>
@@ -268,7 +274,9 @@ export default function TAProfile() {
               type="password"
               className="form-input"
               value={passwordForm.current_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, current_password: e.target.value })
+              }
               required
             />
           </div>
@@ -294,7 +302,9 @@ export default function TAProfile() {
               type="password"
               className="form-input"
               value={passwordForm.password_confirmation}
-              onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })
+              }
               required
               minLength={6}
             />

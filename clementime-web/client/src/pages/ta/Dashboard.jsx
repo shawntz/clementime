@@ -13,19 +13,18 @@ export default function TADashboard() {
   return (
     <Layout title="TA Dashboard">
       {/* Navigation Tabs */}
-      <div style={{
-        backgroundColor: 'var(--surface)',
-        borderRadius: '0.5rem',
-        padding: '1rem',
-        marginBottom: '2rem',
-        display: 'flex',
-        gap: '1rem',
-        flexWrap: 'wrap'
-      }}>
-        <Link
-          to="/ta"
-          className={`btn ${isActive('/ta') ? 'btn-primary' : 'btn-outline'}`}
-        >
+      <div
+        style={{
+          backgroundColor: 'var(--surface)',
+          borderRadius: '0.5rem',
+          padding: '1rem',
+          marginBottom: '2rem',
+          display: 'flex',
+          gap: '1rem',
+          flexWrap: 'wrap',
+        }}
+      >
+        <Link to="/ta" className={`btn ${isActive('/ta') ? 'btn-primary' : 'btn-outline'}`}>
           Schedule
         </Link>
         <Link
@@ -94,12 +93,14 @@ function ScheduleView() {
             oddDayAfter.setDate(oddDayAfter.getDate() + 3);
           }
           const oddIsPast = oddDayAfter ? today > oddDayAfter : false;
-          console.log(`Week ${oddWeekNum}: examDate=${oddDate}, dayAfter=${oddDayAfter}, today>dayAfter=${oddIsPast}`);
+          console.log(
+            `Week ${oddWeekNum}: examDate=${oddDate}, dayAfter=${oddDayAfter}, today>dayAfter=${oddIsPast}`
+          );
           weeks.push({
             weekNumber: oddWeekNum,
             examNumber: examNum,
             date: oddDate,
-            isPast: oddIsPast
+            isPast: oddIsPast,
           });
 
           // Add even week
@@ -110,12 +111,14 @@ function ScheduleView() {
             evenDayAfter.setDate(evenDayAfter.getDate() + 3);
           }
           const evenIsPast = evenDayAfter ? today > evenDayAfter : false;
-          console.log(`Week ${evenWeekNum}: examDate=${evenDate}, dayAfter=${evenDayAfter}, today>dayAfter=${evenIsPast}`);
+          console.log(
+            `Week ${evenWeekNum}: examDate=${evenDate}, dayAfter=${evenDayAfter}, today>dayAfter=${evenIsPast}`
+          );
           weeks.push({
             weekNumber: evenWeekNum,
             examNumber: examNum,
             date: evenDate,
-            isPast: evenIsPast
+            isPast: evenIsPast,
           });
         }
 
@@ -139,12 +142,14 @@ function ScheduleView() {
         setSortedWeeks(sorted);
 
         // Set initial week to first non-past exam, or first exam if all are past
-        const firstCurrentExam = sorted.find(w => !w.isPast);
+        const firstCurrentExam = sorted.find((w) => !w.isPast);
         setWeekNumber(firstCurrentExam ? firstCurrentExam.weekNumber : sorted[0]?.weekNumber || 1);
       } catch (err) {
         console.error('Failed to load exam dates', err);
         // Fallback to default weeks 1-10
-        setSortedWeeks([...Array(10)].map((_, i) => ({ weekNumber: i + 1, date: null, isPast: false })));
+        setSortedWeeks(
+          [...Array(10)].map((_, i) => ({ weekNumber: i + 1, date: null, isPast: false }))
+        );
       }
     };
 
@@ -155,45 +160,56 @@ function ScheduleView() {
     <>
       {/* Cloud Storage Warning Modal */}
       {showStorageWarning && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
           <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
-            <h3 style={{ color: 'var(--error)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3
+              style={{
+                color: 'var(--error)',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
               <span style={{ fontSize: '2rem' }}>⚠️</span>
               Cloud Storage Not Configured
             </h3>
 
             <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
-              Recording uploads to cloud storage are not currently available. Recordings will be saved locally to your computer instead.
+              Recording uploads to cloud storage are not currently available. Recordings will be
+              saved locally to your computer instead.
             </p>
 
-            <div style={{
-              background: '#fef3c7',
-              border: '1px solid #f59e0b',
-              borderRadius: '8px',
-              padding: '1rem',
-              marginBottom: '1rem'
-            }}>
+            <div
+              style={{
+                background: '#fef3c7',
+                border: '1px solid #f59e0b',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1rem',
+              }}
+            >
               <p style={{ margin: 0, fontSize: '0.875rem', color: '#92400e' }}>
-                <strong>Note for Instructor/Admin:</strong> Please configure Cloudflare R2 in System Preferences → Integrations to enable automatic uploads.
+                <strong>Note for Instructor/Admin:</strong> Please configure Cloudflare R2 in System
+                Preferences → Integrations to enable automatic uploads.
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowStorageWarning(false)}
-                className="btn btn-primary"
-              >
+              <button onClick={() => setShowStorageWarning(false)} className="btn btn-primary">
                 Got it, Continue
               </button>
             </div>
@@ -203,13 +219,15 @@ function ScheduleView() {
 
       {/* Week Tabs */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '0' }}>
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          padding: '1rem',
-          overflowX: 'auto',
-          borderBottom: '1px solid var(--border)'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            padding: '1rem',
+            overflowX: 'auto',
+            borderBottom: '1px solid var(--border)',
+          }}
+        >
           {sortedWeeks.map((week) => (
             <button
               key={week.weekNumber}
@@ -219,7 +237,7 @@ function ScheduleView() {
                 fontSize: '0.875rem',
                 padding: '0.5rem 1rem',
                 opacity: week.isPast ? 0.6 : 1,
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
               }}
             >
               Week {week.weekNumber} (Oral Exam {week.examNumber})

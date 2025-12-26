@@ -34,9 +34,7 @@ export default function RosterUpload() {
       </div>
 
       {/* Content */}
-      <div>
-        {activeTab === 'canvas' ? <CanvasUpload /> : <SlackMatching />}
-      </div>
+      <div>{activeTab === 'canvas' ? <CanvasUpload /> : <SlackMatching />}</div>
     </div>
   );
 }

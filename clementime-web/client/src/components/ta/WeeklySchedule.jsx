@@ -11,10 +11,7 @@ const getCrossListedCodes = (code) => {
   const sectionNum = parts[3];
 
   // Return both PSYCH-10 and STATS-60 variants
-  return [
-    `${term}-PSYCH-10-${sectionNum}`,
-    `${term}-STATS-60-${sectionNum}`
-  ];
+  return [`${term}-PSYCH-10-${sectionNum}`, `${term}-STATS-60-${sectionNum}`];
 };
 
 export default function WeeklySchedule({ weekNumber }) {
@@ -61,11 +58,7 @@ export default function WeeklySchedule({ weekNumber }) {
   }
 
   if (schedules.length === 0) {
-    return (
-      <div className="alert alert-info">
-        No schedules assigned for Week {weekNumber}
-      </div>
-    );
+    return <div className="alert alert-info">No schedules assigned for Week {weekNumber}</div>;
   }
 
   return (
@@ -75,9 +68,19 @@ export default function WeeklySchedule({ weekNumber }) {
         return (
           <div key={schedule.section.id} className="card" style={{ marginBottom: '2rem' }}>
             <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                  flexWrap: 'wrap',
+                }}
+              >
                 {codes.map((code, idx) => (
-                  <span key={idx} className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{code}</span>
+                  <span key={idx} className="badge badge-primary" style={{ fontSize: '0.875rem' }}>
+                    {code}
+                  </span>
                 ))}
                 <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--primary)' }}>
                   - {schedule.section.name}
@@ -120,7 +123,9 @@ export default function WeeklySchedule({ weekNumber }) {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {slot.has_recording && slot.recording.uploaded && slot.recording.recording_url ? (
+                          {slot.has_recording &&
+                          slot.recording.uploaded &&
+                          slot.recording.recording_url ? (
                             <>
                               <a
                                 href={slot.recording.recording_url}
@@ -135,19 +140,31 @@ export default function WeeklySchedule({ weekNumber }) {
                                 onClick={() => deleteRecording(slot.recording.id)}
                                 disabled={deletingRecording === slot.recording.id}
                                 className="btn btn-outline"
-                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                                style={{
+                                  fontSize: '0.75rem',
+                                  padding: '0.25rem 0.5rem',
+                                  color: 'var(--error)',
+                                  borderColor: 'var(--error)',
+                                }}
                               >
                                 {deletingRecording === slot.recording.id ? '...' : '🗑️'}
                               </button>
                             </>
                           ) : slot.has_recording && !slot.recording.uploaded ? (
                             <>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Not uploaded</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                                Not uploaded
+                              </span>
                               <button
                                 onClick={() => deleteRecording(slot.recording.id)}
                                 disabled={deletingRecording === slot.recording.id}
                                 className="btn btn-outline"
-                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                                style={{
+                                  fontSize: '0.75rem',
+                                  padding: '0.25rem 0.5rem',
+                                  color: 'var(--error)',
+                                  borderColor: 'var(--error)',
+                                }}
                               >
                                 {deletingRecording === slot.recording.id ? '...' : '🗑️'}
                               </button>

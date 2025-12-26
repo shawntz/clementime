@@ -28,7 +28,7 @@ export default function ResetPassword() {
       await api.post('/auth/reset_password', {
         token,
         password,
-        password_confirmation: passwordConfirmation
+        password_confirmation: passwordConfirmation,
       });
       setSuccess(true);
       setTimeout(() => {
@@ -103,9 +103,7 @@ export default function ResetPassword() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 mb-4 shadow-lg">
               <span className="text-4xl">🔒</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Reset Password
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Reset Password</h1>
             <p className="text-gray-600">Enter your new password</p>
           </div>
 
@@ -118,9 +116,7 @@ export default function ResetPassword() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
               <input
                 type="password"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
@@ -171,9 +167,7 @@ export default function ResetPassword() {
 
         {/* Bottom Text */}
         <div className="mt-6 text-center">
-          <p className="text-white text-sm">
-            Powered by Clementime
-          </p>
+          <p className="text-white text-sm">Powered by Clementime</p>
         </div>
       </div>
     </div>

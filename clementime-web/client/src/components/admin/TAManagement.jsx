@@ -34,9 +34,7 @@ export default function TAManagement() {
       </div>
 
       {/* Content */}
-      <div>
-        {activeTab === 'manage' ? <TAManager /> : <SectionManager />}
-      </div>
+      <div>{activeTab === 'manage' ? <TAManager /> : <SectionManager />}</div>
     </div>
   );
 }
