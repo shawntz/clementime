@@ -66,8 +66,6 @@ A modern, offline-first Mac app designed for instructors who prefer native tools
 
 **Status**: ✅ Active development - Core features implemented
 
-[📖 Read Mac App Documentation →](./clementime-mac/README.md)
-
 **Screenshots:**
 
 ![Mac App - Course Dashboard](./docs/screenshots/mac-welcome.png)
@@ -154,8 +152,6 @@ cd clementime-mac
 open ClemenTime.xcodeproj
 ```
 
-Follow the [Mac App Setup Guide](./clementime-mac/CORE_DATA_MODEL_SETUP.md).
-
 ### Web App (Legacy)
 
 ```bash
@@ -166,7 +162,7 @@ bin/dev
 
 ## Deployment
 
-Ready to deploy ClemenTime at your institution?
+Ready to deploy Clementime at your institution?
 
 - 🚀 **[Quick Start Guide](./docs/QUICK_START.md)** - Get running in 10 minutes
 - 📚 **[Full Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)** - Complete deployment documentation
