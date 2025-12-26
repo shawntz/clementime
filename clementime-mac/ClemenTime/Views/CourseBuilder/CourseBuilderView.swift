@@ -7,6 +7,20 @@
 
 import SwiftUI
 
+// MARK: - Helper for Current User ID
+private extension UserDefaults {
+    var currentUserId: UUID {
+        let key = "com.shawnschwartz.clementime.currentUserId"
+        if let uuidString = string(forKey: key),
+           let uuid = UUID(uuidString: uuidString) {
+            return uuid
+        }
+        let newId = UUID()
+        set(newId.uuidString, forKey: key)
+        return newId
+    }
+}
+
 struct CourseBuilderView: View {
     @Environment(\.dismiss) var dismiss
     @State private var courseName = ""
@@ -193,10 +207,6 @@ struct CourseBuilderView: View {
             do {
                 // Create course with default settings
                 let settings = CourseSettings(
-                    examStartTime: TimeComponents(hour: 13, minute: 30),
-                    examEndTime: TimeComponents(hour: 14, minute: 50),
-                    examDurationMinutes: 7,
-                    examBufferMinutes: 1,
                     balancedTAScheduling: false
                 )
 
@@ -213,10 +223,10 @@ struct CourseBuilderView: View {
                     name: courseName.trimmingCharacters(in: .whitespaces),
                     term: term.trimmingCharacters(in: .whitespaces),
                     quarterStartDate: Date(), // Default to today
-                    examDay: .friday, // Default to Friday
+                    quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(), // Default to ~10 weeks
                     totalExams: 5, // Default to 5 exams
                     isActive: true,
-                    createdBy: UUID(), // TODO: Get current user ID
+                    createdBy: UserDefaults.standard.currentUserId,
                     settings: settings,
                     metadata: metadata
                 )
