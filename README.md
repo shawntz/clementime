@@ -57,9 +57,9 @@ A modern, offline-first Mac app designed for instructors who prefer native tools
 - ☁️ Automatic iCloud sync with CloudKit
 - 📴 Full offline support with Core Data
 - 🎭 Unlimited custom cohorts (not limited to odd/even)
-- 🔐 Granular TA permission system (8 permission types)
+- 🔐 Granular TA permission system
 - 🎙️ Built-in audio recording with iCloud storage
-- 📤 Course export/import (.clementime files)
+- 📤 Course export/import (`.clementime.json` files)
 - 🤝 Course sharing via CloudKit Share
 
 **Requirements**: macOS 15.0+
@@ -92,7 +92,7 @@ A comprehensive web-based solution with multi-user collaboration, real-time noti
 - 👥 Multi-user admin dashboards
 - 📊 PostgreSQL database with Redis caching
 - 🎙️ Browser-based audio recording
-- ☁️ Cloud storage (Google Drive / Cloudflare R2)
+- ☁️ Cloud storage (AWS S3 / Cloudflare R2)
 
 **Requirements**: Ruby 3.4.6+, Rails 8.1.1+, PostgreSQL, Node.js
 
