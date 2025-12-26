@@ -484,11 +484,34 @@ Login as admin and navigate to Settings:
 ### 3. Import Student Roster
 
 1. Prepare CSV file ([download example](./examples/roster-web-example.csv))
+
+   **Canvas LMS Users**: Export your full gradebook instead:
+   - Canvas course → **Grades** → **Export** → **Export Entire Gradebook**
+   - Upload the downloaded CSV (extra columns automatically ignored)
+
 2. Navigate to Students → Import
 3. Upload CSV and verify data
 4. Assign students to sections
 
-### 4. Set Up Slack Notifications (Optional)
+### 3b. Import Slack Members (Optional - For Slack Notifications)
+
+If you've configured Slack integration, you can import Slack workspace members to enable direct message notifications:
+
+**How to export from Slack**:
+1. Go to your Slack workspace in a web browser
+2. Click workspace name → **Settings & administration** → **Workspace settings**
+3. Click **Import/Export Data** → **Export member list**
+4. Download the CSV file
+
+**Import into Clementime**:
+1. Navigate to Settings → Slack Integration
+2. Click "Import Slack Members"
+3. Upload the exported CSV ([download example](./examples/slack-members-example.csv))
+4. System will automatically match students by email address
+
+**What gets matched**: Students from your roster are matched with Slack members by email. When matched, the student's Slack user ID is stored, enabling automated DM notifications for exam schedule changes.
+
+### 4. Configure Slack Integration (Optional)
 
 1. Create Slack app at https://api.slack.com/apps
 2. Enable OAuth with scopes: `chat:write`, `users:read`, `users:read.email`
