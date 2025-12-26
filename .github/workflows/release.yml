@@ -185,11 +185,14 @@ jobs:
           xcode-version: latest-stable
 
       - name: Import signing certificate
-        if: ${{ secrets.MACOS_CERTIFICATE }}
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
         run: |
+          if [ -z "$MACOS_CERTIFICATE" ]; then
+            echo "Skipping certificate import - MACOS_CERTIFICATE not configured"
+            exit 0
+          fi
           # Create temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
@@ -255,12 +258,15 @@ jobs:
           fi
 
       - name: Notarize app
-        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
         env:
           APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          if [ -z "$APPLE_ID" ]; then
+            echo "Skipping app notarization - credentials not configured"
+            exit 0
+          fi
           # Create a zip for notarization
           cd clementime-mac/Clementime/build/Build/Products/Release
           ditto -c -k --keepParent Clementime.app Clementime.zip
@@ -304,13 +310,16 @@ jobs:
             }
 
       - name: Sign and notarize DMG
-        if: ${{ secrets.MACOS_SIGNING_IDENTITY }}
         env:
           CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          if [ -z "$CODE_SIGN_IDENTITY" ]; then
+            echo "Skipping DMG signing - CODE_SIGN_IDENTITY not configured"
+            exit 0
+          fi
           # Sign the DMG
           codesign --sign "$CODE_SIGN_IDENTITY" \
             --timestamp \
@@ -342,10 +351,13 @@ jobs:
             "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
 
       - name: Sign PKG
-        if: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
         env:
           INSTALLER_SIGN_IDENTITY: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
         run: |
+          if [ -z "$INSTALLER_SIGN_IDENTITY" ]; then
+            echo "Skipping PKG signing - INSTALLER_SIGN_IDENTITY not configured"
+            exit 0
+          fi
           # Sign the PKG with installer certificate
           productsign --sign "$INSTALLER_SIGN_IDENTITY" \
             "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg" \
@@ -355,12 +367,15 @@ jobs:
              "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
 
       - name: Notarize PKG
-        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
         env:
           APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          if [ -z "$APPLE_ID" ]; then
+            echo "Skipping PKG notarization - credentials not configured"
+            exit 0
+          fi
           xcrun notarytool submit "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_PASSWORD" \
