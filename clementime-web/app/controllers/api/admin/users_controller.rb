@@ -49,26 +49,33 @@ module Api
       end
 
       def send_welcome_email
-        # Generate a new temporary password using SecureRandom
-        temp_password = generate_password
+        # Generate a one-time, time-limited token the user can use to set their password.
+        # This avoids generating or storing a clear-text password.
+        begin
+          @user.generate_password_reset_token!
+          token = @user.reset_password_token
+          
+          # Validate that token was successfully generated
+          if token.blank?
+            render json: { errors: "Failed to generate password reset token" }, status: :unprocessable_entity
+            return
+          end
+        rescue => e
+          Rails.logger.error "Token generation failed: #{e.message}"
+          render json: { errors: "Failed to generate password reset token" }, status: :unprocessable_entity
+          return
+        end
 
-        # Note: Rails has_secure_password automatically hashes the password before storage
-        # The password/password_confirmation are virtual attributes that trigger BCrypt hashing
-        @user.password = temp_password
-        @user.password_confirmation = temp_password
         @user.must_change_password = true
 
         if @user.save
           # Send email immediately (not using background job)
           begin
-            UserMailer.welcome_email(@user, temp_password).deliver_now
+            UserMailer.welcome_email(@user, token).deliver_now
             render json: { message: "Welcome email sent successfully" }, status: :ok
           rescue => e
             Rails.logger.error "Email delivery failed: #{e.message}"
             render json: { errors: "Email delivery failed: #{e.message}" }, status: :unprocessable_entity
-          ensure
-            # Clear temporary password from memory
-            temp_password = nil
           end
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -108,12 +115,6 @@ module Api
       end
 
       private
-
-      def generate_password
-        # Use SecureRandom for cryptographically secure password generation
-        chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
-        (0...12).map { chars[SecureRandom.random_number(chars.length)] }.join
-      end
 
       def set_user
         @user = User.find(params[:id])
