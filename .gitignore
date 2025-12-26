@@ -37,3 +37,4 @@
 /client/.env
 /client/.env.local
 .DS_Store
+/landing/node_modules
