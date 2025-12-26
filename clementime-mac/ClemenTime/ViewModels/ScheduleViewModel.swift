@@ -102,7 +102,8 @@ class ScheduleViewModel: ObservableObject {
             if !result.errors.isEmpty {
                 error = "Generated with some errors:\n" + result.errors.joined(separator: "\n")
             } else {
-                successMessage = "Successfully generated \(result.scheduledCount) exam slots. \(result.unscheduledCount) students could not be scheduled due to constraints."
+                let totalStudents = result.scheduledCount + result.unscheduledCount
+                successMessage = "Successfully scheduled \(result.scheduledCount) of \(totalStudents) students. \(result.unscheduledCount) could not be scheduled due to constraints."
             }
 
             // Reload data
