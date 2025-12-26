@@ -58,10 +58,8 @@ class User < ApplicationRecord
   private
 
   def password_required?
-    # Password is required when:
-    # 1. Creating a new user with a password provided
-    # 2. Updating password (password field is present)
-    # But NOT required when creating a user without password (for welcome email flow)
-    password.present? || password_confirmation.present? || (new_record? && password_digest.blank? && !password.nil?)
+    # Password validation is required only when password or password_confirmation is provided
+    # This allows creating users without passwords (for welcome email flow with reset token)
+    password.present? || password_confirmation.present?
   end
 end
