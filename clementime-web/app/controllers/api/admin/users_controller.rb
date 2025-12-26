@@ -114,7 +114,6 @@ module Api
         (0...12).map { chars[SecureRandom.random_number(chars.length)] }.join
       end
 
-
       def set_user
         @user = User.find(params[:id])
       rescue ActiveRecord::RecordNotFound
