@@ -44,6 +44,9 @@
 # Ignore client node_modules
 /client/node_modules
 
+# Ignore yarn.lock (project uses npm)
+yarn.lock
+
 .DS_Store
 
 clementime-mac/Clementime/Clementime.xcodeproj/project.pbxproj.backup
