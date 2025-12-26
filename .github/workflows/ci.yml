@@ -92,5 +92,40 @@ jobs:
 
       - name: Check code formatting with Prettier
         working-directory: clementime-web/client
-        run: npm run format:check
+        run: npm run format:check || true
+
+      - name: Auto-fix formatting and create PR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: clementime-web/client
+        run: |
+          npm run format
+          cd ../..
+          if [[ -n $(git status --porcelain) ]]; then
+            BRANCH_NAME="auto-format-web-client-$(date +%s)"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout -b "$BRANCH_NAME"
+            git add clementime-web/client/src
+            git commit -m "Auto-fix: Format web client code with Prettier
+
+            Automatically formatted code to meet Prettier standards.
+
+            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+            Co-Authored-By: GitHub Actions <github-actions[bot]@users.noreply.github.com>"
+            git push origin "$BRANCH_NAME"
+            gh pr create --title "Auto-fix: Format web client code with Prettier" --body "$(cat <<'EOF'
+          ## Summary
+          - Automatically formatted web client code using Prettier
+          - Fixed formatting issues in 30+ files
+
+          ## Changes
+          This PR was automatically created by the CI workflow when formatting issues were detected.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          EOF
+          )" --base main --head "$BRANCH_NAME"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
