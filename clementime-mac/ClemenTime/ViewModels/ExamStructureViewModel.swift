@@ -2,7 +2,7 @@
 //  ExamStructureViewModel.swift
 //  ClemenTime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import SwiftUI
@@ -17,11 +17,13 @@ class ExamStructureViewModel: ObservableObject {
     @Published var error: String?
 
     private let course: Course
-    private let courseRepository: CourseRepository
+    private lazy var courseRepository: CourseRepository = PersistenceController.shared.courseRepository
 
-    init(course: Course, courseRepository: CourseRepository = PersistenceController.shared.courseRepository) {
+    init(course: Course) {
         self.course = course
-        self.courseRepository = courseRepository
+    }
+
+    func initialize() {
         loadStructure()
     }
 
