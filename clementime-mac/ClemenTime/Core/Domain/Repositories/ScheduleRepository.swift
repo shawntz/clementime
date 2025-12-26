@@ -40,4 +40,10 @@ protocol ScheduleRepository {
 
     /// Fetch exam slot history for a specific exam slot
     func fetchExamSlotHistory(examSlotId: UUID) async throws -> [ExamSlotHistory]
+
+    /// Delete all unlocked exam slots for a specific exam session
+    func deleteUnlockedExamSlots(examSessionId: UUID) async throws
+
+    /// Delete all unlocked exam slots for a specific exam number in a course
+    func deleteUnlockedExamSlots(courseId: UUID, examNumber: Int) async throws
 }

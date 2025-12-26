@@ -29,6 +29,15 @@ protocol StudentRepository {
     /// Delete a student
     func deleteStudent(id: UUID) async throws
 
+    /// Delete all students for a course
+    func deleteAllStudents(courseId: UUID) async throws
+
     /// Import students from CSV
-    func importStudents(from csvURL: URL, courseId: UUID) async throws -> ImportResult
+    func importStudents(from csvURL: URL, courseId: UUID, randomlyAssignCohorts: Bool) async throws -> ImportResult
+
+    /// Randomly reassign all students to cohorts with even distribution
+    func randomlyReassignCohorts(courseId: UUID) async throws -> Int
+
+    /// Fix students with invalid cohort assignments (All Students or placeholder IDs)
+    func fixInvalidCohortAssignments(courseId: UUID) async throws -> Int
 }
