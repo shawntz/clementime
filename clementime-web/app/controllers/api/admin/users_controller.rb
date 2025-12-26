@@ -90,7 +90,9 @@ module Api
           additional_user_ids = params[:include_user_ids] || []
 
           begin
-            result = SlackNotifier.send_credentials(@user, temp_password, additional_user_ids)
+            # Do not send the actual temporary password in clear text to Slack
+            # to avoid clear-text storage of sensitive credentials.
+            result = SlackNotifier.send_credentials(@user, "[redacted]", additional_user_ids)
 
             if result[:success]
               render json: { message: result[:message] }, status: :ok
