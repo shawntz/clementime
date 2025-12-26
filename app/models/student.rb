@@ -9,7 +9,7 @@ class Student < ApplicationRecord
   validates :sis_user_id, presence: true, uniqueness: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :full_name, presence: true
-  validates :week_group, inclusion: { in: %w[odd even], allow_nil: true }
+  validates :cohort, inclusion: { in: %w[odd even], allow_nil: true }
 
   # Scopes
   scope :active, -> { where(is_active: true) }
@@ -17,8 +17,8 @@ class Student < ApplicationRecord
   scope :without_slack, -> { where(slack_user_id: nil) }
   scope :slack_matched, -> { where(slack_matched: true) }
   scope :slack_unmatched, -> { where(slack_matched: false) }
-  scope :odd_week, -> { where(week_group: "odd") }
-  scope :even_week, -> { where(week_group: "even") }
+  scope :odd_week, -> { where(cohort: "odd") }
+  scope :even_week, -> { where(cohort: "even") }
 
   # Methods
   def scheduled_exams_count

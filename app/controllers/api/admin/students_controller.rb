@@ -2,7 +2,7 @@ module Api
   module Admin
     class StudentsController < Api::BaseController
       before_action :authorize_admin!
-      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_week_group, :change_section, :notify_slack, :swap_to_opposite_week ]
+      before_action :set_student, only: [ :show, :update, :deactivate, :transfer_cohort, :change_section, :notify_slack, :swap_to_opposite_cohort ]
 
       def index
         students = Student.includes(:section, :constraints)
@@ -48,7 +48,7 @@ module Api
 
         # Apply filters
         students = students.where(section_id: params[:section_id]) if params[:section_id].present?
-        students = students.where(week_group: params[:week_group]) if params[:week_group].present?
+        students = students.where(cohort: params[:cohort]) if params[:cohort].present?
         students = students.where(is_active: params[:is_active]) if params[:is_active].present?
 
         # Search filter
@@ -93,7 +93,7 @@ module Api
               student.section&.code || "",
               student.section&.name || "",
               student.section&.ta ? student.section.ta.full_name : "No TA",
-              student.week_group || "",
+              student.cohort || "",
               student.is_active ? "Yes" : "No"
             ]
           end
@@ -156,13 +156,13 @@ module Api
         render json: { errors: e.message }, status: :internal_server_error
       end
 
-      # Transfer student between odd/even weeks (for athletes, etc.)
-      def transfer_week_group
-        new_week_group = params[:week_group]
+      # Transfer student between odd/even cohorts (for athletes, etc.)
+      def transfer_cohort
+        new_cohort = params[:cohort]
         from_exam = params[:from_exam].to_i
 
-        unless %w[odd even].include?(new_week_group)
-          return render json: { errors: "Invalid week group" }, status: :unprocessable_entity
+        unless %w[odd even].include?(new_cohort)
+          return render json: { errors: "Invalid cohort" }, status: :unprocessable_entity
         end
 
         # Check if any slots from this exam onwards are locked
@@ -177,8 +177,8 @@ module Api
         end
 
         ActiveRecord::Base.transaction do
-          # Update student's week group
-          @student.update!(week_group: new_week_group)
+          # Update student's cohort
+          @student.update!(cohort: new_cohort)
 
           # Clear affected exam slots
           slots_cleared = @student.exam_slots
@@ -205,7 +205,7 @@ module Api
           end
 
           render json: {
-            message: "Student transferred to #{new_week_group} week group and rescheduled",
+            message: "Student transferred to #{new_cohort} cohort and rescheduled",
             student: student_detail_response(@student.reload),
             slots_cleared: slots_cleared,
             slots_scheduled: slots_scheduled
@@ -215,16 +215,16 @@ module Api
         render json: { errors: e.message }, status: :internal_server_error
       end
 
-      # Swap student to opposite week cadence and place at end of schedule
-      def swap_to_opposite_week
+      # Swap student to opposite cohort and place at end of schedule
+      def swap_to_opposite_cohort
         from_exam = params[:from_exam].to_i
 
         if from_exam < 1 || from_exam > 5
           return render json: { errors: "Invalid exam number" }, status: :unprocessable_entity
         end
 
-        # Determine new week group (opposite of current)
-        new_week_group = @student.week_group == "odd" ? "even" : "odd"
+        # Determine new cohort (opposite of current)
+        new_cohort = @student.cohort == "odd" ? "even" : "odd"
 
         begin
           ActiveRecord::Base.transaction do
@@ -235,8 +235,8 @@ module Api
             exam_end_time_str = SystemConfig.get(SystemConfig::EXAM_END_TIME, "14:50")
             exam_end_time = Time.parse("2000-01-01 #{exam_end_time_str}")
 
-            # Update student's week group
-            @student.update!(week_group: new_week_group)
+            # Update student's cohort
+            @student.update!(cohort: new_cohort)
 
             moved_count = 0
             unlocked_count = 0
@@ -251,9 +251,9 @@ module Api
                 old_slot.destroy
               end
 
-              # Calculate new week number based on new week_group
+              # Calculate new week number based on new cohort
               base_week = (exam_number - 1) * 2 + 1
-              new_week_number = new_week_group == "odd" ? base_week : base_week + 1
+              new_week_number = new_cohort == "odd" ? base_week : base_week + 1
 
               # Calculate exam date for this week
               quarter_start = SystemConfig.get(SystemConfig::QUARTER_START_DATE, Date.today.to_s)
@@ -334,10 +334,10 @@ module Api
             end
 
             render json: {
-              message: "Student swapped to #{new_week_group} week cadence and placed at end of schedule",
+              message: "Student swapped to #{new_cohort} cohort and placed at end of schedule",
               student: @student.full_name,
-              old_week_group: new_week_group == "odd" ? "even" : "odd",
-              new_week_group: new_week_group,
+              old_cohort: new_cohort == "odd" ? "even" : "odd",
+              new_cohort: new_cohort,
               from_exam: from_exam,
               moved_count: moved_count,
               unlocked_count: unlocked_count
@@ -481,7 +481,7 @@ module Api
       end
 
       def student_params
-        params.require(:student).permit(:week_group, :is_active)
+        params.require(:student).permit(:cohort, :is_active)
       end
 
       def get_active_constraint_types
@@ -509,7 +509,7 @@ module Api
             name: student.section.name
           } : nil,
           section_override: student.section_override,
-          week_group: student.week_group,
+          cohort: student.cohort,
           slack_matched: student.slack_matched,
           slack_username: student.slack_username,
           slack_user_id: student.slack_user_id,
@@ -532,7 +532,7 @@ module Api
             name: student.section.name
           },
           section_override: student.section_override,
-          week_group: student.week_group,
+          cohort: student.cohort,
           slack_user_id: student.slack_user_id,
           slack_username: student.slack_username,
           slack_matched: student.slack_matched,
