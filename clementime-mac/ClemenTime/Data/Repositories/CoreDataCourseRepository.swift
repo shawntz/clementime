@@ -113,4 +113,24 @@ enum RepositoryError: Error {
     case invalidData
     case saveFailed
     case cloudKitNotAvailable
+    case csvValidationError(String)
+}
+
+extension RepositoryError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .notFound:
+            return "The requested resource was not found"
+        case .notImplemented:
+            return "This feature is not yet implemented"
+        case .invalidData:
+            return "The data is invalid or corrupted"
+        case .saveFailed:
+            return "Failed to save changes"
+        case .cloudKitNotAvailable:
+            return "CloudKit is not available"
+        case .csvValidationError(let message):
+            return message
+        }
+    }
 }

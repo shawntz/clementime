@@ -7,12 +7,15 @@
 
 import Foundation
 @preconcurrency import CoreData
+import CloudKit
 
 class CoreDataRecordingRepository: RecordingRepository {
     private let persistentContainer: NSPersistentCloudKitContainer
+    private let cloudKitContainer: CKContainer
 
     init(persistentContainer: NSPersistentCloudKitContainer) {
         self.persistentContainer = persistentContainer
+        self.cloudKitContainer = CKContainer(identifier: "iCloud.com.shawnschwartz.clementime")
     }
 
     func fetchRecordings(courseId: UUID) async throws -> [Recording] {
@@ -150,14 +153,114 @@ class CoreDataRecordingRepository: RecordingRepository {
     }
 
     func uploadToiCloud(_ recordingId: UUID) async throws {
-        // TODO: Implement iCloud upload using CKAsset
-        // This will be implemented in the iCloudRecordingManager
-        throw RepositoryError.notImplemented
+        // Fetch the recording from Core Data
+        guard let recording = try await fetchRecording(id: recordingId) else {
+            throw RepositoryError.notFound
+        }
+
+        // Get the local file URL
+        guard let localPath = recording.localFileURL,
+              let localURL = URL(string: localPath) else {
+            throw RecordingError.noLocalFile
+        }
+
+        // Verify the file exists
+        guard FileManager.default.fileExists(atPath: localURL.path) else {
+            throw RecordingError.fileNotFound
+        }
+
+        // Create a CKAsset from the local file
+        let asset = CKAsset(fileURL: localURL)
+
+        // Create a CKRecord for the recording
+        let recordID = CKRecord.ID(recordName: recording.id.uuidString)
+        let record = CKRecord(recordType: "Recording", recordID: recordID)
+        record["audioFile"] = asset
+        record["examSlotId"] = recording.examSlotId.uuidString
+        record["studentId"] = recording.studentId.uuidString
+        record["taUserId"] = recording.taUserId.uuidString
+        record["recordedAt"] = recording.recordedAt
+        record["duration"] = recording.duration
+        record["fileSize"] = recording.fileSize
+
+        // Save to CloudKit
+        let database = cloudKitContainer.privateCloudDatabase
+        _ = try await database.save(record)
+
+        // Update the recording entity to mark it as uploaded
+        var updatedRecording = recording
+        updatedRecording.uploadedAt = Date()
+        updatedRecording.iCloudAssetName = recording.id.uuidString
+        try await updateRecording(updatedRecording)
     }
 
     func downloadFromiCloud(_ recordingId: UUID) async throws -> URL {
-        // TODO: Implement iCloud download using CKAsset
-        // This will be implemented in the iCloudRecordingManager
-        throw RepositoryError.notImplemented
+        // Fetch the recording metadata from Core Data
+        guard let recording = try await fetchRecording(id: recordingId) else {
+            throw RepositoryError.notFound
+        }
+
+        // Verify it has been uploaded to iCloud
+        guard let assetName = recording.iCloudAssetName else {
+            throw RecordingError.notUploadedToiCloud
+        }
+
+        // Fetch the record from CloudKit
+        let recordID = CKRecord.ID(recordName: assetName)
+        let database = cloudKitContainer.privateCloudDatabase
+        let record = try await database.record(for: recordID)
+
+        // Get the asset from the record
+        guard let asset = record["audioFile"] as? CKAsset,
+              let fileURL = asset.fileURL else {
+            throw RecordingError.assetNotFound
+        }
+
+        // Create local file path
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let recordingPath = documentsPath.appendingPathComponent("recordings")
+
+        // Create recordings directory if it doesn't exist
+        if !FileManager.default.fileExists(atPath: recordingPath.path) {
+            try FileManager.default.createDirectory(at: recordingPath, withIntermediateDirectories: true)
+        }
+
+        let fileName = "\(recording.id.uuidString).m4a"
+        let localURL = recordingPath.appendingPathComponent(fileName)
+
+        // Copy the file from the CloudKit cache to our local directory
+        if FileManager.default.fileExists(atPath: localURL.path) {
+            try FileManager.default.removeItem(at: localURL)
+        }
+        try FileManager.default.copyItem(at: fileURL, to: localURL)
+
+        // Update the recording entity with the local file path
+        var updatedRecording = recording
+        updatedRecording.localFileURL = localURL.path
+        try await updateRecording(updatedRecording)
+
+        return localURL
+    }
+}
+
+// MARK: - Recording Errors
+
+enum RecordingError: LocalizedError {
+    case noLocalFile
+    case fileNotFound
+    case notUploadedToiCloud
+    case assetNotFound
+
+    var errorDescription: String? {
+        switch self {
+        case .noLocalFile:
+            return "Recording has no local file URL"
+        case .fileNotFound:
+            return "Recording file not found at specified path"
+        case .notUploadedToiCloud:
+            return "Recording has not been uploaded to iCloud"
+        case .assetNotFound:
+            return "iCloud asset not found in CloudKit record"
+        }
     }
 }

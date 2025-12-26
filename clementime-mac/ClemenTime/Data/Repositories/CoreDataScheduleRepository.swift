@@ -99,14 +99,16 @@ class CoreDataScheduleRepository: ScheduleRepository {
             request.predicate = NSPredicate(format: "id == %@", slot.id as CVarArg)
             request.fetchLimit = 1
 
-            guard let entity = try context.fetch(request).first else {
-                throw RepositoryError.notFound
+            if let entity = try context.fetch(request).first {
+                // Update existing slot
+                // Save history before updating
+                try self.createHistory(for: entity, reason: "Manual update", changedBy: "User", in: context)
+                entity.update(from: slot)
+            } else {
+                // Create new slot
+                _ = ExamSlotEntity.create(from: slot, in: context)
             }
 
-            // Save history before updating
-            try self.createHistory(for: entity, reason: "Manual update", changedBy: "User", in: context)
-
-            entity.update(from: slot)
             try context.save()
         }
     }
@@ -201,6 +203,52 @@ class CoreDataScheduleRepository: ScheduleRepository {
         return try await context.perform {
             let entities = try context.fetch(request)
             return entities.map { $0.toDomain() }
+        }
+    }
+
+    func deleteUnlockedExamSlots(examSessionId: UUID) async throws {
+        let context = persistentContainer.newBackgroundContext()
+
+        try await context.perform {
+            let request = NSFetchRequest<ExamSlotEntity>(entityName: "ExamSlotEntity")
+            request.predicate = NSPredicate(format: "examSessionId == %@ AND isLocked == NO", examSessionId as CVarArg)
+
+            let entities = try context.fetch(request)
+            for entity in entities {
+                context.delete(entity)
+            }
+
+            if context.hasChanges {
+                try context.save()
+            }
+        }
+    }
+
+    func deleteUnlockedExamSlots(courseId: UUID, examNumber: Int) async throws {
+        let context = persistentContainer.newBackgroundContext()
+
+        try await context.perform {
+            // First, fetch the exam session
+            let sessionRequest = NSFetchRequest<ExamSessionEntity>(entityName: "ExamSessionEntity")
+            sessionRequest.predicate = NSPredicate(format: "courseId == %@ AND examNumber == %d", courseId as CVarArg, examNumber)
+            sessionRequest.fetchLimit = 1
+
+            guard let session = try context.fetch(sessionRequest).first else {
+                return // No session found, nothing to delete
+            }
+
+            // Delete all unlocked slots for this exam session
+            let slotsRequest = NSFetchRequest<ExamSlotEntity>(entityName: "ExamSlotEntity")
+            slotsRequest.predicate = NSPredicate(format: "examSessionId == %@ AND isLocked == NO", session.id! as CVarArg)
+
+            let entities = try context.fetch(slotsRequest)
+            for entity in entities {
+                context.delete(entity)
+            }
+
+            if context.hasChanges {
+                try context.save()
+            }
         }
     }
 
