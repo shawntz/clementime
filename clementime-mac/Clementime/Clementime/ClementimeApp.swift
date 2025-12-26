@@ -30,7 +30,7 @@ struct ClementimeApp: App {
         .commands {
             // Replace About menu item
             CommandGroup(replacing: .appInfo) {
-                Button("About ClemenTime") {
+                Button("About Clementime") {
                     NSApplication.shared.orderFrontStandardAboutPanel(
                         options: [
                             NSApplication.AboutPanelOptionKey.credits: NSAttributedString(
@@ -56,7 +56,7 @@ struct ClementimeApp: App {
 
             // Add Help menu items
             CommandGroup(replacing: .help) {
-                Button("ClemenTime Documentation") {
+                Button("Clementime Documentation") {
                     if let url = URL(string: "https://github.com/shawntz/clementime/blob/main/clementime-mac/README.md") {
                         NSWorkspace.shared.open(url)
                     }

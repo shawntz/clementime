@@ -35,7 +35,7 @@ struct AboutView: View {
             }
 
             // App Name
-            Text("ClemenTime")
+            Text("Clementime")
                 .font(.system(size: 36, weight: .semibold, design: .default))
                 .foregroundColor(.primary)
 

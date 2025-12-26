@@ -541,7 +541,7 @@ struct InviteCollaboratorView: View {
                     \(shareURL.absoluteString)
 
                     Best regards,
-                    ClemenTime Team
+                    Clementime Team
                     """
 
                     if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
