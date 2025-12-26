@@ -7,13 +7,36 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D02D87CB09F2F0A306CB8C7D /* SectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230DF7EBEBD3132EA3B3563F /* SectionsView.swift */; };
 		54F2568EE86D2B737581D66C /* SectionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758B62CBB633544378819392 /* SectionEditorView.swift */; };
-		CD7823602EF66C460083A25A /* CourseBuilderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */; };
-		CD7823612EF66C460083A25A /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */; };
-		CD7823622EF66C460083A25A /* CourseListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235C2EF66C460083A25A /* CourseListViewModel.swift */; };
-		CD7823632EF66C460083A25A /* ShareCourseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235E2EF66C460083A25A /* ShareCourseViewModel.swift */; };
-		CD7823642EF66C460083A25A /* StudentsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78235F2EF66C460083A25A /* StudentsViewModel.swift */; };
+		72E75DD429F202B6D26AE143 /* CourseOnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B04414B426E6BCD4B817DE /* CourseOnboardingFlow.swift */; };
+		CD26DBB62EF7362000175298 /* CenteredDisclosureStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBB52EF7361600175298 /* CenteredDisclosureStyle.swift */; };
+		CD26DBD12EF7F1E900175298 /* SectionDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBD02EF7F1E900175298 /* SectionDashboardView.swift */; };
+		CD26DBD62EF7F20C00175298 /* ExamStructureCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBD22EF7F20C00175298 /* ExamStructureCanvasView.swift */; };
+		CD26DBD72EF7F20C00175298 /* ExamStructureModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBD32EF7F20C00175298 /* ExamStructureModels.swift */; };
+		CD26DBD82EF7F20C00175298 /* NodeAttributesEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBD42EF7F20C00175298 /* NodeAttributesEditor.swift */; };
+		CD26DBE02EF7F23000175298 /* CourseBuilderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBD92EF7F23000175298 /* CourseBuilderViewModel.swift */; };
+		CD26DBE12EF7F23000175298 /* CourseListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBDA2EF7F23000175298 /* CourseListViewModel.swift */; };
+		CD26DBE22EF7F23000175298 /* ExamStructureViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBDB2EF7F23000175298 /* ExamStructureViewModel.swift */; };
+		CD26DBE32EF7F23000175298 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBDC2EF7F23000175298 /* OnboardingViewModel.swift */; };
+		CD26DBE42EF7F23000175298 /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBDD2EF7F23000175298 /* ScheduleViewModel.swift */; };
+		CD26DBE52EF7F23000175298 /* ShareCourseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBDE2EF7F23000175298 /* ShareCourseViewModel.swift */; };
+		CD26DBE62EF7F23000175298 /* StudentsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBDF2EF7F23000175298 /* StudentsViewModel.swift */; };
+		CD26DBE82EF7F26F00175298 /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBE72EF7F26F00175298 /* ColorExtensions.swift */; };
+		CD26DBEA2EFB6F2800175298 /* ExamSessionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBE92EFB6F2800175298 /* ExamSessionEditorView.swift */; };
+		CD26DBEE2EFB6F7C00175298 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBEC2EFB6F7C00175298 /* SyncStatusView.swift */; };
+		CD26DBF12EFBA3F300175298 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBEF2EFBA3F300175298 /* AboutView.swift */; };
+		CD26DBF52EFBA40300175298 /* ScheduleExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBF32EFBA40300175298 /* ScheduleExportSheet.swift */; };
+		CD26DBF62EFBA40300175298 /* TAListExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBF42EFBA40300175298 /* TAListExportSheet.swift */; };
+		CD26DBF72EFBA40300175298 /* RosterExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBF22EFBA40300175298 /* RosterExportSheet.swift */; };
+		CD26DBFA2EFBA4C600175298 /* CourseExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBF82EFBA4C600175298 /* CourseExport.swift */; };
+		CD26DBFB2EFBA4C600175298 /* ExportOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBF92EFBA4C600175298 /* ExportOptions.swift */; };
+		CD26DBFE2EFBA8DA00175298 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBFC2EFBA8DA00175298 /* DependencyContainer.swift */; };
+		CD26DC012EFBA90900175298 /* ExportCourseUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DBFF2EFBA90900175298 /* ExportCourseUseCase.swift */; };
+		CD26DC022EFBA90900175298 /* ImportCourseUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC002EFBA90900175298 /* ImportCourseUseCase.swift */; };
+		CD26DC0D2EFBA95A00175298 /* CurrentUserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC052EFBA95A00175298 /* CurrentUserService.swift */; };
+		CD26DC0F2EFBA95A00175298 /* PDFGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC072EFBA95A00175298 /* PDFGenerator.swift */; };
+		CD26DC2D2EFD164300175298 /* CSVParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC2C2EFD164300175298 /* CSVParser.swift */; };
+		CD26DC302EFD230C00175298 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC2F2EFD230C00175298 /* BuildInfo.swift */; };
 		CD78236E2EF66C8A0083A25A /* ScheduleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236A2EF66C8A0083A25A /* ScheduleRepository.swift */; };
 		CD78236F2EF66C8A0083A25A /* RecordingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823692EF66C8A0083A25A /* RecordingRepository.swift */; };
 		CD7823702EF66C8A0083A25A /* CohortRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823652EF66C8A0083A25A /* CohortRepository.swift */; };
@@ -73,6 +96,7 @@
 		CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */; };
 		CDCFA6BA2EF6598B00F7BBD1 /* ClementimeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */; };
 		CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */; };
+		D02D87CB09F2F0A306CB8C7D /* SectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230DF7EBEBD3132EA3B3563F /* SectionsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,11 +119,34 @@
 /* Begin PBXFileReference section */
 		230DF7EBEBD3132EA3B3563F /* SectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsView.swift; sourceTree = "<group>"; };
 		758B62CBB633544378819392 /* SectionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorView.swift; sourceTree = "<group>"; };
-		CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseBuilderViewModel.swift; sourceTree = "<group>"; };
-		CD78235C2EF66C460083A25A /* CourseListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseListViewModel.swift; sourceTree = "<group>"; };
-		CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
-		CD78235E2EF66C460083A25A /* ShareCourseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCourseViewModel.swift; sourceTree = "<group>"; };
-		CD78235F2EF66C460083A25A /* StudentsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsViewModel.swift; sourceTree = "<group>"; };
+		CD26DBB52EF7361600175298 /* CenteredDisclosureStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CenteredDisclosureStyle.swift; sourceTree = "<group>"; };
+		CD26DBD02EF7F1E900175298 /* SectionDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionDashboardView.swift; sourceTree = "<group>"; };
+		CD26DBD22EF7F20C00175298 /* ExamStructureCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamStructureCanvasView.swift; sourceTree = "<group>"; };
+		CD26DBD32EF7F20C00175298 /* ExamStructureModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamStructureModels.swift; sourceTree = "<group>"; };
+		CD26DBD42EF7F20C00175298 /* NodeAttributesEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeAttributesEditor.swift; sourceTree = "<group>"; };
+		CD26DBD92EF7F23000175298 /* CourseBuilderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseBuilderViewModel.swift; sourceTree = "<group>"; };
+		CD26DBDA2EF7F23000175298 /* CourseListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseListViewModel.swift; sourceTree = "<group>"; };
+		CD26DBDB2EF7F23000175298 /* ExamStructureViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamStructureViewModel.swift; sourceTree = "<group>"; };
+		CD26DBDC2EF7F23000175298 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		CD26DBDD2EF7F23000175298 /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
+		CD26DBDE2EF7F23000175298 /* ShareCourseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCourseViewModel.swift; sourceTree = "<group>"; };
+		CD26DBDF2EF7F23000175298 /* StudentsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsViewModel.swift; sourceTree = "<group>"; };
+		CD26DBE72EF7F26F00175298 /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
+		CD26DBE92EFB6F2800175298 /* ExamSessionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamSessionEditorView.swift; sourceTree = "<group>"; };
+		CD26DBEC2EFB6F7C00175298 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
+		CD26DBEF2EFBA3F300175298 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		CD26DBF22EFBA40300175298 /* RosterExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RosterExportSheet.swift; sourceTree = "<group>"; };
+		CD26DBF32EFBA40300175298 /* ScheduleExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleExportSheet.swift; sourceTree = "<group>"; };
+		CD26DBF42EFBA40300175298 /* TAListExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TAListExportSheet.swift; sourceTree = "<group>"; };
+		CD26DBF82EFBA4C600175298 /* CourseExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseExport.swift; sourceTree = "<group>"; };
+		CD26DBF92EFBA4C600175298 /* ExportOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportOptions.swift; sourceTree = "<group>"; };
+		CD26DBFC2EFBA8DA00175298 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		CD26DBFF2EFBA90900175298 /* ExportCourseUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportCourseUseCase.swift; sourceTree = "<group>"; };
+		CD26DC002EFBA90900175298 /* ImportCourseUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportCourseUseCase.swift; sourceTree = "<group>"; };
+		CD26DC052EFBA95A00175298 /* CurrentUserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentUserService.swift; sourceTree = "<group>"; };
+		CD26DC072EFBA95A00175298 /* PDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFGenerator.swift; sourceTree = "<group>"; };
+		CD26DC2C2EFD164300175298 /* CSVParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParser.swift; sourceTree = "<group>"; };
+		CD26DC2F2EFD230C00175298 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
 		CD7823652EF66C8A0083A25A /* CohortRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CohortRepository.swift; sourceTree = "<group>"; };
 		CD7823662EF66C8A0083A25A /* ConstraintRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstraintRepository.swift; sourceTree = "<group>"; };
 		CD7823672EF66C8A0083A25A /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
@@ -162,6 +209,7 @@
 		CDCFA6952EF6598B00F7BBD1 /* PermissionChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionChecker.swift; sourceTree = "<group>"; };
 		CDCFA69F2EF6598B00F7BBD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D4B04414B426E6BCD4B817DE /* CourseOnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseOnboardingFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -207,6 +255,71 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9385066BC976017EAABACF96 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				D4B04414B426E6BCD4B817DE /* CourseOnboardingFlow.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		B43DEC72EA8247804A0E6898 /* Sections */ = {
+			isa = PBXGroup;
+			children = (
+				230DF7EBEBD3132EA3B3563F /* SectionsView.swift */,
+				758B62CBB633544378819392 /* SectionEditorView.swift */,
+				CD26DBD02EF7F1E900175298 /* SectionDashboardView.swift */,
+			);
+			path = Sections;
+			sourceTree = "<group>";
+		};
+		CD26DBD52EF7F20C00175298 /* ExamStructure */ = {
+			isa = PBXGroup;
+			children = (
+				CD26DBD22EF7F20C00175298 /* ExamStructureCanvasView.swift */,
+				CD26DBD32EF7F20C00175298 /* ExamStructureModels.swift */,
+				CD26DBD42EF7F20C00175298 /* NodeAttributesEditor.swift */,
+			);
+			path = ExamStructure;
+			sourceTree = "<group>";
+		};
+		CD26DBED2EFB6F7C00175298 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CD26DBF22EFBA40300175298 /* RosterExportSheet.swift */,
+				CD26DBF32EFBA40300175298 /* ScheduleExportSheet.swift */,
+				CD26DBEC2EFB6F7C00175298 /* SyncStatusView.swift */,
+				CD26DBF42EFBA40300175298 /* TAListExportSheet.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		CD26DBF02EFBA3F300175298 /* About */ = {
+			isa = PBXGroup;
+			children = (
+				CD26DBEF2EFBA3F300175298 /* AboutView.swift */,
+			);
+			path = About;
+			sourceTree = "<group>";
+		};
+		CD26DBFD2EFBA8DA00175298 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				CD26DBFC2EFBA8DA00175298 /* DependencyContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		CD26DC0B2EFBA95A00175298 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CD26DC052EFBA95A00175298 /* CurrentUserService.swift */,
+				CD26DC072EFBA95A00175298 /* PDFGenerator.swift */,
+				CD26DC2C2EFD164300175298 /* CSVParser.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		CD7823912EF66CB20083A25A /* Mappers */ = {
 			isa = PBXGroup;
 			children = (
@@ -237,6 +350,7 @@
 		CD7823B62EF674000083A25A /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				CD26DBB52EF7361600175298 /* CenteredDisclosureStyle.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -268,6 +382,7 @@
 		CD7823BE2EF674000083A25A /* ExamSessions */ = {
 			isa = PBXGroup;
 			children = (
+				CD26DBE92EFB6F2800175298 /* ExamSessionEditorView.swift */,
 				CD7823BD2EF674000083A25A /* ExamSessionsView.swift */,
 			);
 			path = ExamSessions;
@@ -299,11 +414,15 @@
 		CD7823C42EF674000083A25A /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CD26DBF02EFBA3F300175298 /* About */,
 				CD7823B62EF674000083A25A /* Common */,
+				CD26DBED2EFB6F7C00175298 /* Components */,
 				CD7823B82EF674000083A25A /* Course */,
 				CD7823BA2EF674000083A25A /* CourseBuilder */,
 				CD7823BC2EF674000083A25A /* CourseSettings */,
 				CD7823BE2EF674000083A25A /* ExamSessions */,
+				CD26DBD52EF7F20C00175298 /* ExamStructure */,
+				9385066BC976017EAABACF96 /* Onboarding */,
 				CD7823C02EF674000083A25A /* Schedule */,
 				B43DEC72EA8247804A0E6898 /* Sections */,
 				CD7823C12EF674000083A25A /* Settings */,
@@ -316,18 +435,18 @@
 			isa = PBXGroup;
 			children = (
 				CDCFA65A2EF6594B00F7BBD1 /* Clementime */,
+				CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */,
 				CDCFA66D2EF6594C00F7BBD1 /* ClementimeTests */,
 				CDCFA6772EF6594C00F7BBD1 /* ClementimeUITests */,
-				CDCFA6592EF6594B00F7BBD1 /* Products */,
-				CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */,
 				CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */,
 				CDCFA6992EF6598B00F7BBD1 /* Core */,
 				CDCFA69E2EF6598B00F7BBD1 /* Data */,
 				CDCFA69F2EF6598B00F7BBD1 /* Info.plist */,
+				CDCFA6592EF6594B00F7BBD1 /* Products */,
 				CDCFA6A12EF6598B00F7BBD1 /* Resources */,
 				CDCFA6A22EF6598B00F7BBD1 /* Services */,
-				CD7823C42EF674000083A25A /* Views */,
 				CDCFA6A32EF6598B00F7BBD1 /* ViewModels */,
+				CD7823C42EF674000083A25A /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -345,11 +464,14 @@
 			isa = PBXGroup;
 			children = (
 				CDCFA6892EF6598B00F7BBD1 /* Cohort.swift */,
+				CD26DBE72EF7F26F00175298 /* ColorExtensions.swift */,
 				CDCFA68A2EF6598B00F7BBD1 /* Constraint.swift */,
 				CDCFA68B2EF6598B00F7BBD1 /* Course.swift */,
+				CD26DBF82EFBA4C600175298 /* CourseExport.swift */,
 				CDCFA68C2EF6598B00F7BBD1 /* ExamSession.swift */,
 				CDCFA68D2EF6598B00F7BBD1 /* ExamSlot.swift */,
 				CDCFA68E2EF6598B00F7BBD1 /* ExamSlotHistory.swift */,
+				CD26DBF92EFBA4C600175298 /* ExportOptions.swift */,
 				CDCFA68F2EF6598B00F7BBD1 /* Recording.swift */,
 				CDCFA6902EF6598B00F7BBD1 /* Section.swift */,
 				CDCFA6912EF6598B00F7BBD1 /* Student.swift */,
@@ -387,8 +509,10 @@
 			children = (
 				CD7823772EF66C960083A25A /* AcceptShareUseCase.swift */,
 				CD7823782EF66C960083A25A /* CreateCourseUseCase.swift */,
+				CD26DBFF2EFBA90900175298 /* ExportCourseUseCase.swift */,
 				CD7823792EF66C960083A25A /* ExportScheduleUseCase.swift */,
 				CD78237A2EF66C960083A25A /* GenerateScheduleUseCase.swift */,
+				CD26DC002EFBA90900175298 /* ImportCourseUseCase.swift */,
 				CD78237B2EF66C960083A25A /* ManageConstraintsUseCase.swift */,
 				CD78237C2EF66C960083A25A /* RemoveCollaboratorUseCase.swift */,
 				CD78237D2EF66C960083A25A /* ShareCourseUseCase.swift */,
@@ -410,7 +534,10 @@
 		CDCFA6992EF6598B00F7BBD1 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				CD26DC2F2EFD230C00175298 /* BuildInfo.swift */,
 				CDCFA6982EF6598B00F7BBD1 /* Domain */,
+				CD26DBFD2EFBA8DA00175298 /* DI */,
+				CD26DC0B2EFBA95A00175298 /* Services */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -467,22 +594,15 @@
 		CDCFA6A32EF6598B00F7BBD1 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				CD78235B2EF66C460083A25A /* CourseBuilderViewModel.swift */,
-				CD78235C2EF66C460083A25A /* CourseListViewModel.swift */,
-				CD78235D2EF66C460083A25A /* ScheduleViewModel.swift */,
-				CD78235E2EF66C460083A25A /* ShareCourseViewModel.swift */,
-				CD78235F2EF66C460083A25A /* StudentsViewModel.swift */,
+				CD26DBD92EF7F23000175298 /* CourseBuilderViewModel.swift */,
+				CD26DBDA2EF7F23000175298 /* CourseListViewModel.swift */,
+				CD26DBDB2EF7F23000175298 /* ExamStructureViewModel.swift */,
+				CD26DBDC2EF7F23000175298 /* OnboardingViewModel.swift */,
+				CD26DBDD2EF7F23000175298 /* ScheduleViewModel.swift */,
+				CD26DBDE2EF7F23000175298 /* ShareCourseViewModel.swift */,
+				CD26DBDF2EF7F23000175298 /* StudentsViewModel.swift */,
 			);
 			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		B43DEC72EA8247804A0E6898 /* Sections */ = {
-			isa = PBXGroup;
-			children = (
-				230DF7EBEBD3132EA3B3563F /* SectionsView.swift */,
-				758B62CBB633544378819392 /* SectionEditorView.swift */,
-			);
-			path = Sections;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -492,6 +612,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = CDCFA67E2EF6594C00F7BBD1 /* Build configuration list for PBXNativeTarget "Clementime" */;
 			buildPhases = (
+				CD26DC2E2EFD224000175298 /* Generate Build Info */,
 				CDCFA6542EF6594B00F7BBD1 /* Sources */,
 				CDCFA6552EF6594B00F7BBD1 /* Frameworks */,
 				CDCFA6562EF6594B00F7BBD1 /* Resources */,
@@ -626,30 +747,65 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		CD26DC2E2EFD224000175298 /* Generate Build Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/scripts/generate-build-info.sh",
+			);
+			name = "Generate Build Info";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Core/BuildInfo.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${SRCROOT}/scripts/generate-build-info.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		CDCFA6542EF6594B00F7BBD1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				CDCFA6AD2EF6598B00F7BBD1 /* ExamSlot.swift in Sources */,
+				CD26DBF52EFBA40300175298 /* ScheduleExportSheet.swift in Sources */,
+				CD26DBF62EFBA40300175298 /* TAListExportSheet.swift in Sources */,
+				CD26DBF72EFBA40300175298 /* RosterExportSheet.swift in Sources */,
 				CDCFA6AF2EF6598B00F7BBD1 /* ExamSlotHistory.swift in Sources */,
+				CD26DBE02EF7F23000175298 /* CourseBuilderViewModel.swift in Sources */,
+				CD26DBE12EF7F23000175298 /* CourseListViewModel.swift in Sources */,
+				CD26DBEE2EFB6F7C00175298 /* SyncStatusView.swift in Sources */,
+				CD26DBE22EF7F23000175298 /* ExamStructureViewModel.swift in Sources */,
+				CD26DBE32EF7F23000175298 /* OnboardingViewModel.swift in Sources */,
+				CD26DBE42EF7F23000175298 /* ScheduleViewModel.swift in Sources */,
+				CD26DBE52EF7F23000175298 /* ShareCourseViewModel.swift in Sources */,
+				CD26DBE62EF7F23000175298 /* StudentsViewModel.swift in Sources */,
 				CDCFA6B02EF6598B00F7BBD1 /* Course.swift in Sources */,
+				CD26DBE82EF7F26F00175298 /* ColorExtensions.swift in Sources */,
 				CDCFA6B12EF6598B00F7BBD1 /* Constraint.swift in Sources */,
 				CDCFA6B22EF6598B00F7BBD1 /* Section.swift in Sources */,
 				CDCFA6B32EF6598B00F7BBD1 /* PermissionChecker.swift in Sources */,
 				CDCFA6B42EF6598B00F7BBD1 /* Student.swift in Sources */,
+				CD26DBF12EFBA3F300175298 /* AboutView.swift in Sources */,
 				CDCFA6B52EF6598B00F7BBD1 /* TAUser.swift in Sources */,
 				CDCFA6B62EF6598B00F7BBD1 /* Cohort.swift in Sources */,
 				CDCFA6B82EF6598B00F7BBD1 /* Recording.swift in Sources */,
-				CD7823602EF66C460083A25A /* CourseBuilderViewModel.swift in Sources */,
-				CD7823612EF66C460083A25A /* ScheduleViewModel.swift in Sources */,
-				CD7823622EF66C460083A25A /* CourseListViewModel.swift in Sources */,
-				CD7823632EF66C460083A25A /* ShareCourseViewModel.swift in Sources */,
 				CD78236E2EF66C8A0083A25A /* ScheduleRepository.swift in Sources */,
 				CD78236F2EF66C8A0083A25A /* RecordingRepository.swift in Sources */,
 				CD7823702EF66C8A0083A25A /* CohortRepository.swift in Sources */,
+				CD26DC012EFBA90900175298 /* ExportCourseUseCase.swift in Sources */,
+				CD26DC022EFBA90900175298 /* ImportCourseUseCase.swift in Sources */,
 				CD7823712EF66C8A0083A25A /* ConstraintRepository.swift in Sources */,
 				CD7823722EF66C8A0083A25A /* SectionRepository.swift in Sources */,
+				CD26DBEA2EFB6F2800175298 /* ExamSessionEditorView.swift in Sources */,
 				CD7823732EF66C8A0083A25A /* StudentRepository.swift in Sources */,
 				CD78237E2EF66C960083A25A /* ManageConstraintsUseCase.swift in Sources */,
 				CD78237F2EF66C960083A25A /* GenerateScheduleUseCase.swift in Sources */,
@@ -662,6 +818,7 @@
 				CD78239B2EF66CB20083A25A /* TAUserEntity+Mapping.swift in Sources */,
 				CD78239C2EF66CB20083A25A /* CourseEntity+Mapping.swift in Sources */,
 				CD78239D2EF66CB20083A25A /* ExamSlotEntity+Mapping.swift in Sources */,
+				CD26DC2D2EFD164300175298 /* CSVParser.swift in Sources */,
 				CD78239E2EF66CB20083A25A /* PersistenceController.swift in Sources */,
 				CD78239F2EF66CB20083A25A /* CohortEntity+Mapping.swift in Sources */,
 				CD7823A02EF66CB20083A25A /* SectionEntity+Mapping.swift in Sources */,
@@ -671,31 +828,42 @@
 				CD7823C62EF674000083A25A /* CourseDetailView.swift in Sources */,
 				CD7823C72EF674000083A25A /* ExamSessionsView.swift in Sources */,
 				CD7823C82EF674000083A25A /* StudentsView.swift in Sources */,
+				CD26DBB62EF7362000175298 /* CenteredDisclosureStyle.swift in Sources */,
 				CD7823C92EF674000083A25A /* CourseSettingsView.swift in Sources */,
 				CD7823CA2EF674000083A25A /* CourseBuilderView.swift in Sources */,
+				CD26DBD62EF7F20C00175298 /* ExamStructureCanvasView.swift in Sources */,
+				CD26DBD72EF7F20C00175298 /* ExamStructureModels.swift in Sources */,
+				CD26DC0D2EFBA95A00175298 /* CurrentUserService.swift in Sources */,
+				CD26DC0F2EFBA95A00175298 /* PDFGenerator.swift in Sources */,
+				CD26DBD82EF7F20C00175298 /* NodeAttributesEditor.swift in Sources */,
 				CD7823822EF66C960083A25A /* ExportScheduleUseCase.swift in Sources */,
 				CD7823862EF66C9D0083A25A /* CloudKitShareManager.swift in Sources */,
 				CD7823832EF66C960083A25A /* CreateCourseUseCase.swift in Sources */,
 				CD7823842EF66C960083A25A /* RemoveCollaboratorUseCase.swift in Sources */,
 				CD7823742EF66C8A0083A25A /* ExamSessionRepository.swift in Sources */,
 				CD7823752EF66C8A0083A25A /* TAUserRepository.swift in Sources */,
+				CD26DBD12EF7F1E900175298 /* SectionDashboardView.swift in Sources */,
 				CD7823762EF66C8A0083A25A /* CourseRepository.swift in Sources */,
-				CD7823642EF66C460083A25A /* StudentsViewModel.swift in Sources */,
 				CDCFA6B92EF6598B00F7BBD1 /* ContentView.swift in Sources */,
 				CDCFA6BA2EF6598B00F7BBD1 /* ClementimeApp.swift in Sources */,
+				CD26DBFE2EFBA8DA00175298 /* DependencyContainer.swift in Sources */,
 				CD7823AB2EF66CC00083A25A /* CoreDataRecordingRepository.swift in Sources */,
 				CD7823AC2EF66CC00083A25A /* CoreDataTAUserRepository.swift in Sources */,
 				CD7823AD2EF66CC00083A25A /* CoreDataSectionRepository.swift in Sources */,
 				CD7823AE2EF66CC00083A25A /* CoreDataConstraintRepository.swift in Sources */,
 				CD7823AF2EF66CC00083A25A /* CoreDataCohortRepository.swift in Sources */,
 				CD7823B02EF66CC00083A25A /* CoreDataScheduleRepository.swift in Sources */,
+				CD26DC302EFD230C00175298 /* BuildInfo.swift in Sources */,
 				CD7823B12EF66CC00083A25A /* CoreDataStudentRepository.swift in Sources */,
 				CD7823B22EF66CC00083A25A /* CoreDataCourseRepository.swift in Sources */,
 				CD7823B32EF66CC00083A25A /* CoreDataExamSessionRepository.swift in Sources */,
 				CDCFA6BB2EF6598B00F7BBD1 /* ExamSession.swift in Sources */,
-			
+				CD26DBFA2EFBA4C600175298 /* CourseExport.swift in Sources */,
+				CD26DBFB2EFBA4C600175298 /* ExportOptions.swift in Sources */,
 				D02D87CB09F2F0A306CB8C7D /* SectionsView.swift in Sources */,
-				54F2568EE86D2B737581D66C /* SectionEditorView.swift in Sources */,);
+				54F2568EE86D2B737581D66C /* SectionEditorView.swift in Sources */,
+				72E75DD429F202B6D26AE143 /* CourseOnboardingFlow.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CDCFA6662EF6594C00F7BBD1 /* Sources */ = {
@@ -885,7 +1053,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 25.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shawnschwartz.Clementime;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -942,7 +1110,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 25.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shawnschwartz.Clementime;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
