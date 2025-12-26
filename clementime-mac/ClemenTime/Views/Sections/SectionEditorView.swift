@@ -18,10 +18,10 @@ struct SectionEditorView: View {
     @State private var sectionCode = ""
     @State private var roomNumber = ""
     @State private var selectedTAId: UUID?
-    @State private var selectedCohortId: UUID?
-    @State private var examDate = Date()
-    @State private var examStartTime = Date()
-    @State private var examEndTime = Date()
+    @State private var selectedWeekday: DayOfWeek = .friday
+    @State private var sectionStartTime = Calendar.current.date(from: DateComponents(hour: 13, minute: 30)) ?? Date()
+    @State private var sectionEndTime = Calendar.current.date(from: DateComponents(hour: 14, minute: 50)) ?? Date()
+    @State private var shouldIgnoreForMatching = false
 
     @StateObject private var taViewModel = TAUsersViewModel()
     @StateObject private var cohortViewModel = CohortsViewModel()
@@ -37,8 +37,28 @@ struct SectionEditorView: View {
             _sectionCode = State(initialValue: section.code)
             _roomNumber = State(initialValue: section.location)
             _selectedTAId = State(initialValue: section.assignedTAId)
-            _selectedCohortId = State(initialValue: section.cohortId)
+            _selectedWeekday = State(initialValue: DayOfWeek.from(weekday: section.weekday))
+            _shouldIgnoreForMatching = State(initialValue: section.shouldIgnoreForMatching)
+
+            // Parse time strings to Dates
+            if let startTime = parseTime(section.startTime) {
+                _sectionStartTime = State(initialValue: startTime)
+            }
+            if let endTime = parseTime(section.endTime) {
+                _sectionEndTime = State(initialValue: endTime)
+            }
         }
+    }
+
+    private func parseTime(_ timeString: String) -> Date? {
+        let components = timeString.split(separator: ":").compactMap { Int($0) }
+        guard components.count == 2 else { return nil }
+
+        let calendar = Calendar.current
+        var dateComponents = DateComponents()
+        dateComponents.hour = components[0]
+        dateComponents.minute = components[1]
+        return calendar.date(from: dateComponents)
     }
 
     var body: some View {
@@ -55,28 +75,41 @@ struct SectionEditorView: View {
                         .textFieldStyle(.plain)
                 }
 
-                SwiftUI.Section("Exam Schedule") {
-                    DatePicker("Exam Date", selection: $examDate, displayedComponents: .date)
+                SwiftUI.Section("Section Schedule") {
+                    Picker("Weekday", selection: $selectedWeekday) {
+                        ForEach(DayOfWeek.allCases) { day in
+                            Text(day.rawValue.capitalized).tag(day)
+                        }
+                    }
+                    .pickerStyle(.segmented)
 
-                    DatePicker("Start Time", selection: $examStartTime, displayedComponents: .hourAndMinute)
+                    DatePicker("Start Time", selection: $sectionStartTime, displayedComponents: .hourAndMinute)
 
-                    DatePicker("End Time", selection: $examEndTime, displayedComponents: .hourAndMinute)
+                    DatePicker("End Time", selection: $sectionEndTime, displayedComponents: .hourAndMinute)
                 }
 
                 SwiftUI.Section("Assignment") {
-                    Picker("Cohort", selection: $selectedCohortId) {
-                        Text("Select Cohort").tag(nil as UUID?)
-                        ForEach(cohortViewModel.cohorts) { cohort in
-                            Text(cohort.name).tag(cohort.id as UUID?)
-                        }
-                    }
-
                     Picker("Assigned TA", selection: $selectedTAId) {
                         Text("No TA Assigned").tag(nil as UUID?)
                         ForEach(taViewModel.taUsers) { ta in
                             Text("\(ta.firstName) \(ta.lastName)").tag(ta.id as UUID?)
                         }
                     }
+                }
+
+                SwiftUI.Section {
+                    Toggle(isOn: $shouldIgnoreForMatching) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Ignore for roster matching")
+                                .fontWeight(.medium)
+                            Text("Enable this for lecture sections that shouldn't be matched during CSV imports")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("Import Settings")
+                        .font(.headline)
                 }
             }
             .formStyle(.grouped)
@@ -107,11 +140,15 @@ struct SectionEditorView: View {
 
     private var isValid: Bool {
         !sectionName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !sectionCode.trimmingCharacters(in: .whitespaces).isEmpty &&
-        selectedCohortId != nil
+        !sectionCode.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func saveSection() {
+        // Extract time components from the DatePickers
+        let calendar = Calendar.current
+        let startComponents = calendar.dateComponents([.hour, .minute], from: sectionStartTime)
+        let endComponents = calendar.dateComponents([.hour, .minute], from: sectionEndTime)
+
         let newSection = Section(
             id: section?.id ?? UUID(),
             courseId: courseId,
@@ -119,8 +156,11 @@ struct SectionEditorView: View {
             name: sectionName.trimmingCharacters(in: .whitespaces),
             location: roomNumber.trimmingCharacters(in: .whitespaces),
             assignedTAId: selectedTAId,
-            cohortId: selectedCohortId ?? UUID(),
-            isActive: true
+            weekday: selectedWeekday.weekdayIndex,
+            startTime: String(format: "%02d:%02d", startComponents.hour ?? 13, startComponents.minute ?? 30),
+            endTime: String(format: "%02d:%02d", endComponents.hour ?? 14, endComponents.minute ?? 50),
+            isActive: true,
+            shouldIgnoreForMatching: shouldIgnoreForMatching
         )
 
         onSave(newSection)
@@ -137,10 +177,10 @@ class TAUsersViewModel: ObservableObject {
     @Published var error: String?
 
     var courseId: UUID?
-    private let taUserRepository: TAUserRepository
+    private lazy var taUserRepository: TAUserRepository = PersistenceController.shared.taUserRepository
 
-    init(taUserRepository: TAUserRepository = PersistenceController.shared.taUserRepository) {
-        self.taUserRepository = taUserRepository
+    init() {
+        // Repository will be lazily initialized on first access
     }
 
     func loadTAUsers() async {
@@ -169,10 +209,10 @@ class CohortsViewModel: ObservableObject {
     @Published var error: String?
 
     var courseId: UUID?
-    private let cohortRepository: CohortRepository
+    private lazy var cohortRepository: CohortRepository = PersistenceController.shared.cohortRepository
 
-    init(cohortRepository: CohortRepository = PersistenceController.shared.cohortRepository) {
-        self.cohortRepository = cohortRepository
+    init() {
+        // Repository will be lazily initialized on first access
     }
 
     func loadCohorts() async {
