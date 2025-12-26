@@ -120,17 +120,17 @@ module Api
           }, status: :forbidden
         end
 
-        # Swap times and dates, but calculate week_number based on student's week_group
+        # Swap times and dates, but calculate week_number based on student's cohort
         slot1_data = {
           date: slot1.date,
           start_time: slot1.start_time,
           end_time: slot1.end_time
         }
 
-        # Calculate correct week_number based on exam_number and student's week_group
-        # Formula: week_number = (exam_number - 1) * 2 + (week_group == "odd" ? 1 : 2)
-        slot1_week_number = calculate_week_number(slot1.exam_number, slot1.student.week_group)
-        slot2_week_number = calculate_week_number(slot2.exam_number, slot2.student.week_group)
+        # Calculate correct week_number based on exam_number and student's cohort
+        # Formula: week_number = (exam_number - 1) * 2 + (cohort == "odd" ? 1 : 2)
+        slot1_week_number = calculate_week_number(slot1.exam_number, slot1.student.cohort)
+        slot2_week_number = calculate_week_number(slot2.exam_number, slot2.student.cohort)
 
         slot1.update!(
           date: slot2.date,
@@ -178,7 +178,7 @@ module Api
 
         slots = ExamSlot.joins(:student)
                        .where(exam_number: exam_number, is_locked: true)
-                       .where(students: { week_group: week_type })
+                       .where(students: { cohort: week_type })
 
         count = slots.update_all(is_locked: false)
 
@@ -210,9 +210,9 @@ module Api
 
       private
 
-      def calculate_week_number(exam_number, week_group)
+      def calculate_week_number(exam_number, cohort)
         base_week = (exam_number - 1) * 2 + 1
-        week_group == "odd" ? base_week : base_week + 1
+        cohort == "odd" ? base_week : base_week + 1
       end
 
       def slot_response(slot)

@@ -73,7 +73,7 @@ module Api
                 student.full_name,
                 student.email,
                 section.name,
-                student.week_group,
+                student.cohort,
                 student.is_active ? "Yes" : "No"
               ]
             end
@@ -96,7 +96,7 @@ module Api
           id: student.id,
           full_name: student.full_name,
           email: student.email,
-          week_group: student.week_group,
+          cohort: student.cohort,
           is_active: student.is_active,
           section: student.section ? {
             id: student.section.id,

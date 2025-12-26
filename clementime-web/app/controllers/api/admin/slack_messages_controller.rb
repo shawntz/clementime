@@ -37,7 +37,7 @@ module Api
             # This supports balanced TA scheduling where students can be scheduled with any TA
             exam_slots = ExamSlot.joins(:student)
                                 .where(section: section, exam_number: exam_number, is_scheduled: true)
-                                .where(students: { week_group: week_type })
+                                .where(students: { cohort: week_type })
                                 .order(:start_time)
 
             next if exam_slots.empty?
@@ -101,7 +101,7 @@ module Api
         # Get all students with scheduled slots for this exam and week type
         exam_slots = ExamSlot.joins(:student)
                             .where(exam_number: exam_number, is_scheduled: true)
-                            .where(students: { week_group: week_type, slack_matched: true })
+                            .where(students: { cohort: week_type, slack_matched: true })
                             .includes(:student, :section)
 
         results = []

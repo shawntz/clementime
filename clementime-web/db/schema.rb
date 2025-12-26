@@ -99,7 +99,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_01_092920) do
     t.string "email", null: false
     t.string "full_name", null: false
     t.bigint "section_id", null: false
-    t.string "week_group"
+    t.string "cohort"
     t.string "slack_user_id"
     t.string "slack_username"
     t.boolean "slack_matched", default: false

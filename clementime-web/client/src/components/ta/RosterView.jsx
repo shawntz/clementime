@@ -7,7 +7,7 @@ export default function RosterView() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSection, setSelectedSection] = useState('all');
-  const [selectedWeekGroup, setSelectedWeekGroup] = useState('all');
+  const [selectedCohort, setSelectedCohort] = useState('all');
   const [constraintFilter, setConstraintFilter] = useState('all');
   const [constraintType, setConstraintType] = useState('all');
   const [availableConstraintTypes, setAvailableConstraintTypes] = useState([]);
@@ -49,8 +49,8 @@ export default function RosterView() {
     const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSection = selectedSection === 'all' || student.section?.id === parseInt(selectedSection);
-    const matchesWeekGroup = selectedWeekGroup === 'all' || student.week_group === selectedWeekGroup;
-    return matchesSearch && matchesSection && matchesWeekGroup;
+    const matchesCohort = selectedCohort === 'all' || student.cohort === selectedCohort;
+    return matchesSearch && matchesSection && matchesCohort;
   });
 
   const downloadRosterBySection = async () => {
@@ -139,13 +139,13 @@ export default function RosterView() {
           <div style={{ minWidth: '140px' }}>
             <select
               className="form-input"
-              value={selectedWeekGroup}
-              onChange={(e) => setSelectedWeekGroup(e.target.value)}
+              value={selectedCohort}
+              onChange={(e) => setSelectedCohort(e.target.value)}
               style={{ width: '100%' }}
             >
-              <option value="all">All Weeks</option>
-              <option value="odd">Odd Weeks</option>
-              <option value="even">Even Weeks</option>
+              <option value="all">All Groups</option>
+              <option value="odd">Group A</option>
+              <option value="even">Group B</option>
             </select>
           </div>
           <div style={{ minWidth: '180px' }}>
@@ -215,8 +215,8 @@ export default function RosterView() {
                   )}
                 </td>
                 <td>
-                  <span className={`badge ${student.week_group === 'odd' ? 'badge-info' : 'badge-secondary'}`}>
-                    {student.week_group}
+                  <span className={`badge ${student.cohort === 'odd' ? 'badge-info' : 'badge-secondary'}`}>
+                    {student.cohort === 'odd' ? 'Group A' : 'Group B'}
                   </span>
                 </td>
                 <td>

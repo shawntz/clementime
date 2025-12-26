@@ -8,7 +8,7 @@ export default function RosterManager() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSection, setSelectedSection] = useState('all');
-  const [selectedWeekGroup, setSelectedWeekGroup] = useState('all');
+  const [selectedCohort, setSelectedCohort] = useState('all');
   const [constraintFilter, setConstraintFilter] = useState('all');
   const [constraintType, setConstraintType] = useState('all');
   const [availableConstraintTypes, setAvailableConstraintTypes] = useState([]);
@@ -18,10 +18,10 @@ export default function RosterManager() {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showChangeSectionModal, setShowChangeSectionModal] = useState(false);
-  const [showSwapWeekModal, setShowSwapWeekModal] = useState(false);
+  const [showSwapCohortModal, setShowSwapCohortModal] = useState(false);
   const [selectedExamNumber, setSelectedExamNumber] = useState(1);
   const [transferFromExam, setTransferFromExam] = useState(1);
-  const [transferToWeek, setTransferToWeek] = useState('odd');
+  const [transferToCohort, setTransferToCohort] = useState('odd');
   const [changeSectionTo, setChangeSectionTo] = useState('');
   const [swapFromExam, setSwapFromExam] = useState(1);
 
@@ -86,19 +86,19 @@ export default function RosterManager() {
 
   const openTransferModal = (student) => {
     setSelectedStudent(student);
-    setTransferToWeek(student.week_group === 'odd' ? 'even' : 'odd');
+    setTransferToCohort(student.cohort === 'odd' ? 'even' : 'odd');
     setShowTransferModal(true);
   };
 
-  const transferWeekGroup = async () => {
+  const transferCohort = async () => {
     if (!selectedStudent) return;
 
     try {
-      await api.post(`/admin/students/${selectedStudent.id}/transfer_week_group`, {
-        week_group: transferToWeek,
+      await api.post(`/admin/students/${selectedStudent.id}/transfer_cohort`, {
+        cohort: transferToCohort,
         from_exam: transferFromExam
       });
-      alert(`Student transferred to ${transferToWeek} week group from Exam #${transferFromExam} onwards`);
+      alert(`Student transferred to ${transferToCohort} cohort from Exam #${transferFromExam} onwards`);
       setShowTransferModal(false);
       loadData();
     } catch (err) {
@@ -152,27 +152,27 @@ export default function RosterManager() {
   const openSwapWeekModal = (student) => {
     setSelectedStudent(student);
     setSwapFromExam(1);
-    setShowSwapWeekModal(true);
+    setShowSwapCohortModal(true);
   };
 
-  const swapToOppositeWeek = async () => {
+  const swapToOppositeCohort = async () => {
     if (!selectedStudent) return;
 
-    const newWeek = selectedStudent.week_group === 'odd' ? 'even' : 'odd';
+    const newCohort = selectedStudent.cohort === 'odd' ? 'even' : 'odd';
 
-    if (!confirm(`This will swap ${selectedStudent.full_name} from ${selectedStudent.week_group} to ${newWeek} week cadence starting from Exam ${swapFromExam}.\n\nThis will:\n- Unlock any locked exams from ${swapFromExam} onwards\n- Delete their old time slots\n- Place them at the END of the ${newWeek} week schedule\n- Not affect any other students\n\nContinue?`)) {
+    if (!confirm(`This will swap ${selectedStudent.full_name} from ${selectedStudent.cohort} cohort to ${newCohort} cohort starting from Exam ${swapFromExam}.\n\nThis will:\n- Unlock any locked exams from ${swapFromExam} onwards\n- Delete their old time slots\n- Place them at the END of the ${newCohort} cohort schedule\n- Not affect any other students\n\nContinue?`)) {
       return;
     }
 
     try {
-      const response = await api.post(`/admin/students/${selectedStudent.id}/swap_to_opposite_week`, {
+      const response = await api.post(`/admin/students/${selectedStudent.id}/swap_to_opposite_cohort`, {
         from_exam: swapFromExam
       });
       alert(response.data.message + `\n\nMoved: ${response.data.moved_count} exams\nUnlocked: ${response.data.unlocked_count} exams`);
-      setShowSwapWeekModal(false);
+      setShowSwapCohortModal(false);
       loadData();
     } catch (err) {
-      alert(err.response?.data?.errors || 'Failed to swap week cadence');
+      alert(err.response?.data?.errors || 'Failed to swap cohort');
     }
   };
 
@@ -180,8 +180,8 @@ export default function RosterManager() {
     const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSection = selectedSection === 'all' || student.section?.id === parseInt(selectedSection);
-    const matchesWeekGroup = selectedWeekGroup === 'all' || student.week_group === selectedWeekGroup;
-    return matchesSearch && matchesSection && matchesWeekGroup;
+    const matchesCohort = selectedCohort === 'all' || student.cohort === selectedCohort;
+    return matchesSearch && matchesSection && matchesCohort;
   });
 
   if (loading) {
@@ -196,8 +196,8 @@ export default function RosterManager() {
       if (selectedSection !== 'all') {
         params.section_id = selectedSection;
       }
-      if (selectedWeekGroup !== 'all') {
-        params.week_group = selectedWeekGroup;
+      if (selectedCohort !== 'all') {
+        params.cohort = selectedCohort;
       }
       if (searchTerm.trim()) {
         params.search = searchTerm.trim();
@@ -285,13 +285,13 @@ export default function RosterManager() {
           <div style={{ minWidth: '140px' }}>
             <select
               className="form-input"
-              value={selectedWeekGroup}
-              onChange={(e) => setSelectedWeekGroup(e.target.value)}
+              value={selectedCohort}
+              onChange={(e) => setSelectedCohort(e.target.value)}
               style={{ width: '100%' }}
             >
-              <option value="all">All Weeks</option>
-              <option value="odd">Odd Weeks</option>
-              <option value="even">Even Weeks</option>
+              <option value="all">All Groups</option>
+              <option value="odd">Group A</option>
+              <option value="even">Group B</option>
             </select>
           </div>
           <div style={{ minWidth: '180px' }}>
@@ -429,10 +429,10 @@ export default function RosterManager() {
                       onClick={() => openTransferModal(student)}
                       className="btn btn-primary"
                       style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                      disabled={!student.week_group}
-                      title={student.week_group ? `Transfer from ${student.week_group} week` : 'No week group assigned'}
+                      disabled={!student.cohort}
+                      title={student.cohort ? `Transfer from cohort ${student.cohort}` : 'No cohort assigned'}
                     >
-                      ↔️ Transfer Week
+                      ↔️ Transfer Cohort
                     </button>
                     <button
                       onClick={() => openChangeSectionModal(student)}
@@ -443,12 +443,12 @@ export default function RosterManager() {
                       {student.section_override ? '🔒 ' : ''}🔄 Change Section
                     </button>
                     <button
-                      onClick={() => openSwapWeekModal(student)}
+                      onClick={() => openSwapCohortModal(student)}
                       className="px-3 py-1.5 text-xs font-medium border border-orange-500 text-orange-600 rounded hover:bg-orange-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!student.week_group}
-                      title="Swap to opposite week cadence and place at end of schedule"
+                      disabled={!student.cohort}
+                      title="Swap to opposite cohort and place at end of schedule"
                     >
-                      🔁 Swap to {student.week_group === 'odd' ? 'Even' : 'Odd'} Week
+                      🔁 Swap to {student.cohort === 'odd' ? 'Group B' : 'Group A'}
                     </button>
                     <button
                       onClick={() => openNotifyModal(student)}
@@ -541,7 +541,7 @@ export default function RosterManager() {
         </div>
       )}
 
-      {/* Transfer Week Group Modal */}
+      {/* Transfer Cohort Modal */}
       {showTransferModal && selectedStudent && (
         <div
           onClick={() => {
@@ -567,13 +567,13 @@ export default function RosterManager() {
             style={{ maxWidth: '500px', width: '90%' }}
           >
             <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-              Transfer Week Group
+              Transfer Cohort
             </h3>
             <p style={{ marginBottom: '1rem' }}>
               <strong>{selectedStudent.full_name}</strong>
             </p>
             <p style={{ marginBottom: '1rem', color: 'var(--text-light)', fontSize: '0.875rem' }}>
-              Current week group: <span className="badge badge-primary">{selectedStudent.week_group}</span>
+              Current cohort: <span className="badge badge-primary">{selectedStudent.cohort}</span>
             </p>
 
             <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'rgba(255, 152, 0, 0.1)', borderRadius: '8px' }}>
@@ -583,14 +583,14 @@ export default function RosterManager() {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Transfer to week group</label>
+              <label className="form-label">Transfer to cohort</label>
               <select
                 className="form-input"
-                value={transferToWeek}
-                onChange={(e) => setTransferToWeek(e.target.value)}
+                value={transferToCohort}
+                onChange={(e) => setTransferToCohort(e.target.value)}
               >
-                <option value="odd">Odd Week</option>
-                <option value="even">Even Week</option>
+                <option value="odd">Group A</option>
+                <option value="even">Group B</option>
               </select>
             </div>
 
@@ -612,7 +612,7 @@ export default function RosterManager() {
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
-                onClick={transferWeekGroup}
+                onClick={transferCohort}
                 className="btn btn-primary"
               >
                 ✅ Confirm Transfer
@@ -733,8 +733,8 @@ export default function RosterManager() {
         </div>
       )}
 
-      {/* Swap to Opposite Week Modal */}
-      {showSwapWeekModal && selectedStudent && (
+      {/* Swap to Opposite Cohort Modal */}
+      {showSwapCohortModal && selectedStudent && (
         <div
           style={{
             position: 'fixed',
@@ -749,7 +749,7 @@ export default function RosterManager() {
             zIndex: 1000
           }}
           onClick={() => {
-            setShowSwapWeekModal(false);
+            setShowSwapCohortModal(false);
             setSelectedStudent(null);
           }}
         >
@@ -759,10 +759,10 @@ export default function RosterManager() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-              Swap to Opposite Week Cadence
+              Swap to Opposite Cohort
             </h3>
             <p style={{ marginBottom: '1rem' }}>
-              Swap <strong>{selectedStudent.full_name}</strong> from <strong>{selectedStudent.week_group}</strong> to <strong>{selectedStudent.week_group === 'odd' ? 'even' : 'odd'}</strong> week cadence
+              Swap <strong>{selectedStudent.full_name}</strong> from <strong>{selectedStudent.cohort === 'odd' ? 'Group A' : 'Group B'}</strong> to <strong>{selectedStudent.cohort === 'odd' ? 'Group B' : 'Group A'}</strong>
             </p>
 
             <div style={{ marginBottom: '1.5rem' }}>
@@ -795,21 +795,21 @@ export default function RosterManager() {
               <ul style={{ marginTop: '0.5rem', marginLeft: '1.25rem' }}>
                 <li>Unlock any locked exams from Exam {swapFromExam} onwards</li>
                 <li>Delete their old time slots</li>
-                <li>Place them at the END of the {selectedStudent.week_group === 'odd' ? 'even' : 'odd'} week schedule</li>
+                <li>Place them at the END of the {selectedStudent.cohort === 'odd' ? 'Group B' : 'Group A'} schedule</li>
                 <li>NOT affect any other students</li>
               </ul>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
               <button
-                onClick={swapToOppositeWeek}
+                onClick={swapToOppositeCohort}
                 className="btn btn-primary"
               >
-                🔁 Swap Week Cadence
+                🔁 Swap Cohort
               </button>
               <button
                 onClick={() => {
-                  setShowSwapWeekModal(false);
+                  setShowSwapCohortModal(false);
                   setSelectedStudent(null);
                 }}
                 className="btn btn-outline"

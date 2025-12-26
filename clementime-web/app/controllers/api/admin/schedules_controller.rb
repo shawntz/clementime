@@ -70,7 +70,7 @@ module Api
 
         Recording.delete_all
         ExamSlot.delete_all
-        Student.update_all(week_group: nil)
+        Student.update_all(cohort: nil)
 
         render json: {
           message: "All schedules cleared successfully"
@@ -118,7 +118,7 @@ module Api
               csv << [
                 slot.exam_number,
                 slot.week_number,
-                slot.student.week_group,
+                slot.student.cohort,
                 slot.section.code,
                 slot.section.name,
                 slot.section.ta ? slot.section.ta.full_name : "No TA",
@@ -164,34 +164,34 @@ module Api
           # Get all active students
           students = Student.active.includes(:exam_slots, :section, :constraints)
 
-          # First, assign week groups to students who don't have one
-          students_without_week_group = students.select { |s| s.section && s.week_group.nil? }
+          # First, assign cohorts to students who don't have one
+          students_without_cohort = students.select { |s| s.section && s.cohort.nil? }
 
-          students_without_week_group.group_by(&:section).each do |section, section_students|
+          students_without_cohort.group_by(&:section).each do |section, section_students|
             # Handle students with week_preference constraints first
             section_students.each do |student|
               week_constraint = student.constraints.active.find_by(constraint_type: "week_preference")
-              if week_constraint && student.week_group != week_constraint.constraint_value
-                student.update!(week_group: week_constraint.constraint_value)
+              if week_constraint && student.cohort != week_constraint.constraint_value
+                student.update!(cohort: week_constraint.constraint_value)
               end
             end
 
-            # Assign remaining students without week_group
-            unassigned = section_students.select { |s| s.week_group.nil? }
+            # Assign remaining students without cohort
+            unassigned = section_students.select { |s| s.cohort.nil? }
             next if unassigned.empty?
 
-            # Get existing week group distribution in this section
-            existing_students = section.students.active.where.not(week_group: nil)
-            odd_count = existing_students.where(week_group: "odd").count
-            even_count = existing_students.where(week_group: "even").count
+            # Get existing cohort distribution in this section
+            existing_students = section.students.active.where.not(cohort: nil)
+            odd_count = existing_students.where(cohort: "odd").count
+            even_count = existing_students.where(cohort: "even").count
 
             # Assign new students to balance the groups
             unassigned.each do |student|
               if odd_count <= even_count
-                student.update!(week_group: "odd")
+                student.update!(cohort: "odd")
                 odd_count += 1
               else
-                student.update!(week_group: "even")
+                student.update!(cohort: "even")
                 even_count += 1
               end
             end
@@ -199,7 +199,7 @@ module Api
 
           students.each do |student|
             next unless student.section
-            next unless student.week_group
+            next unless student.cohort
 
             student_scheduled = 0
             student_unscheduled = 0
@@ -215,7 +215,7 @@ module Api
 
               # Calculate week number
               base_week = (exam_number - 1) * 2 + 1
-              week_number = student.week_group == "odd" ? base_week : base_week + 1
+              week_number = student.cohort == "odd" ? base_week : base_week + 1
 
               # Calculate exam date
               days_until_exam = case exam_day.downcase
@@ -325,7 +325,7 @@ module Api
               id: slot.id,
               exam_number: slot.exam_number,
               week_number: slot.week_number,
-              week_type: slot.student.week_group,
+              cohort: slot.student.cohort,
               is_locked: slot.is_locked,
               student: {
                 id: slot.student.id,
