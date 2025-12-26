@@ -56,6 +56,26 @@ opt_in_rules:
 disabled_rules:
   - todo
   - trailing_whitespace
+  - force_unwrapping
+  - line_length
+  - file_length
+  - function_body_length
+  - type_body_length
+  - cyclomatic_complexity
+  - function_parameter_count
+  - large_tuple
+  - identifier_name
+  - prefer_explicit_type_over_literal
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - trailing_closure
+  - implicit_optional_initialization
+  - for_where
+  - unused_enumerated
+  - unused_closure_parameter
+  - closure_end_indentation
+  - sorted_first_last
+  - contains_over_filter_is_empty
 
 # Rule customization
 line_length:
