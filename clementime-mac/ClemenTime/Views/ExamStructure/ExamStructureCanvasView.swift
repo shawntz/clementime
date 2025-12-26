@@ -2,7 +2,7 @@
 //  ExamStructureCanvasView.swift
 //  ClemenTime
 //
-//  Created by Claude on 2025-12-19.
+//  Created by Shawn Schwartz on 12/19/25.
 //
 
 import SwiftUI
@@ -13,18 +13,17 @@ struct ExamStructureCanvasView: View {
     let course: Course
     @StateObject private var viewModel: ExamStructureViewModel
     @State private var selectedNodeId: UUID?
+    @State private var selectedConnectionId: UUID?
     @State private var showNodePalette = false
     @State private var canvasOffset: CGSize = .zero
     @State private var canvasScale: CGFloat = 1.0
     @State private var showValidationErrors = false
     @State private var validationErrors: [String] = []
+    @State private var showDeleteConnectionConfirmation = false
 
     init(course: Course) {
         self.course = course
-        self._viewModel = StateObject(wrappedValue: ExamStructureViewModel(
-            course: course,
-            courseRepository: PersistenceController.shared.courseRepository
-        ))
+        self._viewModel = StateObject(wrappedValue: ExamStructureViewModel(course: course))
     }
 
     var body: some View {
@@ -45,10 +44,17 @@ struct ExamStructureCanvasView: View {
                         ConnectionArrow(
                             connection: connection,
                             nodes: viewModel.nodes,
-                            isSelected: false
+                            isSelected: selectedConnectionId == connection.id
                         )
                         .onTapGesture {
-                            // TODO: Select connection
+                            // Deselect nodes when selecting a connection
+                            selectedNodeId = nil
+                            // Toggle connection selection
+                            if selectedConnectionId == connection.id {
+                                selectedConnectionId = nil
+                            } else {
+                                selectedConnectionId = connection.id
+                            }
                         }
                     }
 
@@ -59,6 +65,7 @@ struct ExamStructureCanvasView: View {
                             isSelected: selectedNodeId == node.id,
                             onTap: {
                                 selectedNodeId = node.id
+                                selectedConnectionId = nil // Deselect connections when selecting a node
                             },
                             onDrag: { offset in
                                 viewModel.moveNode(node.id, by: offset)
@@ -81,6 +88,16 @@ struct ExamStructureCanvasView: View {
                             Label("Add Node", systemImage: "plus.app.fill")
                         }
                         .buttonStyle(.borderedProminent)
+
+                        // Delete connection button (only show when connection is selected)
+                        if selectedConnectionId != nil {
+                            Button(action: {
+                                showDeleteConnectionConfirmation = true
+                            }) {
+                                Label("Delete Connection", systemImage: "trash")
+                            }
+                            .buttonStyle(.bordered)
+                        }
 
                         Spacer()
 
@@ -166,8 +183,12 @@ struct ExamStructureCanvasView: View {
                     }
             )
         }
-        .sheet(item: $selectedNodeId) { nodeId in
-            if let node = viewModel.nodes.first(where: { $0.id == nodeId }) {
+        .sheet(isPresented: Binding(
+            get: { selectedNodeId != nil },
+            set: { if !$0 { selectedNodeId = nil } }
+        )) {
+            if let nodeId = selectedNodeId,
+               let node = viewModel.nodes.first(where: { $0.id == nodeId }) {
                 NodeAttributesEditor(
                     node: node,
                     course: course,
@@ -198,6 +219,20 @@ struct ExamStructureCanvasView: View {
             if let error = viewModel.error {
                 Text(error)
             }
+        }
+        .alert("Delete Connection?", isPresented: $showDeleteConnectionConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let connectionId = selectedConnectionId {
+                    viewModel.deleteConnection(connectionId)
+                    selectedConnectionId = nil
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this connection?")
+        }
+        .onAppear {
+            viewModel.initialize()
         }
     }
 }
@@ -362,7 +397,7 @@ struct ConnectionArrow: View {
 
     private func getPortPosition(for node: ExamStructureNode, port: NodePort) -> CGPoint {
         let nodeWidth: CGFloat = 180
-        let nodeHeight: CGFloat = 100
+        let _: CGFloat = 100 // nodeHeight - unused
 
         switch port {
         case .input:
@@ -405,7 +440,7 @@ struct ArrowPath: Shape {
 
     private func addArrowhead(to path: inout Path, at point: CGPoint, from source: CGPoint) {
         let arrowLength: CGFloat = 10
-        let arrowWidth: CGFloat = 6
+        let _: CGFloat = 6 // arrowWidth - unused
 
         let angle = atan2(point.y - source.y, point.x - source.x)
 
@@ -494,7 +529,7 @@ struct NodePaletteView: View {
         name: "PSYCH 10",
         term: "Fall 2025",
         quarterStartDate: Date(),
-        examDay: .friday,
+        quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
         totalExams: 5,
         isActive: true,
         createdBy: UUID(),
