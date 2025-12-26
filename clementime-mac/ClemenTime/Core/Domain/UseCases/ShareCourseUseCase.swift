@@ -75,6 +75,7 @@ enum UseCaseError: Error, LocalizedError {
     case taUserCreationFailed
     case permissionDenied
     case invalidInput
+    case notImplemented
 
     var errorDescription: String? {
         switch self {
@@ -88,6 +89,8 @@ enum UseCaseError: Error, LocalizedError {
             return "You don't have permission to perform this action."
         case .invalidInput:
             return "Invalid input provided."
+        case .notImplemented:
+            return "This feature is not yet implemented."
         }
     }
 }

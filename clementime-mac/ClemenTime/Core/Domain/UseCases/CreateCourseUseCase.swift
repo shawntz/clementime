@@ -11,7 +11,7 @@ struct CreateCourseInput {
     let name: String
     let term: String
     let quarterStartDate: Date
-    let examDay: DayOfWeek
+    let quarterEndDate: Date
     let totalExams: Int
     let cohorts: [CohortInput]
     let examSessions: [ExamSessionInput]
@@ -21,18 +21,16 @@ struct CreateCourseInput {
 
 struct CohortInput {
     let name: String
-    let weekType: WeekType
     let colorHex: String
     let sortOrder: Int
+    let isDefault: Bool
 }
 
 struct ExamSessionInput {
     let examNumber: Int
-    let oddWeekDate: Date
-    let evenWeekDate: Date
+    let weekStartDate: Date
+    let assignedCohortId: UUID?
     let theme: String?
-    let startTime: String  // "HH:MM"
-    let endTime: String    // "HH:MM"
     let durationMinutes: Int
     let bufferMinutes: Int
 }
@@ -79,7 +77,7 @@ class CreateCourseUseCase {
             name: input.name,
             term: input.term,
             quarterStartDate: input.quarterStartDate,
-            examDay: input.examDay,
+            quarterEndDate: input.quarterEndDate,
             totalExams: input.totalExams,
             isActive: true,
             createdBy: input.createdBy,
@@ -90,14 +88,21 @@ class CreateCourseUseCase {
 
         // 3. Create cohorts
         var createdCohorts: [Cohort] = []
+
+        // Always create an "All Students" default cohort first
+        let allStudentsCohort = Cohort.createAllStudentsCohort(courseId: courseId)
+        let createdAllStudents = try await cohortRepository.createCohort(allStudentsCohort)
+        createdCohorts.append(createdAllStudents)
+
+        // Then create user-defined cohorts
         for cohortInput in input.cohorts {
             let cohort = Cohort(
                 id: UUID(),
                 courseId: courseId,
                 name: cohortInput.name,
-                weekType: cohortInput.weekType,
                 colorHex: cohortInput.colorHex,
-                sortOrder: cohortInput.sortOrder
+                sortOrder: cohortInput.sortOrder,
+                isDefault: cohortInput.isDefault
             )
             let created = try await cohortRepository.createCohort(cohort)
             createdCohorts.append(created)
@@ -110,11 +115,9 @@ class CreateCourseUseCase {
                 id: UUID(),
                 courseId: courseId,
                 examNumber: sessionInput.examNumber,
-                oddWeekDate: sessionInput.oddWeekDate,
-                evenWeekDate: sessionInput.evenWeekDate,
+                weekStartDate: sessionInput.weekStartDate,
+                assignedCohortId: sessionInput.assignedCohortId,
                 theme: sessionInput.theme,
-                startTime: sessionInput.startTime,
-                endTime: sessionInput.endTime,
                 durationMinutes: sessionInput.durationMinutes,
                 bufferMinutes: sessionInput.bufferMinutes
             )

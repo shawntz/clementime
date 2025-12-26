@@ -41,258 +41,320 @@ class GenerateScheduleUseCase {
     }
 
     func execute(input: GenerateScheduleInput) async throws -> ScheduleResult {
-        // 1. Load course and validate
+        // Load all data needed for scheduling
         guard let course = try await courseRepository.fetchCourse(id: input.courseId) else {
             throw UseCaseError.courseNotFound
         }
-
-        // 2. Load cohorts, students, sections, exam sessions, constraints
-        let cohorts = try await cohortRepository.fetchCohorts(courseId: input.courseId)
+        var cohorts = try await cohortRepository.fetchCohorts(courseId: input.courseId)
         let students = try await studentRepository.fetchStudents(courseId: input.courseId)
         let sections = try await sectionRepository.fetchSections(courseId: input.courseId)
         let examSessions = try await examSessionRepository.fetchExamSessions(courseId: input.courseId)
 
-        guard !cohorts.isEmpty else {
-            throw UseCaseError.invalidInput
-        }
-
-        // 3. Load constraints for all students
-        var studentConstraints: [UUID: [Constraint]] = [:]
+        // Load all constraints grouped by student ID
+        var constraintsByStudent: [UUID: [Constraint]] = [:]
         for student in students {
-            let constraints = try await constraintRepository.fetchActiveConstraints(studentId: student.id)
-            studentConstraints[student.id] = constraints
+            let studentConstraints = try await constraintRepository.fetchConstraints(studentId: student.id)
+            constraintsByStudent[student.id] = studentConstraints
         }
 
-        // 4. Assign cohorts to students without one (respecting week_preference constraints)
-        let updatedStudents = try await assignCohorts(
-            students: students,
-            cohorts: cohorts,
-            constraints: studentConstraints
-        )
+        // Ensure "All Students" cohort exists with isDefault = true
+        let allStudentsCohort: Cohort
+        if let existingDefault = cohorts.first(where: { $0.isDefault }) {
+            allStudentsCohort = existingDefault
+        } else if let existingByName = cohorts.first(where: { $0.name == "All Students" }) {
+            // Found "All Students" cohort but isDefault is not set - fix it
+            var updatedCohort = existingByName
+            updatedCohort.isDefault = true
+            try await cohortRepository.updateCohort(updatedCohort)
+            allStudentsCohort = updatedCohort
 
-        // 5. Determine which exams to generate
-        let startExam = input.startingFromExam ?? 1
-        let examNumbers = Array(startExam...course.totalExams)
+            // Update local cohorts array
+            cohorts = try await cohortRepository.fetchCohorts(courseId: input.courseId)
+        } else {
+            // Create "All Students" cohort
+            let newAllStudentsCohort = Cohort.createAllStudentsCohort(courseId: input.courseId)
+            allStudentsCohort = try await cohortRepository.createCohort(newAllStudentsCohort)
 
-        // 6. Generate slots
-        var generatedCount = 0
-        var unscheduledCount = 0
-        var errors: [String] = []
-        var unscheduledStudentIds: [UUID] = []
+            // Update local cohorts array
+            cohorts = try await cohortRepository.fetchCohorts(courseId: input.courseId)
+        }
 
-        for examNumber in examNumbers {
-            // Find the exam session for this exam number
-            guard let examSession = examSessions.first(where: { $0.examNumber == examNumber }) else {
-                errors.append("Exam session not found for exam \(examNumber)")
-                continue
-            }
+        // Filter exam sessions if starting from a specific exam
+        let sessionsToGenerate: [ExamSession]
+        if let startingExam = input.startingFromExam {
+            sessionsToGenerate = examSessions.filter { $0.examNumber >= startingExam }
+        } else {
+            sessionsToGenerate = examSessions
+        }
 
-            // Generate slots for each cohort
-            for cohort in cohorts {
-                // Get students in this cohort
-                let cohortStudents = updatedStudents.filter { $0.cohortId == cohort.id }
+        var totalScheduled = 0
+        var totalUnscheduled = 0
+        var allErrors: [String] = []
+        var allUnscheduledStudents: [UUID] = []
 
-                // Determine exam date for this cohort
-                let examDate = cohort.weekType == .odd ? examSession.oddWeekDate : examSession.evenWeekDate
+        // Generate slots for each exam session
+        for examSession in sessionsToGenerate {
+            // Delete existing unlocked slots for this exam session before regenerating
+            try await scheduleRepository.deleteUnlockedExamSlots(examSessionId: examSession.id)
 
-                // Generate slots for this cohort
-                let result = try await generateCohortSlots(
-                    students: cohortStudents,
-                    cohort: cohort,
-                    examSession: examSession,
-                    examDate: examDate,
-                    course: course,
-                    constraints: studentConstraints,
-                    sections: sections
-                )
+            let result = try await generateSlotsForExamSession(
+                examSession: examSession,
+                course: course,
+                students: students,
+                sections: sections,
+                cohorts: cohorts,
+                allStudentsCohort: allStudentsCohort,
+                constraints: constraintsByStudent
+            )
 
-                generatedCount += result.scheduled
-                unscheduledCount += result.unscheduled
-                errors.append(contentsOf: result.errors)
-                unscheduledStudentIds.append(contentsOf: result.unscheduledStudentIds)
-            }
+            totalScheduled += result.scheduled
+            totalUnscheduled += result.unscheduled
+            allErrors.append(contentsOf: result.errors)
+            allUnscheduledStudents.append(contentsOf: result.unscheduledStudents)
         }
 
         return ScheduleResult(
-            scheduledCount: generatedCount,
-            unscheduledCount: unscheduledCount,
-            errors: errors,
-            unscheduledStudents: unscheduledStudentIds
+            scheduledCount: totalScheduled,
+            unscheduledCount: totalUnscheduled,
+            errors: allErrors,
+            unscheduledStudents: allUnscheduledStudents
         )
     }
 
     // MARK: - Private Methods
 
-    private func assignCohorts(
-        students: [Student],
-        cohorts: [Cohort],
-        constraints: [UUID: [Constraint]]
-    ) async throws -> [Student] {
-        var updatedStudents: [Student] = []
-
-        for var student in students {
-            // Check if student has a week_preference constraint
-            if let studentConstraints = constraints[student.id],
-               let weekPreference = studentConstraints.first(where: { $0.type == .weekPreference }) {
-                // Find cohort matching the preference
-                if let preferredCohort = cohorts.first(where: {
-                    $0.weekType.rawValue == weekPreference.value
-                }) {
-                    if student.cohortId != preferredCohort.id {
-                        student.cohortId = preferredCohort.id
-                        try await studentRepository.updateStudent(student)
-                    }
-                }
-            } else if student.cohortId == UUID(uuidString: "00000000-0000-0000-0000-000000000000") {
-                // Student has no cohort assigned - assign randomly
-                let randomCohort = cohorts.randomElement()!
-                student.cohortId = randomCohort.id
-                try await studentRepository.updateStudent(student)
-            }
-
-            updatedStudents.append(student)
-        }
-
-        return updatedStudents
-    }
-
-    private func generateCohortSlots(
-        students: [Student],
-        cohort: Cohort,
+    private func generateSlotsForExamSession(
         examSession: ExamSession,
-        examDate: Date,
         course: Course,
-        constraints: [UUID: [Constraint]],
-        sections: [Section]
-    ) async throws -> (scheduled: Int, unscheduled: Int, errors: [String], unscheduledStudentIds: [UUID]) {
+        students: [Student],
+        sections: [Section],
+        cohorts: [Cohort],
+        allStudentsCohort: Cohort,
+        constraints: [UUID: [Constraint]]
+    ) async throws -> (scheduled: Int, unscheduled: Int, errors: [String], unscheduledStudents: [UUID]) {
         var scheduled = 0
         var unscheduled = 0
         var errors: [String] = []
-        var unscheduledStudentIds: [UUID] = []
+        var unscheduledStudents: [UUID] = []
 
-        // Group students by section
-        let studentsBySection = Dictionary(grouping: students) { $0.sectionId }
-
-        for (sectionId, sectionStudents) in studentsBySection {
-            guard let section = sections.first(where: { $0.id == sectionId }) else {
-                continue
-            }
-
-            // Prioritize students by constraint type
-            let orderedStudents = prioritizeStudents(
-                sectionStudents,
-                constraints: constraints,
-                seed: examSession.examNumber
-            )
-
-            // Parse start and end times
-            let calendar = Calendar.current
-            let baseDate = Date(timeIntervalSince1970: 0) // Reference date for times
-            let startTimeComponents = parseTime(examSession.startTime)
-            let endTimeComponents = parseTime(examSession.endTime)
-
-            guard var currentTime = calendar.date(bySettingHour: startTimeComponents.hour,
-                                                   minute: startTimeComponents.minute,
-                                                   second: 0,
-                                                   of: baseDate),
-                  let endTime = calendar.date(bySettingHour: endTimeComponents.hour,
-                                              minute: endTimeComponents.minute,
-                                              second: 0,
-                                              of: baseDate) else {
-                errors.append("Failed to parse exam times for exam \(examSession.examNumber)")
-                continue
-            }
-
-            // Load existing slots to check for locked slots
-            let existingSlots = try await scheduleRepository.fetchExamSlots(
-                courseId: course.id,
-                examNumber: examSession.examNumber
-            )
-
-            for student in orderedStudents {
-                // Check if student has existing locked slot
-                if let existingSlot = existingSlots.first(where: { $0.studentId == student.id && $0.isLocked }) {
-                    // Skip but advance time to avoid overlap
-                    if existingSlot.isScheduled {
-                        let slotEndWithBuffer = existingSlot.endTime.addingTimeInterval(
-                            TimeInterval(examSession.bufferMinutes * 60)
-                        )
-                        if slotEndWithBuffer > currentTime {
-                            currentTime = slotEndWithBuffer
-                        }
-                    }
-                    continue
-                }
-
-                // Calculate slot end time
-                let slotEndTime = currentTime.addingTimeInterval(
-                    TimeInterval(examSession.durationMinutes * 60)
-                )
-
-                // Check if we have time remaining
-                if slotEndTime > endTime {
-                    // Create unscheduled slot
-                    try await createUnscheduledSlot(
-                        studentId: student.id,
-                        sectionId: section.id,
-                        examSession: examSession,
-                        courseId: course.id
-                    )
-                    unscheduled += 1
-                    unscheduledStudentIds.append(student.id)
-                    continue
-                }
-
-                // Combine exam date with time
-                let actualStartTime = combineDateTime(date: examDate, time: currentTime)
-                let actualEndTime = combineDateTime(date: examDate, time: slotEndTime)
-
-                // Check constraints
-                if !canScheduleStudent(
-                    student: student,
-                    constraints: constraints[student.id] ?? [],
-                    date: examDate,
-                    startTime: actualStartTime,
-                    endTime: actualEndTime
-                ) {
-                    // Create unscheduled slot
-                    try await createUnscheduledSlot(
-                        studentId: student.id,
-                        sectionId: section.id,
-                        examSession: examSession,
-                        courseId: course.id
-                    )
-                    unscheduled += 1
-                    unscheduledStudentIds.append(student.id)
-                    continue
-                }
-
-                // Create scheduled slot
-                let slot = ExamSlot(
-                    id: UUID(),
-                    courseId: course.id,
-                    studentId: student.id,
-                    sectionId: section.id,
-                    examSessionId: examSession.id,
-                    date: examDate,
-                    startTime: actualStartTime,
-                    endTime: actualEndTime,
-                    isScheduled: true,
-                    isLocked: false,
-                    notes: nil
-                )
-
-                try await scheduleRepository.updateExamSlot(slot)
-                scheduled += 1
-
-                // Advance time for next student
-                currentTime = slotEndTime.addingTimeInterval(
-                    TimeInterval(examSession.bufferMinutes * 60)
-                )
-            }
+        // Determine which students are eligible for this exam session
+        let eligibleStudents: [Student]
+        if let assignedCohortId = examSession.assignedCohortId {
+            // Specific cohort exam - only students in that cohort
+            eligibleStudents = students.filter { $0.cohortId == assignedCohortId }
+        } else {
+            // "All Students" exam - all students
+            eligibleStudents = students
         }
 
-        return (scheduled, unscheduled, errors, unscheduledStudentIds)
+        // Generate slots for each section
+        for section in sections where section.isActive {
+            // Calculate exam date: weekStartDate + section.weekday offset
+            let examDate = calculateExamDate(
+                weekStartDate: examSession.weekStartDate,
+                weekday: section.weekday
+            )
+
+            // Filter students by section
+            let sectionStudents = eligibleStudents.filter { $0.sectionId == section.id && $0.isActive }
+
+            if sectionStudents.isEmpty {
+                continue
+            }
+
+            // Generate slots for this section
+            let result = try await generateSlotsForSection(
+                students: sectionStudents,
+                section: section,
+                examSession: examSession,
+                examDate: examDate,
+                course: course,
+                constraints: constraints
+            )
+
+            scheduled += result.scheduled
+            unscheduled += result.unscheduled
+            errors.append(contentsOf: result.errors)
+            unscheduledStudents.append(contentsOf: result.unscheduledStudents)
+        }
+
+        return (scheduled, unscheduled, errors, unscheduledStudents)
+    }
+
+    private func generateSlotsForSection(
+        students: [Student],
+        section: Section,
+        examSession: ExamSession,
+        examDate: Date,
+        course: Course,
+        constraints: [UUID: [Constraint]]
+    ) async throws -> (scheduled: Int, unscheduled: Int, errors: [String], unscheduledStudents: [UUID]) {
+        var scheduled = 0
+        var unscheduled = 0
+        var errors: [String] = []
+        var unscheduledStudents: [UUID] = []
+
+        // Prioritize students by constraint type
+        let orderedStudents = prioritizeStudents(students, constraints: constraints, seed: examSession.examNumber)
+
+        // Parse section start and end times
+        let calendar = Calendar.current
+        let startTimeComponents = parseTime(section.startTime)
+        let endTimeComponents = parseTime(section.endTime)
+
+        print("📅 [Schedule] Section: \(section.code)")
+        print("📅 [Schedule] Exam date: \(examDate)")
+        print("📅 [Schedule] Section start time string: \(section.startTime)")
+        print("📅 [Schedule] Section end time string: \(section.endTime)")
+        print("📅 [Schedule] Parsed start: \(startTimeComponents.hour):\(startTimeComponents.minute)")
+        print("📅 [Schedule] Parsed end: \(endTimeComponents.hour):\(endTimeComponents.minute)")
+
+        // Create base time on exam date
+        guard var currentTime = calendar.date(
+            bySettingHour: startTimeComponents.hour,
+            minute: startTimeComponents.minute,
+            second: 0,
+            of: examDate
+        ),
+        let sectionEndTime = calendar.date(
+            bySettingHour: endTimeComponents.hour,
+            minute: endTimeComponents.minute,
+            second: 0,
+            of: examDate
+        ) else {
+            errors.append("Failed to parse section times for section \(section.code)")
+            return (0, 0, errors, [])
+        }
+
+        print("📅 [Schedule] Current time (section start): \(currentTime)")
+        print("📅 [Schedule] Section end time: \(sectionEndTime)")
+        print("📅 [Schedule] Exam duration: \(examSession.durationMinutes) min, Buffer: \(examSession.bufferMinutes) min")
+
+        // Validate section time range
+        let sectionDurationMinutes = sectionEndTime.timeIntervalSince(currentTime) / 60
+        print("📅 [Schedule] Section duration: \(sectionDurationMinutes) minutes")
+
+        if sectionDurationMinutes <= 0 {
+            let errorMsg = "Section \(section.code) has invalid time range: start \(section.startTime) >= end \(section.endTime)"
+            print("❌ [Schedule] \(errorMsg)")
+            errors.append(errorMsg)
+            return (0, 0, errors, [])
+        }
+
+        if sectionDurationMinutes < Double(examSession.durationMinutes) {
+            let errorMsg = "Section \(section.code) duration (\(sectionDurationMinutes) min) is less than exam duration (\(examSession.durationMinutes) min)"
+            print("❌ [Schedule] \(errorMsg)")
+            errors.append(errorMsg)
+            return (0, 0, errors, [])
+        }
+
+        // Load existing slots to check for locked slots
+        let existingSlots = try await scheduleRepository.fetchExamSlots(
+            courseId: course.id,
+            examNumber: examSession.examNumber
+        )
+
+        // Allocate time slots for each student
+        for student in orderedStudents {
+            // Check if student has existing locked slot
+            if let existingSlot = existingSlots.first(where: { $0.studentId == student.id && $0.isLocked }) {
+                // Skip but advance time to avoid overlap
+                if existingSlot.isScheduled {
+                    let slotEndWithBuffer = existingSlot.endTime.addingTimeInterval(
+                        TimeInterval(examSession.bufferMinutes * 60)
+                    )
+                    if slotEndWithBuffer > currentTime {
+                        currentTime = slotEndWithBuffer
+                    }
+                }
+                continue
+            }
+
+            // Calculate slot end time
+            let slotEndTime = currentTime.addingTimeInterval(
+                TimeInterval(examSession.durationMinutes * 60)
+            )
+
+            print("📅 [Schedule] Student: \(student.fullName) - Current: \(currentTime), End: \(slotEndTime), Section End: \(sectionEndTime)")
+
+            // Check if we have time remaining in the section
+            if slotEndTime > sectionEndTime {
+                print("⚠️ [Schedule] Insufficient time for \(student.fullName): slotEnd \(slotEndTime) > sectionEnd \(sectionEndTime)")
+                // Create unscheduled slot
+                try await createUnscheduledSlot(
+                    studentId: student.id,
+                    sectionId: section.id,
+                    examSession: examSession,
+                    courseId: course.id,
+                    reason: "Insufficient time remaining in section"
+                )
+                unscheduled += 1
+                unscheduledStudents.append(student.id)
+                continue
+            }
+
+            // Check constraints
+            if !canScheduleStudent(
+                student: student,
+                constraints: constraints[student.id] ?? [],
+                date: examDate,
+                startTime: currentTime,
+                endTime: slotEndTime
+            ) {
+                // Create unscheduled slot
+                try await createUnscheduledSlot(
+                    studentId: student.id,
+                    sectionId: section.id,
+                    examSession: examSession,
+                    courseId: course.id,
+                    reason: "Constraint violation"
+                )
+                unscheduled += 1
+                unscheduledStudents.append(student.id)
+                continue
+            }
+
+            // Create scheduled slot
+            let slot = ExamSlot(
+                id: UUID(),
+                courseId: course.id,
+                studentId: student.id,
+                sectionId: section.id,
+                examSessionId: examSession.id,
+                date: examDate,
+                startTime: currentTime,
+                endTime: slotEndTime,
+                isScheduled: true,
+                isLocked: false,
+                notes: nil
+            )
+
+            try await scheduleRepository.updateExamSlot(slot)
+            scheduled += 1
+
+            // Advance time for next student (duration + buffer)
+            currentTime = slotEndTime.addingTimeInterval(
+                TimeInterval(examSession.bufferMinutes * 60)
+            )
+        }
+
+        return (scheduled, unscheduled, errors, unscheduledStudents)
+    }
+
+    private func calculateExamDate(weekStartDate: Date, weekday: Int) -> Date {
+        let calendar = Calendar.current
+
+        // weekday: 1=Sunday, 2=Monday, ..., 7=Saturday
+        // Get the weekday of the week start date
+        let weekStartWeekday = calendar.component(.weekday, from: weekStartDate)
+
+        // Calculate days to add
+        var daysToAdd = weekday - weekStartWeekday
+        if daysToAdd < 0 {
+            daysToAdd += 7
+        }
+
+        return calendar.date(byAdding: .day, value: daysToAdd, to: weekStartDate) ?? weekStartDate
     }
 
     private func prioritizeStudents(
@@ -309,10 +371,10 @@ class GenerateScheduleUseCase {
         for student in students {
             let studentConstraints = constraints[student.id] ?? []
 
-            let hasTimeBefore = studentConstraints.contains { $0.type == .timeBefore }
-            let hasTimeAfter = studentConstraints.contains { $0.type == .timeAfter }
+            let hasTimeBefore = studentConstraints.contains { $0.type == .timeBefore && $0.isActive }
+            let hasTimeAfter = studentConstraints.contains { $0.type == .timeAfter && $0.isActive }
             let hasOther = studentConstraints.contains {
-                $0.type == .specificDate || $0.type == .excludeDate
+                ($0.type == .specificDate || $0.type == .excludeDate) && $0.isActive
             }
 
             if hasTimeBefore {
@@ -326,11 +388,12 @@ class GenerateScheduleUseCase {
             }
         }
 
-        // Shuffle within each group for fairness
-        return timeBefore.shuffled() +
-               timeAfter.shuffled() +
-               otherConstraints.shuffled() +
-               noConstraints.shuffled()
+        // Shuffle within each group for fairness (using seed for determinism)
+        var rng = SeededRandomNumberGenerator(seed: UInt64(seed))
+        return timeBefore.shuffled(using: &rng) +
+               timeAfter.shuffled(using: &rng) +
+               otherConstraints.shuffled(using: &rng) +
+               noConstraints.shuffled(using: &rng)
     }
 
     private func canScheduleStudent(
@@ -340,36 +403,39 @@ class GenerateScheduleUseCase {
         startTime: Date,
         endTime: Date
     ) -> Bool {
+        let calendar = Calendar.current
+
         for constraint in constraints where constraint.isActive {
             switch constraint.type {
             case .timeBefore:
                 // Student must start BEFORE this time
-                let maxTime = parseConstraintTime(constraint.value)
-                let startTimeComponents = Calendar.current.dateComponents([.hour, .minute], from: startTime)
-                let maxTimeComponents = parseTime(maxTime)
+                let maxTimeComponents = parseTime(constraint.value)
+                let startTimeComponents = calendar.dateComponents([.hour, .minute], from: startTime)
 
-                if startTimeComponents.hour! > maxTimeComponents.hour ||
-                   (startTimeComponents.hour! == maxTimeComponents.hour &&
-                    startTimeComponents.minute! >= maxTimeComponents.minute) {
-                    return false
+                if let startHour = startTimeComponents.hour,
+                   let startMinute = startTimeComponents.minute {
+                    if startHour > maxTimeComponents.hour ||
+                       (startHour == maxTimeComponents.hour && startMinute >= maxTimeComponents.minute) {
+                        return false
+                    }
                 }
 
             case .timeAfter:
                 // Student must start AFTER this time
-                let minTime = parseConstraintTime(constraint.value)
-                let startTimeComponents = Calendar.current.dateComponents([.hour, .minute], from: startTime)
-                let minTimeComponents = parseTime(minTime)
+                let minTimeComponents = parseTime(constraint.value)
+                let startTimeComponents = calendar.dateComponents([.hour, .minute], from: startTime)
 
-                if startTimeComponents.hour! < minTimeComponents.hour ||
-                   (startTimeComponents.hour! == minTimeComponents.hour &&
-                    startTimeComponents.minute! < minTimeComponents.minute) {
-                    return false
+                if let startHour = startTimeComponents.hour,
+                   let startMinute = startTimeComponents.minute {
+                    if startHour < minTimeComponents.hour ||
+                       (startHour == minTimeComponents.hour && startMinute < minTimeComponents.minute) {
+                        return false
+                    }
                 }
 
             case .specificDate:
                 // Student must be scheduled on this specific date
                 if let requiredDate = parseConstraintDate(constraint.value) {
-                    let calendar = Calendar.current
                     if !calendar.isDate(date, inSameDayAs: requiredDate) {
                         return false
                     }
@@ -378,14 +444,13 @@ class GenerateScheduleUseCase {
             case .excludeDate:
                 // Student cannot be scheduled on this date
                 if let excludedDate = parseConstraintDate(constraint.value) {
-                    let calendar = Calendar.current
                     if calendar.isDate(date, inSameDayAs: excludedDate) {
                         return false
                     }
                 }
 
             case .weekPreference:
-                // Handled during cohort assignment
+                // Week preference is handled via cohort assignment, not during scheduling
                 break
             }
         }
@@ -397,7 +462,8 @@ class GenerateScheduleUseCase {
         studentId: UUID,
         sectionId: UUID,
         examSession: ExamSession,
-        courseId: UUID
+        courseId: UUID,
+        reason: String
     ) async throws {
         let slot = ExamSlot(
             id: UUID(),
@@ -410,7 +476,7 @@ class GenerateScheduleUseCase {
             endTime: Date(),
             isScheduled: false,
             isLocked: false,
-            notes: "Could not schedule due to constraints or time limitations"
+            notes: reason
         )
 
         try await scheduleRepository.updateExamSlot(slot)
@@ -419,13 +485,8 @@ class GenerateScheduleUseCase {
     // MARK: - Helper Methods
 
     private func parseTime(_ timeString: String) -> (hour: Int, minute: Int) {
-        let components = timeString.split(separator: ":").map { Int($0) ?? 0 }
-        return (hour: components[0], minute: components.count > 1 ? components[1] : 0)
-    }
-
-    private func parseConstraintTime(_ timeString: String) -> String {
-        // Constraint value is already in HH:MM format
-        return timeString
+        let components = timeString.split(separator: ":").compactMap { Int($0) }
+        return (hour: components.first ?? 0, minute: components.count > 1 ? components[1] : 0)
     }
 
     private func parseConstraintDate(_ dateString: String) -> Date? {
@@ -433,20 +494,19 @@ class GenerateScheduleUseCase {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.date(from: dateString)
     }
+}
 
-    private func combineDateTime(date: Date, time: Date) -> Date {
-        let calendar = Calendar.current
-        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
-        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+// MARK: - Seeded Random Number Generator
 
-        var combined = DateComponents()
-        combined.year = dateComponents.year
-        combined.month = dateComponents.month
-        combined.day = dateComponents.day
-        combined.hour = timeComponents.hour
-        combined.minute = timeComponents.minute
-        combined.second = timeComponents.second
+struct SeededRandomNumberGenerator: RandomNumberGenerator {
+    private var state: UInt64
 
-        return calendar.date(from: combined) ?? date
+    init(seed: UInt64) {
+        self.state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state = state &* 6364136223846793005 &+ 1442695040888963407
+        return state
     }
 }
