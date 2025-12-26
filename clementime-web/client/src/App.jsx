@@ -11,9 +11,18 @@ function PrivateRoute({ children, role }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <div className="spinner"></div>
-    </div>;
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <div className="spinner"></div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -32,9 +41,7 @@ function AppHome() {
 
   if (!user) return <Navigate to="/login" />;
 
-  return user.role === 'admin' ?
-    <Navigate to="/admin" /> :
-    <Navigate to="/ta" />;
+  return user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/ta" />;
 }
 
 function App() {

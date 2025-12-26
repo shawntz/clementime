@@ -16,14 +16,16 @@ export default function TAManager() {
     try {
       const [tasRes, sectionsRes] = await Promise.all([
         api.get('/admin/users?role=ta'),
-        api.get('/admin/sections')
+        api.get('/admin/sections'),
       ]);
       // Filter out inactive TAs
-      setTas(tasRes.data.users.filter(ta => ta.is_active));
-      setSections(sectionsRes.data.sections.filter(s => {
-        const parts = s.code.split('-');
-        return parts.length >= 4 && parseInt(parts[3]) !== 1;
-      }));
+      setTas(tasRes.data.users.filter((ta) => ta.is_active));
+      setSections(
+        sectionsRes.data.sections.filter((s) => {
+          const parts = s.code.split('-');
+          return parts.length >= 4 && parseInt(parts[3]) !== 1;
+        })
+      );
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {
@@ -45,7 +47,7 @@ export default function TAManager() {
   const toggleTAStatus = async (taId, currentStatus) => {
     try {
       await api.put(`/admin/users/${taId}`, {
-        is_active: !currentStatus
+        is_active: !currentStatus,
       });
       loadData();
     } catch (err) {
@@ -82,14 +84,16 @@ export default function TAManager() {
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--primary)', margin: 0 }}>
-            TA Management
-          </h3>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="btn btn-primary"
-          >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
+          <h3 style={{ color: 'var(--primary)', margin: 0 }}>TA Management</h3>
+          <button onClick={() => setShowCreateModal(true)} className="btn btn-primary">
             + Create TA
           </button>
         </div>
@@ -109,14 +113,24 @@ export default function TAManager() {
           </thead>
           <tbody>
             {tas.map((ta) => {
-              const assignedSections = sections.filter(s => s.ta?.id === ta.id);
+              const assignedSections = sections.filter((s) => s.ta?.id === ta.id);
               return (
                 <tr key={ta.id} style={{ opacity: ta.is_active ? 1 : 0.5 }}>
                   <td>{ta.full_name}</td>
-                  <td><code>{ta.username}</code></td>
+                  <td>
+                    <code>{ta.username}</code>
+                  </td>
                   <td>{ta.email}</td>
-                  <td>{ta.location || <span style={{ color: 'var(--text-light)' }}>Not set</span>}</td>
-                  <td>{ta.slack_id ? <code>{ta.slack_id}</code> : <span style={{ color: 'var(--text-light)' }}>Not set</span>}</td>
+                  <td>
+                    {ta.location || <span style={{ color: 'var(--text-light)' }}>Not set</span>}
+                  </td>
+                  <td>
+                    {ta.slack_id ? (
+                      <code>{ta.slack_id}</code>
+                    ) : (
+                      <span style={{ color: 'var(--text-light)' }}>Not set</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`badge ${ta.is_active ? 'badge-success' : 'badge-error'}`}>
                       {ta.is_active ? 'Active' : 'Inactive'}
@@ -125,7 +139,7 @@ export default function TAManager() {
                   <td>
                     {assignedSections.length > 0 ? (
                       <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                        {assignedSections.map(section => (
+                        {assignedSections.map((section) => (
                           <span key={section.id} className="badge badge-primary">
                             {section.name}
                           </span>
@@ -171,7 +185,11 @@ export default function TAManager() {
                       <button
                         onClick={() => deleteTA(ta.id)}
                         className="btn btn-outline"
-                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: 'var(--error)' }}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          color: 'var(--error)',
+                        }}
                       >
                         Delete
                       </button>
@@ -211,10 +229,7 @@ export default function TAManager() {
       )}
 
       {slackModalUser && (
-        <SlackCredentialsModal
-          user={slackModalUser}
-          onClose={() => setSlackModalUser(null)}
-        />
+        <SlackCredentialsModal user={slackModalUser} onClose={() => setSlackModalUser(null)} />
       )}
     </div>
   );
@@ -234,13 +249,13 @@ function SlackCredentialsModal({ user, onClose }) {
     try {
       const [adminsRes, tasRes] = await Promise.all([
         api.get('/admin/users?role=admin'),
-        api.get('/admin/users?role=ta')
+        api.get('/admin/users?role=ta'),
       ]);
 
       const usersWithSlack = [
-        ...adminsRes.data.users.map(u => ({ ...u, type: 'Admin' })),
-        ...tasRes.data.users.map(u => ({ ...u, type: 'TA' }))
-      ].filter(u => u.slack_id && u.id !== user.id && u.is_active); // Exclude the recipient, users without Slack ID, and inactive users
+        ...adminsRes.data.users.map((u) => ({ ...u, type: 'Admin' })),
+        ...tasRes.data.users.map((u) => ({ ...u, type: 'TA' })),
+      ].filter((u) => u.slack_id && u.id !== user.id && u.is_active); // Exclude the recipient, users without Slack ID, and inactive users
 
       setAllUsers(usersWithSlack);
     } catch (err) {
@@ -251,10 +266,8 @@ function SlackCredentialsModal({ user, onClose }) {
   };
 
   const toggleUser = (userId) => {
-    setSelectedUserIds(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
   };
 
@@ -264,7 +277,7 @@ function SlackCredentialsModal({ user, onClose }) {
     setSending(true);
     try {
       await api.post(`/admin/users/${user.id}/send_slack_credentials`, {
-        include_user_ids: selectedUserIds
+        include_user_ids: selectedUserIds,
       });
       alert('Credentials sent via Slack successfully!');
       onClose();
@@ -288,12 +301,14 @@ function SlackCredentialsModal({ user, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
-      }}>
+        zIndex: 1000,
+      }}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
+        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}
+      >
         <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
           Send Credentials to {user.name}
         </h3>
@@ -312,7 +327,7 @@ function SlackCredentialsModal({ user, onClose }) {
               </p>
             ) : (
               <div style={{ maxHeight: '300px', overflow: 'auto', marginBottom: '1rem' }}>
-                {allUsers.map(u => (
+                {allUsers.map((u) => (
                   <label
                     key={u.id}
                     style={{
@@ -323,8 +338,11 @@ function SlackCredentialsModal({ user, onClose }) {
                       borderRadius: '6px',
                       marginBottom: '0.5rem',
                       cursor: 'pointer',
-                      backgroundColor: selectedUserIds.includes(u.id) ? 'var(--primary-light)' : 'transparent'
-                    }}>
+                      backgroundColor: selectedUserIds.includes(u.id)
+                        ? 'var(--primary-light)'
+                        : 'transparent',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedUserIds.includes(u.id)}
@@ -342,30 +360,25 @@ function SlackCredentialsModal({ user, onClose }) {
               </div>
             )}
 
-            <div style={{
-              padding: '0.75rem',
-              backgroundColor: 'var(--info-light)',
-              borderRadius: '6px',
-              marginBottom: '1rem',
-              fontSize: '0.875rem'
-            }}>
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: 'var(--info-light)',
+                borderRadius: '6px',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+              }}
+            >
               <strong>Recipients:</strong> {user.name}
-              {selectedUserIds.length > 0 && ` + ${selectedUserIds.length} other${selectedUserIds.length > 1 ? 's' : ''}`}
+              {selectedUserIds.length > 0 &&
+                ` + ${selectedUserIds.length} other${selectedUserIds.length > 1 ? 's' : ''}`}
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                onClick={handleSend}
-                className="btn btn-primary"
-                disabled={sending}
-              >
+              <button onClick={handleSend} className="btn btn-primary" disabled={sending}>
                 {sending ? 'Sending...' : 'Send Credentials'}
               </button>
-              <button
-                onClick={onClose}
-                className="btn btn-outline"
-                disabled={sending}
-              >
+              <button onClick={onClose} className="btn btn-outline" disabled={sending}>
                 Cancel
               </button>
             </div>
@@ -403,7 +416,7 @@ function CreateTAModal({ onClose }) {
     first_name: '',
     last_name: '',
     location: '',
-    slack_id: ''
+    slack_id: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -412,7 +425,7 @@ function CreateTAModal({ onClose }) {
   useEffect(() => {
     if (formData.first_name && formData.last_name) {
       const baseUsername = `${formData.first_name.toLowerCase()}.${formData.last_name.toLowerCase()}`;
-      setFormData(prev => ({ ...prev, username: baseUsername }));
+      setFormData((prev) => ({ ...prev, username: baseUsername }));
     }
   }, [formData.first_name, formData.last_name]);
 
@@ -452,8 +465,8 @@ function CreateTAModal({ onClose }) {
           location: formData.location,
           slack_id: formData.slack_id,
           role: 'ta',
-          is_active: true
-        }
+          is_active: true,
+        },
       });
       onClose();
     } catch (err) {
@@ -464,22 +477,22 @@ function CreateTAModal({ onClose }) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+    >
       <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Create New TA
-        </h3>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Create New TA</h3>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
@@ -600,7 +613,7 @@ function EditTAModal({ ta, onClose }) {
     last_name: ta.last_name,
     email: ta.email,
     location: ta.location || '',
-    slack_id: ta.slack_id || ''
+    slack_id: ta.slack_id || '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -617,8 +630,8 @@ function EditTAModal({ ta, onClose }) {
           last_name: formData.last_name,
           email: formData.email,
           location: formData.location,
-          slack_id: formData.slack_id
-        }
+          slack_id: formData.slack_id,
+        },
       });
       onClose();
     } catch (err) {
@@ -641,15 +654,15 @@ function EditTAModal({ ta, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
-      }}>
+        zIndex: 1000,
+      }}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '500px', width: '90%' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Edit TA: {ta.full_name}
-        </h3>
+        style={{ maxWidth: '500px', width: '90%' }}
+      >
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Edit TA: {ta.full_name}</h3>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>

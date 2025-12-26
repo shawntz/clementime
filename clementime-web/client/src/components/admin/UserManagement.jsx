@@ -37,8 +37,8 @@ export default function UserManagement() {
     try {
       await api.put(`/admin/users/${userId}`, {
         user: {
-          is_active: !currentStatus
-        }
+          is_active: !currentStatus,
+        },
       });
       loadUsers();
     } catch (err) {
@@ -75,14 +75,16 @@ export default function UserManagement() {
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--primary)', margin: 0 }}>
-            Admin User Management
-          </h3>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowCreateModal(true)}
-          >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
+          <h3 style={{ color: 'var(--primary)', margin: 0 }}>Admin User Management</h3>
+          <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
             + Admin User
           </button>
         </div>
@@ -105,7 +107,13 @@ export default function UserManagement() {
                   <td style={{ fontWeight: '500' }}>{user.username}</td>
                   <td>{user.full_name}</td>
                   <td>{user.email}</td>
-                  <td>{user.slack_id ? <code>{user.slack_id}</code> : <span style={{ color: 'var(--text-light)' }}>Not set</span>}</td>
+                  <td>
+                    {user.slack_id ? (
+                      <code>{user.slack_id}</code>
+                    ) : (
+                      <span style={{ color: 'var(--text-light)' }}>Not set</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`badge ${user.is_active ? 'badge-success' : 'badge-error'}`}>
                       {user.is_active ? 'Active' : 'Inactive'}
@@ -144,7 +152,7 @@ export default function UserManagement() {
                           fontSize: '0.75rem',
                           padding: '0.25rem 0.5rem',
                           backgroundColor: user.is_active ? 'var(--warning)' : 'var(--success)',
-                          color: 'white'
+                          color: 'white',
                         }}
                       >
                         {user.is_active ? 'Deactivate' : 'Activate'}
@@ -156,7 +164,7 @@ export default function UserManagement() {
                           fontSize: '0.75rem',
                           padding: '0.25rem 0.5rem',
                           backgroundColor: 'var(--error)',
-                          color: 'white'
+                          color: 'white',
                         }}
                       >
                         Delete
@@ -199,10 +207,7 @@ export default function UserManagement() {
       )}
 
       {slackModalUser && (
-        <SlackCredentialsModal
-          user={slackModalUser}
-          onClose={() => setSlackModalUser(null)}
-        />
+        <SlackCredentialsModal user={slackModalUser} onClose={() => setSlackModalUser(null)} />
       )}
     </div>
   );
@@ -222,13 +227,13 @@ function SlackCredentialsModal({ user, onClose }) {
     try {
       const [adminsRes, tasRes] = await Promise.all([
         api.get('/admin/users?role=admin'),
-        api.get('/admin/users?role=ta')
+        api.get('/admin/users?role=ta'),
       ]);
 
       const usersWithSlack = [
-        ...adminsRes.data.users.map(u => ({ ...u, type: 'Admin' })),
-        ...tasRes.data.users.map(u => ({ ...u, type: 'TA' }))
-      ].filter(u => u.slack_id && u.id !== user.id && u.is_active); // Exclude the recipient, users without Slack ID, and inactive users
+        ...adminsRes.data.users.map((u) => ({ ...u, type: 'Admin' })),
+        ...tasRes.data.users.map((u) => ({ ...u, type: 'TA' })),
+      ].filter((u) => u.slack_id && u.id !== user.id && u.is_active); // Exclude the recipient, users without Slack ID, and inactive users
 
       setAllUsers(usersWithSlack);
     } catch (err) {
@@ -239,10 +244,8 @@ function SlackCredentialsModal({ user, onClose }) {
   };
 
   const toggleUser = (userId) => {
-    setSelectedUserIds(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
   };
 
@@ -252,7 +255,7 @@ function SlackCredentialsModal({ user, onClose }) {
     setSending(true);
     try {
       await api.post(`/admin/users/${user.id}/send_slack_credentials`, {
-        include_user_ids: selectedUserIds
+        include_user_ids: selectedUserIds,
       });
       alert('Credentials sent via Slack successfully!');
       onClose();
@@ -276,12 +279,14 @@ function SlackCredentialsModal({ user, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
-      }}>
+        zIndex: 1000,
+      }}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
+        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}
+      >
         <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
           Send Credentials to {user.name}
         </h3>
@@ -300,7 +305,7 @@ function SlackCredentialsModal({ user, onClose }) {
               </p>
             ) : (
               <div style={{ maxHeight: '300px', overflow: 'auto', marginBottom: '1rem' }}>
-                {allUsers.map(u => (
+                {allUsers.map((u) => (
                   <label
                     key={u.id}
                     style={{
@@ -311,8 +316,11 @@ function SlackCredentialsModal({ user, onClose }) {
                       borderRadius: '6px',
                       marginBottom: '0.5rem',
                       cursor: 'pointer',
-                      backgroundColor: selectedUserIds.includes(u.id) ? 'var(--primary-light)' : 'transparent'
-                    }}>
+                      backgroundColor: selectedUserIds.includes(u.id)
+                        ? 'var(--primary-light)'
+                        : 'transparent',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedUserIds.includes(u.id)}
@@ -330,30 +338,25 @@ function SlackCredentialsModal({ user, onClose }) {
               </div>
             )}
 
-            <div style={{
-              padding: '0.75rem',
-              backgroundColor: 'var(--info-light)',
-              borderRadius: '6px',
-              marginBottom: '1rem',
-              fontSize: '0.875rem'
-            }}>
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: 'var(--info-light)',
+                borderRadius: '6px',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+              }}
+            >
               <strong>Recipients:</strong> {user.name}
-              {selectedUserIds.length > 0 && ` + ${selectedUserIds.length} other${selectedUserIds.length > 1 ? 's' : ''}`}
+              {selectedUserIds.length > 0 &&
+                ` + ${selectedUserIds.length} other${selectedUserIds.length > 1 ? 's' : ''}`}
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                onClick={handleSend}
-                className="btn btn-primary"
-                disabled={sending}
-              >
+              <button onClick={handleSend} className="btn btn-primary" disabled={sending}>
                 {sending ? 'Sending...' : 'Send Credentials'}
               </button>
-              <button
-                onClick={onClose}
-                className="btn btn-outline"
-                disabled={sending}
-              >
+              <button onClick={onClose} className="btn btn-outline" disabled={sending}>
                 Cancel
               </button>
             </div>
@@ -384,7 +387,7 @@ function CreateAdminModal({ onClose, onSuccess }) {
     full_name: '',
     email: '',
     password: generatePassword(),
-    slack_id: ''
+    slack_id: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -410,8 +413,8 @@ function CreateAdminModal({ onClose, onSuccess }) {
           first_name: firstName,
           last_name: lastName,
           role: 'admin',
-          is_active: true
-        }
+          is_active: true,
+        },
       });
       onSuccess();
     } catch (err) {
@@ -422,19 +425,24 @@ function CreateAdminModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }} onClick={onClose}>
-      <div className="card" style={{ maxWidth: '500px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Create New Admin User
-        </h3>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="card"
+        style={{ maxWidth: '500px', width: '90%' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Create New Admin User</h3>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -484,14 +492,17 @@ function CreateAdminModal({ onClose, onSuccess }) {
             </small>
           </div>
 
-          <div style={{
-            padding: '0.75rem',
-            backgroundColor: 'var(--info-light)',
-            borderRadius: '6px',
-            marginBottom: '1rem',
-            fontSize: '0.875rem'
-          }}>
-            ℹ️ A temporary password will be auto-generated. Send the welcome email to provide the admin with their login credentials.
+          <div
+            style={{
+              padding: '0.75rem',
+              backgroundColor: 'var(--info-light)',
+              borderRadius: '6px',
+              marginBottom: '1rem',
+              fontSize: '0.875rem',
+            }}
+          >
+            ℹ️ A temporary password will be auto-generated. Send the welcome email to provide the
+            admin with their login credentials.
           </div>
 
           {error && (
@@ -501,19 +512,10 @@ function CreateAdminModal({ onClose, onSuccess }) {
           )}
 
           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={onClose}
-              disabled={saving}
-            >
+            <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={saving}
-            >
+            <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Creating...' : 'Create Admin'}
             </button>
           </div>
@@ -528,7 +530,7 @@ function EditAdminModal({ user, onClose, onSuccess }) {
     username: user.username,
     full_name: user.full_name,
     email: user.email,
-    slack_id: user.slack_id || ''
+    slack_id: user.slack_id || '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -550,8 +552,8 @@ function EditAdminModal({ user, onClose, onSuccess }) {
           email: formData.email,
           slack_id: formData.slack_id,
           first_name: firstName,
-          last_name: lastName
-        }
+          last_name: lastName,
+        },
       });
       onSuccess();
     } catch (err) {
@@ -562,19 +564,23 @@ function EditAdminModal({ user, onClose, onSuccess }) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }} onClick={onClose}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '500px', width: '90%' }}>
+        style={{ maxWidth: '500px', width: '90%' }}
+      >
         <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
           Edit Admin: {user.full_name}
         </h3>
@@ -634,19 +640,10 @@ function EditAdminModal({ user, onClose, onSuccess }) {
           )}
 
           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={onClose}
-              disabled={saving}
-            >
+            <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={saving}
-            >
+            <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>

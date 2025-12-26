@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  has_secure_password
+  has_secure_password validations: false
 
   # Associations
   has_many :sections, foreign_key: "ta_id", dependent: :nullify
@@ -11,6 +11,10 @@ class User < ApplicationRecord
             format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :role, presence: true, inclusion: { in: %w[admin ta] }
   validates :first_name, :last_name, presence: true
+  
+  # Custom password validation - only validate if password is being set
+  validates :password, presence: true, length: { minimum: 6 }, if: :password_required?
+  validates :password, confirmation: true, if: :password_required?
 
   # Scopes
   scope :active, -> { where(is_active: true) }
@@ -49,5 +53,13 @@ class User < ApplicationRecord
 
   def password_reset_token_valid?
     reset_password_sent_at.present? && reset_password_sent_at > 2.hours.ago
+  end
+
+  private
+
+  def password_required?
+    # Password validation is required only when password or password_confirmation is provided
+    # This allows creating users without passwords (for welcome email flow with reset token)
+    password.present? || password_confirmation.present?
   end
 end

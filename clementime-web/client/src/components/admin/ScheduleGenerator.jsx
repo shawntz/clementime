@@ -22,7 +22,7 @@ export default function ScheduleGenerator() {
       const response = await api.get('/admin/schedules/overview');
 
       // Filter out section 01 and sort by section number
-      const filteredOverview = response.data.overview.filter(item => {
+      const filteredOverview = response.data.overview.filter((item) => {
         const parts = item.section.code.split('-');
         if (parts.length >= 4) {
           const sectionNum = parseInt(parts[3]);
@@ -41,14 +41,17 @@ export default function ScheduleGenerator() {
       // Recalculate totals based on filtered sections
       const total_students = filteredOverview.reduce((sum, item) => sum + item.students_count, 0);
       const total_scheduled = filteredOverview.reduce((sum, item) => sum + item.scheduled_slots, 0);
-      const total_unscheduled = filteredOverview.reduce((sum, item) => sum + item.unscheduled_slots_count, 0);
+      const total_unscheduled = filteredOverview.reduce(
+        (sum, item) => sum + item.unscheduled_slots_count,
+        0
+      );
 
       setOverview({
         ...response.data,
         overview: filteredOverview,
         total_students,
         total_scheduled,
-        total_unscheduled
+        total_unscheduled,
       });
     } catch (err) {
       console.error('Failed to load overview', err);
@@ -56,7 +59,11 @@ export default function ScheduleGenerator() {
   };
 
   const generateSchedules = async () => {
-    if (!confirm('Generate schedules for all sections? This will create exam slots for all active students.')) {
+    if (
+      !confirm(
+        'Generate schedules for all sections? This will create exam slots for all active students.'
+      )
+    ) {
       return;
     }
 
@@ -81,7 +88,11 @@ export default function ScheduleGenerator() {
       return;
     }
 
-    if (!confirm(`Regenerate schedules from Exam ${startExam} onwards? This will preserve all exam schedules before Exam ${startExam} and regenerate the rest.`)) {
+    if (
+      !confirm(
+        `Regenerate schedules from Exam ${startExam} onwards? This will preserve all exam schedules before Exam ${startExam} and regenerate the rest.`
+      )
+    ) {
       return;
     }
 
@@ -92,7 +103,7 @@ export default function ScheduleGenerator() {
 
     try {
       const response = await api.post('/admin/schedules/generate', {
-        start_exam: startExam
+        start_exam: startExam,
       });
       setResult(response.data);
       loadOverview();
@@ -105,7 +116,11 @@ export default function ScheduleGenerator() {
   };
 
   const scheduleNewStudents = async () => {
-    if (!confirm('Schedule new students only? This will add new/unscheduled students to the END of existing schedules without affecting anyone else.')) {
+    if (
+      !confirm(
+        'Schedule new students only? This will add new/unscheduled students to the END of existing schedules without affecting anyone else.'
+      )
+    ) {
       return;
     }
 
@@ -122,9 +137,9 @@ export default function ScheduleGenerator() {
         message += `\n⚠️ ${data.unscheduled_count} slots couldn't fit (exceeded exam time)`;
       }
       if (data.students_processed.length > 0) {
-        message += `\n\nStudents processed:\n${data.students_processed.map(s =>
-          `• ${s.full_name}: ${s.scheduled} scheduled, ${s.unscheduled} unscheduled`
-        ).join('\n')}`;
+        message += `\n\nStudents processed:\n${data.students_processed
+          .map((s) => `• ${s.full_name}: ${s.scheduled} scheduled, ${s.unscheduled} unscheduled`)
+          .join('\n')}`;
       }
 
       alert(message);
@@ -160,7 +175,7 @@ export default function ScheduleGenerator() {
   const exportToCSV = async () => {
     try {
       const response = await api.get('/admin/schedules/export_csv', {
-        responseType: 'blob'
+        responseType: 'blob',
       });
 
       // Create a blob from the response
@@ -205,30 +220,21 @@ export default function ScheduleGenerator() {
     const sectionNum = parts[3];
 
     // Return both PSYCH-10 and STATS-60 variants
-    return [
-      `${term}-PSYCH-10-${sectionNum}`,
-      `${term}-STATS-60-${sectionNum}`
-    ];
+    return [`${term}-PSYCH-10-${sectionNum}`, `${term}-STATS-60-${sectionNum}`];
   };
 
   return (
     <div>
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Schedule Generator
-        </h3>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Schedule Generator</h3>
 
         <p style={{ marginBottom: '1rem', color: 'var(--text-light)' }}>
-          This will generate exam schedules for all active students across all sections.
-          Students will be randomly assigned to odd/even weeks within their section.
+          This will generate exam schedules for all active students across all sections. Students
+          will be randomly assigned to odd/even weeks within their section.
         </p>
 
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={generateSchedules}
-            className="btn btn-primary"
-            disabled={loading}
-          >
+          <button onClick={generateSchedules} className="btn btn-primary" disabled={loading}>
             {loading ? 'Generating...' : '🗓️ Generate All Schedules'}
           </button>
           <button
@@ -249,11 +255,7 @@ export default function ScheduleGenerator() {
           >
             {loading ? 'Scheduling...' : '➕ Schedule New Students'}
           </button>
-          <button
-            onClick={exportToCSV}
-            className="btn btn-outline"
-            disabled={loading}
-          >
+          <button onClick={exportToCSV} className="btn btn-outline" disabled={loading}>
             📥 Export to CSV
           </button>
           <button
@@ -274,9 +276,13 @@ export default function ScheduleGenerator() {
               `Generated ${result.generated_count} exam slots`
             ) : result.scheduled_count !== undefined ? (
               <>
-                Scheduled {result.scheduled_count} slots for {result.students_processed?.length || 0} students
+                Scheduled {result.scheduled_count} slots for{' '}
+                {result.students_processed?.length || 0} students
                 {result.unscheduled_count > 0 && (
-                  <><br />⚠️ {result.unscheduled_count} slots couldn't fit (exceeded exam time)</>
+                  <>
+                    <br />
+                    ⚠️ {result.unscheduled_count} slots couldn't fit (exceeded exam time)
+                  </>
                 )}
               </>
             ) : (
@@ -294,20 +300,34 @@ export default function ScheduleGenerator() {
 
       {overview && (
         <div className="card">
-          <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-            Schedule Overview
-          </h3>
+          <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Schedule Overview</h3>
 
           <div style={{ marginBottom: '1.5rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-              <div style={{ padding: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Total Students</div>
+              <div
+                style={{
+                  padding: '1rem',
+                  backgroundColor: 'var(--background)',
+                  borderRadius: '0.5rem',
+                }}
+              >
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                  Total Students
+                </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>
                   {overview.total_students}
                 </div>
               </div>
-              <div style={{ padding: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Scheduled Slots</div>
+              <div
+                style={{
+                  padding: '1rem',
+                  backgroundColor: 'var(--background)',
+                  borderRadius: '0.5rem',
+                }}
+              >
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                  Scheduled Slots
+                </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>
                   {overview.total_scheduled}
                 </div>
@@ -319,7 +339,7 @@ export default function ScheduleGenerator() {
                   borderRadius: '0.5rem',
                   cursor: overview.total_unscheduled > 0 ? 'pointer' : 'default',
                   transition: 'all 0.2s',
-                  border: '2px solid transparent'
+                  border: '2px solid transparent',
                 }}
                 onMouseEnter={(e) => {
                   if (overview.total_unscheduled > 0) {
@@ -365,7 +385,9 @@ export default function ScheduleGenerator() {
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {codes.map((code, idx) => (
-                          <span key={idx} className="badge badge-primary">{code}</span>
+                          <span key={idx} className="badge badge-primary">
+                            {code}
+                          </span>
                         ))}
                       </div>
                     </td>
@@ -399,7 +421,7 @@ export default function ScheduleGenerator() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
         >
           <div
@@ -415,25 +437,30 @@ export default function ScheduleGenerator() {
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-              {[1, 2, 3, 4, 5].map(examNum => {
+              {[1, 2, 3, 4, 5].map((examNum) => {
                 // Calculate counts for each exam/week combination
                 const oddCount = overview.overview.reduce((sum, section) => {
                   const count = section.unscheduled_slots.filter(
-                    slot => slot.exam_number === examNum && slot.week_type === 'odd'
+                    (slot) => slot.exam_number === examNum && slot.week_type === 'odd'
                   ).length;
                   return sum + count;
                 }, 0);
 
                 const evenCount = overview.overview.reduce((sum, section) => {
                   const count = section.unscheduled_slots.filter(
-                    slot => slot.exam_number === examNum && slot.week_type === 'even'
+                    (slot) => slot.exam_number === examNum && slot.week_type === 'even'
                   ).length;
                   return sum + count;
                 }, 0);
 
                 return (
-                  <div key={examNum} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Oral Exam #{examNum}</h4>
+                  <div
+                    key={examNum}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+                  >
+                    <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
+                      Oral Exam #{examNum}
+                    </h4>
                     <button
                       onClick={() => {
                         setSelectedExam(examNum);
@@ -448,23 +475,25 @@ export default function ScheduleGenerator() {
                         justifyContent: 'space-between',
                         opacity: oddCount === 0 ? 0.5 : 1,
                         cursor: oddCount === 0 ? 'not-allowed' : 'pointer',
-                        backgroundColor: oddCount === 0 ? 'var(--background)' : 'transparent'
+                        backgroundColor: oddCount === 0 ? 'var(--background)' : 'transparent',
                       }}
                     >
                       <span>Odd Week</span>
                       {oddCount > 0 && (
-                        <span style={{
-                          backgroundColor: '#ef4444',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold'
-                        }}>
+                        <span
+                          style={{
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                          }}
+                        >
                           {oddCount}
                         </span>
                       )}
@@ -483,23 +512,25 @@ export default function ScheduleGenerator() {
                         justifyContent: 'space-between',
                         opacity: evenCount === 0 ? 0.5 : 1,
                         cursor: evenCount === 0 ? 'not-allowed' : 'pointer',
-                        backgroundColor: evenCount === 0 ? 'var(--background)' : 'transparent'
+                        backgroundColor: evenCount === 0 ? 'var(--background)' : 'transparent',
                       }}
                     >
                       <span>Even Week</span>
                       {evenCount > 0 && (
-                        <span style={{
-                          backgroundColor: '#ef4444',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold'
-                        }}>
+                        <span
+                          style={{
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                          }}
+                        >
                           {evenCount}
                         </span>
                       )}
@@ -510,10 +541,7 @@ export default function ScheduleGenerator() {
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>
-              <button
-                onClick={() => setShowUnscheduledModal(false)}
-                className="btn btn-outline"
-              >
+              <button onClick={() => setShowUnscheduledModal(false)} className="btn btn-outline">
                 Cancel
               </button>
             </div>
@@ -552,18 +580,21 @@ export default function ScheduleGenerator() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
-          }}>
+            zIndex: 1000,
+          }}
+        >
           <div
             className="card"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '500px', width: '90%' }}>
+            style={{ maxWidth: '500px', width: '90%' }}
+          >
             <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
               Regenerate from Exam Number
             </h3>
 
             <p style={{ marginBottom: '1rem', color: 'var(--text-light)' }}>
-              This will preserve all exam schedules <strong>before</strong> the specified exam number and regenerate everything from that exam onwards. This is useful when:
+              This will preserve all exam schedules <strong>before</strong> the specified exam
+              number and regenerate everything from that exam onwards. This is useful when:
             </p>
 
             <ul style={{ marginBottom: '1rem', marginLeft: '1.5rem', color: 'var(--text-light)' }}>
@@ -582,27 +613,28 @@ export default function ScheduleGenerator() {
                 onChange={(e) => setStartExam(parseInt(e.target.value) || 1)}
                 placeholder="e.g., 3"
               />
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+              <div
+                style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}
+              >
                 All exams before Exam #{startExam} will be preserved
               </div>
             </div>
 
-            <div style={{
-              padding: '0.75rem',
-              backgroundColor: 'var(--warning-light)',
-              borderRadius: '6px',
-              marginBottom: '1rem',
-              fontSize: '0.875rem'
-            }}>
-              <strong>⚠️ Note:</strong> Locked exam slots will always be preserved, regardless of the start exam number.
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: 'var(--warning-light)',
+                borderRadius: '6px',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+              }}
+            >
+              <strong>⚠️ Note:</strong> Locked exam slots will always be preserved, regardless of
+              the start exam number.
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                onClick={regenerateFromExam}
-                className="btn btn-primary"
-                disabled={loading}
-              >
+              <button onClick={regenerateFromExam} className="btn btn-primary" disabled={loading}>
                 {loading ? 'Regenerating...' : `Regenerate from Exam ${startExam}`}
               </button>
               <button

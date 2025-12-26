@@ -70,11 +70,13 @@ A modern, offline-first Mac app designed for instructors who prefer native tools
 
 **Screenshots:**
 
-![Mac App - Course Dashboard](./docs/screenshots/mac-dashboard.png)
+![Mac App - Course Dashboard](./docs/screenshots/mac-welcome.png)
 *Main course dashboard with cohort management and exam sessions*
 
-![Mac App - Schedule Generator](./docs/screenshots/mac-schedule-view.png)
-*Constraint-based schedule generation with drag-and-drop support*
+![Mac App - Schedule Generator](./docs/screenshots/mac-exam-sessions.png)
+![Mac App - Schedule Generator](./docs/screenshots/mac-pdf-export.png)
+![Mac App - Schedule Generator](./docs/screenshots/mac-pdf-export-pdf.png)
+*Constraint-based schedule generation*
 
 ---
 
@@ -100,10 +102,11 @@ A comprehensive web-based solution with multi-user collaboration, real-time noti
 
 **Screenshots:**
 
-![Web App - Admin Dashboard](./docs/screenshots/web-dashboard.png)
+![Web App - Admin Dashboard](./docs/screenshots/web-portal.png)
 *Multi-user admin dashboard with real-time updates*
 
-![Web App - Slack Integration](./docs/screenshots/web-slack-notifications.png)
+![Web App - Slack Integration](./docs/screenshots/web-slack-login.png)
+![Web App - Slack Integration](./docs/screenshots/web-slack-overview.png)
 *Automated Slack notifications for schedule changes*
 
 ---

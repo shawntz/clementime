@@ -18,14 +18,14 @@ export default function SlackControlCenter() {
     try {
       const response = await api.post('/admin/slack_messages/send_ta_schedules', {
         exam_number: examNumber,
-        week_type: weekType
+        week_type: weekType,
       });
 
       setResult({
         type: 'ta',
         examNumber,
         weekType,
-        ...response.data
+        ...response.data,
       });
     } catch (err) {
       setError(err.response?.data?.errors || 'Failed to send TA schedules');
@@ -35,7 +35,11 @@ export default function SlackControlCenter() {
   };
 
   const sendStudentSchedules = async (examNumber, weekType) => {
-    if (!confirm(`Send schedules to all students for Oral Exam #${examNumber} (${weekType} week)?\n\nThis will LOCK the schedules and prevent further changes.`)) {
+    if (
+      !confirm(
+        `Send schedules to all students for Oral Exam #${examNumber} (${weekType} week)?\n\nThis will LOCK the schedules and prevent further changes.`
+      )
+    ) {
       return;
     }
 
@@ -46,14 +50,14 @@ export default function SlackControlCenter() {
     try {
       const response = await api.post('/admin/slack_messages/send_student_schedules', {
         exam_number: examNumber,
-        week_type: weekType
+        week_type: weekType,
       });
 
       setResult({
         type: 'student',
         examNumber,
         weekType,
-        ...response.data
+        ...response.data,
       });
     } catch (err) {
       setError(err.response?.data?.errors || 'Failed to send student schedules');
@@ -63,7 +67,11 @@ export default function SlackControlCenter() {
   };
 
   const bulkUnlock = async (examNumber, weekType) => {
-    if (!confirm(`⚠️ EMERGENCY UNLOCK\n\nUnlock all schedules for Oral Exam #${examNumber} (${weekType} week)?\n\nThis should only be done in emergency situations when you need to modify schedules after they've been sent to students.`)) {
+    if (
+      !confirm(
+        `⚠️ EMERGENCY UNLOCK\n\nUnlock all schedules for Oral Exam #${examNumber} (${weekType} week)?\n\nThis should only be done in emergency situations when you need to modify schedules after they've been sent to students.`
+      )
+    ) {
       return;
     }
 
@@ -73,7 +81,7 @@ export default function SlackControlCenter() {
     try {
       const response = await api.post('/admin/exam_slots/bulk_unlock', {
         exam_number: examNumber,
-        week_type: weekType
+        week_type: weekType,
       });
       alert(`✅ ${response.data.message}\n\n${response.data.count} schedules unlocked.`);
     } catch (err) {
@@ -86,34 +94,52 @@ export default function SlackControlCenter() {
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          🚀 Slack Control Center
-        </h3>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>🚀 Slack Control Center</h3>
         <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>
-          Send schedule notifications to TAs and students. Student schedules will be locked after sending.
+          Send schedule notifications to TAs and students. Student schedules will be locked after
+          sending.
         </p>
 
         {/* Exam Selection Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-          {[1, 2, 3, 4, 5].map(examNumber => (
-            <div key={examNumber} style={{
-              border: '2px solid var(--border)',
-              borderRadius: '8px',
-              padding: '1rem'
-            }}>
+          {[1, 2, 3, 4, 5].map((examNumber) => (
+            <div
+              key={examNumber}
+              style={{
+                border: '2px solid var(--border)',
+                borderRadius: '8px',
+                padding: '1rem',
+              }}
+            >
               <h4 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>
                 Oral Exam #{examNumber}
               </h4>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '1rem',
+                }}
+              >
                 {/* Odd Week */}
-                <div style={{
-                  padding: '1rem',
-                  backgroundColor: 'rgba(255, 152, 0, 0.05)',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(255, 152, 0, 0.2)'
-                }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: 'rgba(255, 152, 0, 0.05)',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255, 152, 0, 0.2)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 'bold',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
                     📅 Odd Week
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -137,7 +163,11 @@ export default function SlackControlCenter() {
                       onClick={() => bulkUnlock(examNumber, 'odd')}
                       disabled={loading}
                       className="btn btn-outline"
-                      style={{ fontSize: '0.875rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                      style={{
+                        fontSize: '0.875rem',
+                        color: 'var(--error)',
+                        borderColor: 'var(--error)',
+                      }}
                     >
                       🔓 Emergency Unlock
                     </button>
@@ -145,13 +175,23 @@ export default function SlackControlCenter() {
                 </div>
 
                 {/* Even Week */}
-                <div style={{
-                  padding: '1rem',
-                  backgroundColor: 'rgba(33, 150, 243, 0.05)',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(33, 150, 243, 0.2)'
-                }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: 'rgba(33, 150, 243, 0.05)',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(33, 150, 243, 0.2)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 'bold',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
                     📅 Even Week
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -175,7 +215,11 @@ export default function SlackControlCenter() {
                       onClick={() => bulkUnlock(examNumber, 'even')}
                       disabled={loading}
                       className="btn btn-outline"
-                      style={{ fontSize: '0.875rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                      style={{
+                        fontSize: '0.875rem',
+                        color: 'var(--error)',
+                        borderColor: 'var(--error)',
+                      }}
                     >
                       🔓 Emergency Unlock
                     </button>
@@ -196,24 +240,36 @@ export default function SlackControlCenter() {
       )}
 
       {error && (
-        <div className="card" style={{ backgroundColor: 'rgba(244, 67, 54, 0.1)', border: '2px solid var(--error)' }}>
+        <div
+          className="card"
+          style={{ backgroundColor: 'rgba(244, 67, 54, 0.1)', border: '2px solid var(--error)' }}
+        >
           <h4 style={{ color: 'var(--error)', marginBottom: '0.5rem' }}>❌ Error</h4>
           <p>{error}</p>
         </div>
       )}
 
       {result && (
-        <div className="card" style={{ backgroundColor: 'rgba(76, 175, 80, 0.1)', border: '2px solid var(--success)' }}>
-          <h4 style={{ color: 'var(--success)', marginBottom: '1rem' }}>
-            ✅ {result.message}
-          </h4>
+        <div
+          className="card"
+          style={{ backgroundColor: 'rgba(76, 175, 80, 0.1)', border: '2px solid var(--success)' }}
+        >
+          <h4 style={{ color: 'var(--success)', marginBottom: '1rem' }}>✅ {result.message}</h4>
 
           <div style={{ marginBottom: '1rem' }}>
-            <p><strong>Oral Exam:</strong> #{result.examNumber}</p>
-            <p><strong>Week Type:</strong> {result.weekType}</p>
-            <p><strong>Messages Sent:</strong> {result.sent_count}</p>
+            <p>
+              <strong>Oral Exam:</strong> #{result.examNumber}
+            </p>
+            <p>
+              <strong>Week Type:</strong> {result.weekType}
+            </p>
+            <p>
+              <strong>Messages Sent:</strong> {result.sent_count}
+            </p>
             {result.locked_count > 0 && (
-              <p><strong>Schedules Locked:</strong> {result.locked_count}</p>
+              <p>
+                <strong>Schedules Locked:</strong> {result.locked_count}
+              </p>
             )}
           </div>
 
@@ -222,14 +278,16 @@ export default function SlackControlCenter() {
               <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 View Details ({result.results.length} items)
               </summary>
-              <div style={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                backgroundColor: 'white',
-                padding: '1rem',
-                borderRadius: '4px',
-                marginTop: '0.5rem'
-              }}>
+              <div
+                style={{
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  backgroundColor: 'white',
+                  padding: '1rem',
+                  borderRadius: '4px',
+                  marginTop: '0.5rem',
+                }}
+              >
                 {result.type === 'ta' ? (
                   <table className="table" style={{ fontSize: '0.875rem' }}>
                     <thead>
@@ -264,9 +322,7 @@ export default function SlackControlCenter() {
                           <td>{item.student}</td>
                           <td>{item.time}</td>
                           <td>
-                            {item.locked && (
-                              <span className="badge badge-success">🔒 Locked</span>
-                            )}
+                            {item.locked && <span className="badge badge-success">🔒 Locked</span>}
                           </td>
                         </tr>
                       ))}
@@ -279,17 +335,28 @@ export default function SlackControlCenter() {
 
           {result.errors && result.errors.length > 0 && (
             <details style={{ marginTop: '1rem' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: 'bold', color: 'var(--error)', marginBottom: '0.5rem' }}>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  color: 'var(--error)',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 ⚠️ Errors ({result.errors.length})
               </summary>
-              <ul style={{
-                marginTop: '0.5rem',
-                padding: '1rem',
-                backgroundColor: 'rgba(244, 67, 54, 0.05)',
-                borderRadius: '4px'
-              }}>
+              <ul
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '1rem',
+                  backgroundColor: 'rgba(244, 67, 54, 0.05)',
+                  borderRadius: '4px',
+                }}
+              >
                 {result.errors.map((err, idx) => (
-                  <li key={idx} style={{ color: 'var(--error)', fontSize: '0.875rem' }}>{err}</li>
+                  <li key={idx} style={{ color: 'var(--error)', fontSize: '0.875rem' }}>
+                    {err}
+                  </li>
                 ))}
               </ul>
             </details>
