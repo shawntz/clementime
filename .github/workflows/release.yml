@@ -159,13 +159,13 @@ jobs:
 
       - name: Create web archive
         run: |
-          if [ ! -d "clementime-web/client/dist" ]; then
-            echo "Error: dist directory not found"
-            ls -la clementime-web/client/
+          if [ ! -d "clementime-web/public" ]; then
+            echo "Error: public directory not found"
+            ls -la clementime-web/
             exit 1
           fi
-          cd clementime-web/client/dist
-          zip -r ../../../clementime-web-${{ needs.create-release.outputs.version }}.zip .
+          cd clementime-web/public
+          zip -r ../clementime-web-${{ needs.create-release.outputs.version }}.zip .
 
       - name: Upload web assets to release
         uses: softprops/action-gh-release@v1
@@ -239,20 +239,22 @@ jobs:
 
       - name: Build macOS app
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
         run: |
           cd clementime-mac/Clementime
 
-          # Build with signing if credentials are available
-          if [ -n "$APPLE_TEAM_ID" ]; then
-            echo "Building with automatic code signing"
+          # Build with signing if certificate is available
+          if [ -n "$CODE_SIGN_IDENTITY" ]; then
+            echo "Building with manual code signing: $CODE_SIGN_IDENTITY"
             xcodebuild -project Clementime.xcodeproj \
               -scheme Clementime \
               -configuration Release \
               -derivedDataPath build \
-              CODE_SIGN_STYLE=Automatic \
-              DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-              -allowProvisioningUpdates
+              CODE_SIGN_STYLE=Manual \
+              CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
+              PROVISIONING_PROFILE_SPECIFIER="" \
+              CODE_SIGNING_REQUIRED=YES \
+              CODE_SIGNING_ALLOWED=YES
           else
             echo "Building without code signing (unsigned)"
             xcodebuild -project Clementime.xcodeproj \
