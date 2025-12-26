@@ -18,6 +18,9 @@ class CanvasRosterImporter
     csv_data = load_csv_data
     return false unless csv_data
 
+    # Validate CSV format before processing
+    return false unless validate_csv_format(csv_data)
+
     ActiveRecord::Base.transaction do
       # Get all currently active student IDs before processing
       @existing_student_ids = Student.where(is_active: true).pluck(:sis_user_id).to_set
@@ -40,6 +43,34 @@ class CanvasRosterImporter
 
   private
 
+  def validate_csv_format(csv_data)
+    # Check if CSV has enough rows (at least header + 1 data row)
+    if csv_data.length < 4
+      @errors << "Invalid CSV format: File must have at least 4 rows (3 header rows + 1 data row)"
+      @errors << "Expected Canvas roster CSV format with columns: Student, ID, SIS User ID, SIS Login ID, Section, SU ID"
+      return false
+    end
+
+    # Check if CSV has enough columns by examining a data row (skip first 3 header rows)
+    data_row = csv_data[3]
+    if data_row.nil? || data_row.length < 6
+      @errors << "Invalid CSV format: Each row must have at least 6 columns"
+      @errors << "Expected Canvas roster CSV format:"
+      @errors << "  Column 1: Student Name"
+      @errors << "  Column 2: Canvas ID"
+      @errors << "  Column 3: SIS User ID"
+      @errors << "  Column 4: SIS Login ID"
+      @errors << "  Column 5: Section(s) (e.g., 'F25-PSYCH-10-02')"
+      @errors << "  Column 6: SU ID"
+      @errors << ""
+      @errors << "Note: The first 3 rows are treated as headers and will be skipped."
+      @errors << "Note: Column numbers are 1-based."
+      return false
+    end
+
+    true
+  end
+
   def load_csv_data
     if @file_path_or_content.is_a?(String) && File.exist?(@file_path_or_content)
       CSV.read(@file_path_or_content, headers: false)
@@ -50,6 +81,7 @@ class CanvasRosterImporter
     end
   rescue => e
     @errors << "CSV parsing error: #{e.message}"
+    @errors << "Please ensure the file is a valid CSV file exported from Canvas."
     nil
   end
 
