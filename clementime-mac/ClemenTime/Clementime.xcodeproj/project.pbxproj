@@ -37,7 +37,7 @@
 		CD26DC0F2EFBA95A00175298 /* PDFGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC072EFBA95A00175298 /* PDFGenerator.swift */; };
 		CD26DC2D2EFD164300175298 /* CSVParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC2C2EFD164300175298 /* CSVParser.swift */; };
 		CD26DC302EFD230C00175298 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC2F2EFD230C00175298 /* BuildInfo.swift */; };
-		CD52BCEA2EFE9A6B004E9BAA /* Clementime App.icon in Resources */ = {isa = PBXBuildFile; fileRef = CD52BCE92EFE9A6B004E9BAA /* Clementime App.icon */; };
+		CD52BCEA2EFE9A6B004E9BAA /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = CD52BCE92EFE9A6B004E9BAA /* AppIcon.icon */; };
 		CD52BD042EFE9CB0004E9BAA /* clementime-app-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = CD52BD032EFE9CB0004E9BAA /* clementime-app-logo.png */; };
 		CD78236E2EF66C8A0083A25A /* ScheduleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236A2EF66C8A0083A25A /* ScheduleRepository.swift */; };
 		CD78236F2EF66C8A0083A25A /* RecordingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823692EF66C8A0083A25A /* RecordingRepository.swift */; };
@@ -149,7 +149,7 @@
 		CD26DC072EFBA95A00175298 /* PDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFGenerator.swift; sourceTree = "<group>"; };
 		CD26DC2C2EFD164300175298 /* CSVParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParser.swift; sourceTree = "<group>"; };
 		CD26DC2F2EFD230C00175298 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
-		CD52BCE92EFE9A6B004E9BAA /* Clementime App.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Clementime App.icon"; sourceTree = "<group>"; };
+		CD52BCE92EFE9A6B004E9BAA /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		CD52BD032EFE9CB0004E9BAA /* clementime-app-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "clementime-app-logo.png"; sourceTree = "<group>"; };
 		CD7823652EF66C8A0083A25A /* CohortRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CohortRepository.swift; sourceTree = "<group>"; };
 		CD7823662EF66C8A0083A25A /* ConstraintRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstraintRepository.swift; sourceTree = "<group>"; };
@@ -437,7 +437,7 @@
 				CDCFA66D2EF6594C00F7BBD1 /* ClementimeTests */,
 				CDCFA6772EF6594C00F7BBD1 /* ClementimeUITests */,
 				CDCFA6592EF6594B00F7BBD1 /* Products */,
-				CD52BCE92EFE9A6B004E9BAA /* Clementime App.icon */,
+				CD52BCE92EFE9A6B004E9BAA /* AppIcon.icon */,
 				CD52BD032EFE9CB0004E9BAA /* clementime-app-logo.png */,
 			);
 			sourceTree = "<group>";
@@ -723,7 +723,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CD52BCEA2EFE9A6B004E9BAA /* Clementime App.icon in Resources */,
+				CD52BCEA2EFE9A6B004E9BAA /* AppIcon.icon in Resources */,
 				CD52BD042EFE9CB0004E9BAA /* clementime-app-logo.png in Resources */,
 				CDCFA6AB2EF6598B00F7BBD1 /* Info.plist in Resources */,
 				CDCFA6AC2EF6598B00F7BBD1 /* Assets.xcassets in Resources */,
@@ -1018,7 +1018,7 @@
 		CDCFA67F2EF6594C00F7BBD1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "Clementime App";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				AUTOMATION_APPLE_EVENTS = NO;
@@ -1077,7 +1077,7 @@
 		CDCFA6802EF6594C00F7BBD1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "Clementime App";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				AUTOMATION_APPLE_EVENTS = NO;
