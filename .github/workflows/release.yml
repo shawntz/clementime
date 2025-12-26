@@ -262,6 +262,9 @@ jobs:
               -project Clementime.xcodeproj \
               -scheme Clementime \
               -configuration Release \
+              ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
+              ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES \
+              ASSETCATALOG_COMPILER_OPTIMIZATION=space \
               -derivedDataPath build \
               CODE_SIGN_STYLE=Manual \
               CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
