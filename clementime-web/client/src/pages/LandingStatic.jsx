@@ -29,11 +29,11 @@ export default function LandingStatic() {
         { icon: '📴', text: 'Full offline support' },
         { icon: '🎭', text: 'Unlimited custom cohorts' },
         { icon: '🔐', text: 'Granular TA permissions' },
-        { icon: '🤝', text: 'CloudKit course sharing' }
+        { icon: '🤝', text: 'CloudKit course sharing' },
       ],
       cta: 'Download for Mac',
       ctaLink: 'https://github.com/shawntz/clementime/releases',
-      gradient: 'from-blue-500 via-purple-500 to-pink-500'
+      gradient: 'from-blue-500 via-purple-500 to-pink-500',
     },
     web: {
       title: 'Web Application',
@@ -44,86 +44,100 @@ export default function LandingStatic() {
         { icon: '📚', text: 'Canvas LMS integration' },
         { icon: '👥', text: 'Multi-user dashboards' },
         { icon: '🎙️', text: 'Browser recording' },
-        { icon: '☁️', text: 'Google Drive storage' }
+        { icon: '☁️', text: 'Google Drive storage' },
       ],
       cta: 'Deploy Web App',
       ctaLink: 'https://github.com/shawntz/clementime/wiki/Deployment-Guide',
-      gradient: 'from-orange-500 via-red-500 to-pink-500'
-    }
+      gradient: 'from-orange-500 via-red-500 to-pink-500',
+    },
   };
 
   const features = [
     {
       title: 'Smart Scheduling',
-      description: 'AI-powered schedule generation that respects student constraints, balances TA workloads, and optimizes time slots automatically.',
+      description:
+        'AI-powered schedule generation that respects student constraints, balances TA workloads, and optimizes time slots automatically.',
       icon: '📅',
-      gradient: 'from-orange-400 to-pink-500'
+      gradient: 'from-orange-400 to-pink-500',
     },
     {
       title: 'Flexible Cohorts',
-      description: 'Create unlimited custom cohorts beyond A/B splits. Perfect for complex scheduling needs with multiple sections and exam tracks.',
+      description:
+        'Create unlimited custom cohorts beyond A/B splits. Perfect for complex scheduling needs with multiple sections and exam tracks.',
       icon: '🎭',
-      gradient: 'from-purple-400 to-indigo-500'
+      gradient: 'from-purple-400 to-indigo-500',
     },
     {
       title: 'Recording Management',
-      description: 'Built-in audio recording with automatic cloud upload to iCloud or Google Drive. Organized folder structures included.',
+      description:
+        'Built-in audio recording with automatic cloud upload to iCloud or Google Drive. Organized folder structures included.',
       icon: '🎙️',
-      gradient: 'from-blue-400 to-cyan-500'
+      gradient: 'from-blue-400 to-cyan-500',
     },
     {
       title: 'Real-time Sync',
-      description: 'CloudKit sync for Mac app or real-time updates for web. Your data stays current across all devices and collaborators.',
+      description:
+        'CloudKit sync for Mac app or real-time updates for web. Your data stays current across all devices and collaborators.',
       icon: '🔄',
-      gradient: 'from-green-400 to-teal-500'
-    }
+      gradient: 'from-green-400 to-teal-500',
+    },
   ];
 
   const stats = [
     { number: '500+', label: 'Students Scheduled' },
     { number: '2', label: 'Platforms' },
     { number: '2000+', label: 'Exams Recorded' },
-    { number: '100%', label: 'Open Source' }
+    { number: '100%', label: 'Open Source' },
   ];
 
   const screenshots = [
     {
       title: 'Smart Scheduling',
       description: 'Automatically generate optimal exam schedules with student constraints',
-      color: 'from-orange-500/20 to-pink-500/20'
+      color: 'from-orange-500/20 to-pink-500/20',
     },
     {
       title: 'Course Management',
       description: 'Manage multiple courses, sections, and cohorts in one place',
-      color: 'from-blue-500/20 to-purple-500/20'
+      color: 'from-blue-500/20 to-purple-500/20',
     },
     {
       title: 'Student Dashboard',
       description: 'Track student availability and exam sessions effortlessly',
-      color: 'from-purple-500/20 to-pink-500/20'
+      color: 'from-purple-500/20 to-pink-500/20',
     },
     {
       title: 'Recording Tools',
       description: 'Built-in audio recording with automatic cloud sync',
-      color: 'from-green-500/20 to-teal-500/20'
-    }
+      color: 'from-green-500/20 to-teal-500/20',
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
       {/* Animated Background Grid */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.15) 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }}></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.15) 1px, transparent 0)',
+            backgroundSize: '40px 40px',
+          }}
+        ></div>
       </div>
 
       {/* Gradient Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-orange-500/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-blob" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl animate-blob" style={{ animationDelay: '4s' }}></div>
+        <div
+          className="absolute top-0 -right-4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-blob"
+          style={{ animationDelay: '2s' }}
+        ></div>
+        <div
+          className="absolute -bottom-8 left-1/2 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl animate-blob"
+          style={{ animationDelay: '4s' }}
+        ></div>
       </div>
 
       {/* Navigation */}
@@ -138,9 +152,7 @@ export default function LandingStatic() {
           >
             <div className="flex items-center space-x-3">
               <span className="text-5xl">🍊</span>
-              <h1 className="text-2xl font-bold tracking-tight">
-                Clementime
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">Clementime</h1>
             </div>
             <div className="flex items-center gap-3">
               <a
@@ -194,8 +206,9 @@ export default function LandingStatic() {
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Choose your platform: Native macOS app with iCloud sync, or web application with real-time collaboration.
-            Both feature smart scheduling, automatic notifications, and seamless recording management.
+            Choose your platform: Native macOS app with iCloud sync, or web application with
+            real-time collaboration. Both feature smart scheduling, automatic notifications, and
+            seamless recording management.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
@@ -228,9 +241,7 @@ export default function LandingStatic() {
                 <div className="text-4xl md:text-5xl font-extrabold mb-2 bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
                   {stat.number}
                 </div>
-                <div className="text-gray-400 text-sm md:text-base font-medium">
-                  {stat.label}
-                </div>
+                <div className="text-gray-400 text-sm md:text-base font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -274,13 +285,17 @@ export default function LandingStatic() {
                         : 'opacity-0 scale-95 pointer-events-none'
                     }`}
                   >
-                    <div className={`w-full h-full bg-gradient-to-br ${screenshot.color} rounded-2xl flex flex-col items-center justify-center p-12 border border-white/20`}>
+                    <div
+                      className={`w-full h-full bg-gradient-to-br ${screenshot.color} rounded-2xl flex flex-col items-center justify-center p-12 border border-white/20`}
+                    >
                       <div className="text-center">
                         <div className="text-6xl md:text-8xl mb-6 opacity-30">
                           {idx === 0 ? '📅' : idx === 1 ? '📚' : idx === 2 ? '👥' : '🎙️'}
                         </div>
                         <h3 className="text-3xl md:text-4xl font-bold mb-4">{screenshot.title}</h3>
-                        <p className="text-xl text-gray-300 max-w-xl mx-auto">{screenshot.description}</p>
+                        <p className="text-xl text-gray-300 max-w-xl mx-auto">
+                          {screenshot.description}
+                        </p>
                         <div className="mt-8 text-sm text-gray-500">
                           Screenshot placeholder - Add your app screenshots to public folder
                         </div>
@@ -292,7 +307,11 @@ export default function LandingStatic() {
 
               {/* Navigation Arrows */}
               <button
-                onClick={() => setActiveScreenshot((prev) => (prev - 1 + screenshots.length) % screenshots.length)}
+                onClick={() =>
+                  setActiveScreenshot(
+                    (prev) => (prev - 1 + screenshots.length) % screenshots.length
+                  )
+                }
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full backdrop-blur-xl bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-110"
               >
                 <span className="text-2xl">←</span>
@@ -370,9 +389,7 @@ export default function LandingStatic() {
       <div className="relative z-10 py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-extrabold mb-4">
-              Choose Your Platform
-            </h2>
+            <h2 className="text-5xl font-extrabold mb-4">Choose Your Platform</h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Two independent implementations, both featuring the same powerful scheduling platform
             </p>
@@ -449,9 +466,7 @@ export default function LandingStatic() {
       <div className="relative z-10 py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-extrabold mb-4">
-              Everything you need
-            </h2>
+            <h2 className="text-5xl font-extrabold mb-4">Everything you need</h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Powerful features built for instructors and TAs who value their time
             </p>
@@ -467,12 +482,8 @@ export default function LandingStatic() {
                 <div className="text-6xl mb-6 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
                   {feature.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-4">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-400 leading-relaxed">
-                  {feature.description}
-                </p>
+                <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -506,9 +517,7 @@ export default function LandingStatic() {
       {/* CTA Section */}
       <div className="relative z-10 py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-5xl md:text-6xl font-extrabold mb-6">
-            Ready to get started?
-          </h2>
+          <h2 className="text-5xl md:text-6xl font-extrabold mb-6">Ready to get started?</h2>
           <p className="text-xl md:text-2xl text-gray-400 mb-12 leading-relaxed">
             Open source and free forever. Deploy in minutes or download the native Mac app.
           </p>
@@ -547,10 +556,30 @@ export default function LandingStatic() {
               Multi-platform oral exam scheduling for universities
             </p>
             <div className="flex space-x-8">
-              <a href="https://github.com/shawntz/clementime" className="text-gray-400 hover:text-white transition-colors">GitHub</a>
-              <a href="https://github.com/shawntz/clementime#readme" className="text-gray-400 hover:text-white transition-colors">Documentation</a>
-              <a href="https://github.com/shawntz/clementime/releases" className="text-gray-400 hover:text-white transition-colors">Releases</a>
-              <a href="https://github.com/shawntz/clementime/issues" className="text-gray-400 hover:text-white transition-colors">Support</a>
+              <a
+                href="https://github.com/shawntz/clementime"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://github.com/shawntz/clementime#readme"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Documentation
+              </a>
+              <a
+                href="https://github.com/shawntz/clementime/releases"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Releases
+              </a>
+              <a
+                href="https://github.com/shawntz/clementime/issues"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Support
+              </a>
             </div>
 
             {/* Tech Stack */}

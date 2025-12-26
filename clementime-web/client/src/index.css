@@ -3,20 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --primary: #FF6B35;
-  --primary-dark: #E85A2A;
-  --secondary: #F7931E;
-  --accent: #FDB462;
-  --dark: #C44536;
-  --light: #FFE5B4;
-  --background: #FFF5E6;
-  --surface: #FFFFFF;
-  --text: #4A4A4A;
-  --text-light: #6B7280;
-  --border: #E5E7EB;
-  --success: #10B981;
-  --error: #EF4444;
-  --warning: #F59E0B;
+  --primary: #ff6b35;
+  --primary-dark: #e85a2a;
+  --secondary: #f7931e;
+  --accent: #fdb462;
+  --dark: #c44536;
+  --light: #ffe5b4;
+  --background: #fff5e6;
+  --surface: #ffffff;
+  --text: #4a4a4a;
+  --text-light: #6b7280;
+  --border: #e5e7eb;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
 }
 
 @layer base {
@@ -27,9 +27,9 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+      'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--background);
@@ -43,16 +43,16 @@
   }
 
   /* Orange headers - make them bolder and bigger */
-  h3[style*="var(--primary)"],
-  h4[style*="var(--primary)"] {
+  h3[style*='var(--primary)'],
+  h4[style*='var(--primary)'] {
     font-weight: 700 !important;
   }
 
-  h3[style*="var(--primary)"] {
+  h3[style*='var(--primary)'] {
     font-size: 1.75rem !important;
   }
 
-  h4[style*="var(--primary)"] {
+  h4[style*='var(--primary)'] {
     font-size: 1.25rem !important;
   }
 }
@@ -107,7 +107,9 @@
   background-color: var(--surface);
   border-radius: 0.5rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* Forms */
@@ -176,18 +178,18 @@
 }
 
 .badge-success {
-  background-color: #D1FAE5;
-  color: #065F46;
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .badge-warning {
-  background-color: #FEF3C7;
-  color: #92400E;
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .badge-error {
-  background-color: #FEE2E2;
-  color: #991B1B;
+  background-color: #fee2e2;
+  color: #991b1b;
 }
 
 .badge-primary {
@@ -203,15 +205,15 @@
 }
 
 .alert-success {
-  background-color: #D1FAE5;
-  color: #065F46;
-  border: 1px solid #10B981;
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
 }
 
 .alert-error {
-  background-color: #FEE2E2;
-  color: #991B1B;
-  border: 1px solid #EF4444;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
 }
 
 .alert-info {
@@ -231,6 +233,10 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

@@ -43,7 +43,7 @@ export default function SlackMatching() {
 
     try {
       const response = await api.post('/admin/slack/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       setUploadResult(response.data);
 
@@ -52,7 +52,7 @@ export default function SlackMatching() {
         filename: file.name,
         uploadDate: new Date().toISOString(),
         matchedCount: response.data.matched_count,
-        fileData: await file.text() // Store CSV content
+        fileData: await file.text(), // Store CSV content
       };
       localStorage.setItem('slack_last_upload', JSON.stringify(uploadInfo));
       setLastUpload(uploadInfo);
@@ -157,11 +157,23 @@ export default function SlackMatching() {
                 className="flex items-center justify-center w-full px-6 py-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 transition-colors cursor-pointer bg-gray-50 hover:bg-purple-50"
               >
                 <div className="text-center">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    stroke="currentColor"
+                    fill="none"
+                    viewBox="0 0 48 48"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   <p className="mt-2 text-sm text-gray-600">
-                    <span className="font-semibold text-purple-600">Click to upload</span> or drag and drop
+                    <span className="font-semibold text-purple-600">Click to upload</span> or drag
+                    and drop
                   </p>
                   <p className="text-xs text-gray-500">Slack member list CSV</p>
                 </div>
@@ -169,8 +181,18 @@ export default function SlackMatching() {
             </div>
             {file && (
               <div className="mt-3 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="h-5 w-5 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span className="text-sm text-green-800 font-medium">{file.name}</span>
               </div>
@@ -217,9 +239,7 @@ export default function SlackMatching() {
           <h3 className="text-2xl font-extrabold text-orange-600 mb-4">
             Unmatched Students ({unmatched.length})
           </h3>
-          <p className="mb-4 text-gray-600">
-            These students need manual Slack matching:
-          </p>
+          <p className="mb-4 text-gray-600">These students need manual Slack matching:</p>
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -304,34 +324,47 @@ export default function SlackMatching() {
 
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">Step 1: Navigate to Slack Admin</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">
+                    Step 1: Navigate to Slack Admin
+                  </h4>
                   <p className="text-blue-800 text-sm">
-                    Go to your Slack workspace admin panel at <code className="bg-blue-100 px-2 py-1 rounded">su-212489.slack.com/admin</code> (or your workspace URL)
+                    Go to your Slack workspace admin panel at{' '}
+                    <code className="bg-blue-100 px-2 py-1 rounded">su-212489.slack.com/admin</code>{' '}
+                    (or your workspace URL)
                   </p>
                 </div>
 
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-purple-900 mb-2">Step 2: Go to "Manage members"</h4>
+                  <h4 className="font-semibold text-purple-900 mb-2">
+                    Step 2: Go to "Manage members"
+                  </h4>
                   <p className="text-purple-800 text-sm mb-3">
-                    Click on "Manage members" in the admin sidebar, then click "Export full member list"
+                    Click on "Manage members" in the admin sidebar, then click "Export full member
+                    list"
                   </p>
                   <img
                     src="/images/slack-export-screenshot.png"
                     alt="Slack Admin Panel showing Manage members and Export full member list button"
                     className="rounded-lg border border-gray-300 w-full shadow-md"
                     onError={(e) => {
-                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect fill='%23f3f4f6' width='800' height='400'/%3E%3Ctext x='400' y='200' font-family='Arial' font-size='16' fill='%236b7280' text-anchor='middle'%3EScreenshot: Slack Admin Panel%3C/text%3E%3Ctext x='400' y='230' font-family='Arial' font-size='14' fill='%239ca3af' text-anchor='middle'%3E(Place slack-export-screenshot.png in public/images/)%3C/text%3E%3C/svg%3E";
+                      e.target.src =
+                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect fill='%23f3f4f6' width='800' height='400'/%3E%3Ctext x='400' y='200' font-family='Arial' font-size='16' fill='%236b7280' text-anchor='middle'%3EScreenshot: Slack Admin Panel%3C/text%3E%3Ctext x='400' y='230' font-family='Arial' font-size='14' fill='%239ca3af' text-anchor='middle'%3E(Place slack-export-screenshot.png in public/images/)%3C/text%3E%3C/svg%3E";
                     }}
                   />
                   <p className="text-xs text-purple-600 mt-2">
-                    Screenshot showing the "Manage members" section with "Export full member list" button
+                    Screenshot showing the "Manage members" section with "Export full member list"
+                    button
                   </p>
                 </div>
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-green-900 mb-2">Step 3: Upload to Clementime</h4>
+                  <h4 className="font-semibold text-green-900 mb-2">
+                    Step 3: Upload to Clementime
+                  </h4>
                   <p className="text-green-800 text-sm">
-                    The exported CSV file will contain all workspace members with their Full name, Display name, and Email address. Upload it here and Clementime will automatically match students by email address.
+                    The exported CSV file will contain all workspace members with their Full name,
+                    Display name, and Email address. Upload it here and Clementime will
+                    automatically match students by email address.
                   </p>
                 </div>
 
@@ -341,7 +374,8 @@ export default function SlackMatching() {
                     Pro Tip
                   </h4>
                   <p className="text-yellow-800 text-sm">
-                    Make sure students are using their Stanford email addresses in Slack for automatic matching to work correctly.
+                    Make sure students are using their Stanford email addresses in Slack for
+                    automatic matching to work correctly.
                   </p>
                 </div>
               </div>

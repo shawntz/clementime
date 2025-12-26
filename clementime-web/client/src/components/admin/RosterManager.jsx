@@ -42,15 +42,17 @@ export default function RosterManager() {
 
       const [studentsRes, sectionsRes] = await Promise.all([
         api.get('/admin/students', { params }),
-        api.get('/admin/sections')
+        api.get('/admin/sections'),
       ]);
 
       setStudents(studentsRes.data.students);
       setAvailableConstraintTypes(studentsRes.data.constraint_types || []);
-      setSections(sectionsRes.data.sections.filter(s => {
-        const parts = s.code.split('-');
-        return parts.length >= 4 && parseInt(parts[3]) !== 1;
-      }));
+      setSections(
+        sectionsRes.data.sections.filter((s) => {
+          const parts = s.code.split('-');
+          return parts.length >= 4 && parseInt(parts[3]) !== 1;
+        })
+      );
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {
@@ -61,7 +63,7 @@ export default function RosterManager() {
   const toggleStudentStatus = async (studentId, currentStatus) => {
     try {
       await api.put(`/admin/students/${studentId}`, {
-        is_active: !currentStatus
+        is_active: !currentStatus,
       });
       loadData();
     } catch (err) {
@@ -96,9 +98,11 @@ export default function RosterManager() {
     try {
       await api.post(`/admin/students/${selectedStudent.id}/transfer_cohort`, {
         cohort: transferToCohort,
-        from_exam: transferFromExam
+        from_exam: transferFromExam,
       });
-      alert(`Student transferred to ${transferToCohort} cohort from Exam #${transferFromExam} onwards`);
+      alert(
+        `Student transferred to ${transferToCohort} cohort from Exam #${transferFromExam} onwards`
+      );
       setShowTransferModal(false);
       loadData();
     } catch (err) {
@@ -109,7 +113,7 @@ export default function RosterManager() {
   const openChangeSectionModal = (student) => {
     setSelectedStudent(student);
     // Set default to first different section
-    const otherSection = sections.find(s => s.id !== student.section?.id);
+    const otherSection = sections.find((s) => s.id !== student.section?.id);
     setChangeSectionTo(otherSection ? otherSection.id.toString() : '');
     setShowChangeSectionModal(true);
   };
@@ -117,13 +121,17 @@ export default function RosterManager() {
   const changeSection = async () => {
     if (!selectedStudent || !changeSectionTo) return;
 
-    if (!confirm(`This will move ${selectedStudent.full_name} to a new section and clear all their exam slots. The section override will be preserved on future roster uploads. Continue?`)) {
+    if (
+      !confirm(
+        `This will move ${selectedStudent.full_name} to a new section and clear all their exam slots. The section override will be preserved on future roster uploads. Continue?`
+      )
+    ) {
       return;
     }
 
     try {
       const response = await api.post(`/admin/students/${selectedStudent.id}/change_section`, {
-        section_id: changeSectionTo
+        section_id: changeSectionTo,
       });
       alert(response.data.message);
       setShowChangeSectionModal(false);
@@ -138,9 +146,11 @@ export default function RosterManager() {
 
     try {
       const response = await api.post(`/admin/students/${selectedStudent.id}/notify_slack`, {
-        exam_number: selectedExamNumber
+        exam_number: selectedExamNumber,
       });
-      alert(response.data.message || `Slack notification sent for Oral Exam #${selectedExamNumber}`);
+      alert(
+        response.data.message || `Slack notification sent for Oral Exam #${selectedExamNumber}`
+      );
       setShowNotifyModal(false);
       loadData(); // Reload data to reflect locked status
     } catch (err) {
@@ -160,15 +170,25 @@ export default function RosterManager() {
 
     const newCohort = selectedStudent.cohort === 'odd' ? 'even' : 'odd';
 
-    if (!confirm(`This will swap ${selectedStudent.full_name} from ${selectedStudent.cohort} cohort to ${newCohort} cohort starting from Exam ${swapFromExam}.\n\nThis will:\n- Unlock any locked exams from ${swapFromExam} onwards\n- Delete their old time slots\n- Place them at the END of the ${newCohort} cohort schedule\n- Not affect any other students\n\nContinue?`)) {
+    if (
+      !confirm(
+        `This will swap ${selectedStudent.full_name} from ${selectedStudent.cohort} cohort to ${newCohort} cohort starting from Exam ${swapFromExam}.\n\nThis will:\n- Unlock any locked exams from ${swapFromExam} onwards\n- Delete their old time slots\n- Place them at the END of the ${newCohort} cohort schedule\n- Not affect any other students\n\nContinue?`
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await api.post(`/admin/students/${selectedStudent.id}/swap_to_opposite_cohort`, {
-        from_exam: swapFromExam
-      });
-      alert(response.data.message + `\n\nMoved: ${response.data.moved_count} exams\nUnlocked: ${response.data.unlocked_count} exams`);
+      const response = await api.post(
+        `/admin/students/${selectedStudent.id}/swap_to_opposite_cohort`,
+        {
+          from_exam: swapFromExam,
+        }
+      );
+      alert(
+        response.data.message +
+          `\n\nMoved: ${response.data.moved_count} exams\nUnlocked: ${response.data.unlocked_count} exams`
+      );
       setShowSwapCohortModal(false);
       loadData();
     } catch (err) {
@@ -176,10 +196,12 @@ export default function RosterManager() {
     }
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSection = selectedSection === 'all' || student.section?.id === parseInt(selectedSection);
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch =
+      student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSection =
+      selectedSection === 'all' || student.section?.id === parseInt(selectedSection);
     const matchesCohort = selectedCohort === 'all' || student.cohort === selectedCohort;
     return matchesSearch && matchesSection && matchesCohort;
   });
@@ -211,7 +233,7 @@ export default function RosterManager() {
 
       const response = await api.get('/admin/students/export_by_section', {
         params,
-        responseType: 'blob'
+        responseType: 'blob',
       });
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
@@ -243,10 +265,15 @@ export default function RosterManager() {
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--primary)', margin: 0 }}>
-            Roster Management
-          </h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
+          <h3 style={{ color: 'var(--primary)', margin: 0 }}>Roster Management</h3>
           <button
             onClick={downloadFilteredRoster}
             className="btn btn-primary"
@@ -256,7 +283,15 @@ export default function RosterManager() {
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '1rem',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <div style={{ flex: '1 1 300px' }}>
             <input
               type="text"
@@ -275,7 +310,7 @@ export default function RosterManager() {
               style={{ width: '100%' }}
             >
               <option value="all">All Sections</option>
-              {sections.map(section => (
+              {sections.map((section) => (
                 <option key={section.id} value={section.id}>
                   {section.name}
                 </option>
@@ -320,7 +355,7 @@ export default function RosterManager() {
                 style={{ width: '100%' }}
               >
                 <option value="all">All Constraint Types</option>
-                {availableConstraintTypes.map(type => (
+                {availableConstraintTypes.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label} ({type.count})
                   </option>
@@ -353,7 +388,13 @@ export default function RosterManager() {
                 <td>
                   <div>
                     <div>{student.full_name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.15rem' }}>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-light)',
+                        marginTop: '0.15rem',
+                      }}
+                    >
                       {student.email}
                     </div>
                   </div>
@@ -362,9 +403,14 @@ export default function RosterManager() {
                   {student.section ? (
                     <span
                       className="badge badge-primary"
-                      title={student.section_override ? 'Section manually overridden - will not change on roster uploads' : ''}
+                      title={
+                        student.section_override
+                          ? 'Section manually overridden - will not change on roster uploads'
+                          : ''
+                      }
                     >
-                      {student.section_override ? '🔒 ' : ''}{student.section.name.replace(/^Section\s+/i, '')}
+                      {student.section_override ? '🔒 ' : ''}
+                      {student.section.name.replace(/^Section\s+/i, '')}
                     </span>
                   ) : (
                     <span style={{ color: 'var(--text-light)' }}>No section</span>
@@ -374,17 +420,29 @@ export default function RosterManager() {
                   {student.constraints_count > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                       <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>
-                        {student.constraints_count} constraint{student.constraints_count !== 1 ? 's' : ''}
+                        {student.constraints_count} constraint
+                        {student.constraints_count !== 1 ? 's' : ''}
                       </span>
                       {student.constraint_types && student.constraint_types.length > 0 && (
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-light)', display: 'flex', flexWrap: 'wrap', gap: '0.15rem' }}>
-                          {student.constraint_types.map(type => (
-                            <span key={type} style={{
-                              backgroundColor: 'var(--bg-light)',
-                              padding: '0.1rem 0.3rem',
-                              borderRadius: '3px',
-                              whiteSpace: 'nowrap'
-                            }}>
+                        <div
+                          style={{
+                            fontSize: '0.65rem',
+                            color: 'var(--text-light)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.15rem',
+                          }}
+                        >
+                          {student.constraint_types.map((type) => (
+                            <span
+                              key={type}
+                              style={{
+                                backgroundColor: 'var(--bg-light)',
+                                padding: '0.1rem 0.3rem',
+                                borderRadius: '3px',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
                               {type.replace(/_/g, ' ')}
                             </span>
                           ))}
@@ -430,7 +488,11 @@ export default function RosterManager() {
                       className="btn btn-primary"
                       style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                       disabled={!student.cohort}
-                      title={student.cohort ? `Transfer from cohort ${student.cohort}` : 'No cohort assigned'}
+                      title={
+                        student.cohort
+                          ? `Transfer from cohort ${student.cohort}`
+                          : 'No cohort assigned'
+                      }
                     >
                       ↔️ Transfer Cohort
                     </button>
@@ -438,7 +500,9 @@ export default function RosterManager() {
                       onClick={() => openChangeSectionModal(student)}
                       className="btn btn-primary"
                       style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                      title={student.section_override ? 'Section manually overridden' : 'Change section'}
+                      title={
+                        student.section_override ? 'Section manually overridden' : 'Change section'
+                      }
                     >
                       {student.section_override ? '🔒 ' : ''}🔄 Change Section
                     </button>
@@ -498,11 +562,10 @@ export default function RosterManager() {
       {showNotifyModal && selectedStudent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              Send Slack Notification
-            </h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Send Slack Notification</h3>
             <p className="text-gray-600 mb-4">
-              Sending notification to: <span className="font-semibold">{selectedStudent.full_name}</span>
+              Sending notification to:{' '}
+              <span className="font-semibold">{selectedStudent.full_name}</span>
             </p>
 
             <div className="mb-6">
@@ -514,8 +577,10 @@ export default function RosterManager() {
                 onChange={(e) => setSelectedExamNumber(parseInt(e.target.value))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
-                {[1, 2, 3, 4, 5].map(num => (
-                  <option key={num} value={num}>Oral Exam #{num}</option>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <option key={num} value={num}>
+                    Oral Exam #{num}
+                  </option>
                 ))}
               </select>
             </div>
@@ -558,7 +623,7 @@ export default function RosterManager() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
         >
           <div
@@ -566,9 +631,7 @@ export default function RosterManager() {
             onClick={(e) => e.stopPropagation()}
             style={{ maxWidth: '500px', width: '90%' }}
           >
-            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-              Transfer Cohort
-            </h3>
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Transfer Cohort</h3>
             <p style={{ marginBottom: '1rem' }}>
               <strong>{selectedStudent.full_name}</strong>
             </p>
@@ -576,9 +639,17 @@ export default function RosterManager() {
               Current cohort: <span className="badge badge-primary">{selectedStudent.cohort}</span>
             </p>
 
-            <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'rgba(255, 152, 0, 0.1)', borderRadius: '8px' }}>
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                borderRadius: '8px',
+              }}
+            >
               <p style={{ fontSize: '0.875rem', margin: 0 }}>
-                ⚠️ This will clear all exam schedules from the selected exam number onwards. Locked schedules cannot be transferred.
+                ⚠️ This will clear all exam schedules from the selected exam number onwards. Locked
+                schedules cannot be transferred.
               </p>
             </div>
 
@@ -601,8 +672,10 @@ export default function RosterManager() {
                 value={transferFromExam}
                 onChange={(e) => setTransferFromExam(parseInt(e.target.value))}
               >
-                {[1, 2, 3, 4, 5].map(num => (
-                  <option key={num} value={num}>Oral Exam #{num}</option>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <option key={num} value={num}>
+                    Oral Exam #{num}
+                  </option>
                 ))}
               </select>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
@@ -611,10 +684,7 @@ export default function RosterManager() {
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={transferCohort}
-                className="btn btn-primary"
-              >
+              <button onClick={transferCohort} className="btn btn-primary">
                 ✅ Confirm Transfer
               </button>
               <button
@@ -644,7 +714,7 @@ export default function RosterManager() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => {
             setShowChangeSectionModal(false);
@@ -656,22 +726,22 @@ export default function RosterManager() {
             style={{ minWidth: '400px', maxWidth: '500px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-              Change Section
-            </h3>
+            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Change Section</h3>
             <p style={{ marginBottom: '1rem' }}>
               Change section for <strong>{selectedStudent.full_name}</strong>
             </p>
 
             {selectedStudent.section_override && (
-              <div style={{
-                padding: '0.75rem',
-                backgroundColor: '#fef3c7',
-                border: '1px solid #f59e0b',
-                borderRadius: '0.5rem',
-                marginBottom: '1rem',
-                fontSize: '0.875rem'
-              }}>
+              <div
+                style={{
+                  padding: '0.75rem',
+                  backgroundColor: '#fef3c7',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '0.5rem',
+                  marginBottom: '1rem',
+                  fontSize: '0.875rem',
+                }}
+              >
                 🔒 This student's section is already manually overridden
               </div>
             )}
@@ -691,8 +761,8 @@ export default function RosterManager() {
               >
                 <option value="">Select Section</option>
                 {sections
-                  .filter(s => s.id !== selectedStudent.section?.id)
-                  .map(section => (
+                  .filter((s) => s.id !== selectedStudent.section?.id)
+                  .map((section) => (
                     <option key={section.id} value={section.id}>
                       {section.name} - {section.ta ? section.ta.full_name : 'No TA'}
                     </option>
@@ -700,15 +770,18 @@ export default function RosterManager() {
               </select>
             </div>
 
-            <div style={{
-              padding: '0.75rem',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #ef4444',
-              borderRadius: '0.5rem',
-              marginBottom: '1rem',
-              fontSize: '0.875rem'
-            }}>
-              ⚠️ <strong>Warning:</strong> All exam slots for this student will be cleared. The section override will persist on future roster uploads.
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #ef4444',
+                borderRadius: '0.5rem',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+              }}
+            >
+              ⚠️ <strong>Warning:</strong> All exam slots for this student will be cleared. The
+              section override will persist on future roster uploads.
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -746,7 +819,7 @@ export default function RosterManager() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => {
             setShowSwapCohortModal(false);
@@ -762,7 +835,9 @@ export default function RosterManager() {
               Swap to Opposite Cohort
             </h3>
             <p style={{ marginBottom: '1rem' }}>
-              Swap <strong>{selectedStudent.full_name}</strong> from <strong>{selectedStudent.cohort === 'odd' ? 'Group A' : 'Group B'}</strong> to <strong>{selectedStudent.cohort === 'odd' ? 'Group B' : 'Group A'}</strong>
+              Swap <strong>{selectedStudent.full_name}</strong> from{' '}
+              <strong>{selectedStudent.cohort === 'odd' ? 'Group A' : 'Group B'}</strong> to{' '}
+              <strong>{selectedStudent.cohort === 'odd' ? 'Group B' : 'Group A'}</strong>
             </p>
 
             <div style={{ marginBottom: '1.5rem' }}>
@@ -783,28 +858,30 @@ export default function RosterManager() {
               </select>
             </div>
 
-            <div style={{
-              padding: '0.75rem',
-              backgroundColor: '#fff7ed',
-              border: '1px solid #f97316',
-              borderRadius: '0.5rem',
-              marginBottom: '1rem',
-              fontSize: '0.875rem'
-            }}>
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: '#fff7ed',
+                border: '1px solid #f97316',
+                borderRadius: '0.5rem',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+              }}
+            >
               <strong>⚠️ This will:</strong>
               <ul style={{ marginTop: '0.5rem', marginLeft: '1.25rem' }}>
                 <li>Unlock any locked exams from Exam {swapFromExam} onwards</li>
                 <li>Delete their old time slots</li>
-                <li>Place them at the END of the {selectedStudent.cohort === 'odd' ? 'Group B' : 'Group A'} schedule</li>
+                <li>
+                  Place them at the END of the{' '}
+                  {selectedStudent.cohort === 'odd' ? 'Group B' : 'Group A'} schedule
+                </li>
                 <li>NOT affect any other students</li>
               </ul>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button
-                onClick={swapToOppositeCohort}
-                className="btn btn-primary"
-              >
+              <button onClick={swapToOppositeCohort} className="btn btn-primary">
                 🔁 Swap Cohort
               </button>
               <button
@@ -829,7 +906,7 @@ function ConstraintModal({ student, onClose }) {
   const [loading, setLoading] = useState(true);
   const [newConstraint, setNewConstraint] = useState({
     constraint_type: 'time_before',
-    value: ''
+    value: '',
   });
 
   useEffect(() => {
@@ -858,8 +935,8 @@ function ConstraintModal({ student, onClose }) {
         student_id: student.id,
         constraint: {
           constraint_type: newConstraint.constraint_type,
-          constraint_value: newConstraint.value
-        }
+          constraint_value: newConstraint.value,
+        },
       });
       setNewConstraint({ constraint_type: 'time_before', value: '' });
       loadConstraints();
@@ -892,15 +969,15 @@ function ConstraintModal({ student, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
-      }}>
+        zIndex: 1000,
+      }}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Scheduling Constraints
-        </h3>
+        style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}
+      >
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Scheduling Constraints</h3>
         <p style={{ marginBottom: '1rem' }}>
           <strong>{student.full_name}</strong> ({student.email})
         </p>
@@ -912,7 +989,9 @@ function ConstraintModal({ student, onClose }) {
             <select
               className="form-input"
               value={newConstraint.constraint_type}
-              onChange={(e) => setNewConstraint({ ...newConstraint, constraint_type: e.target.value, value: '' })}
+              onChange={(e) =>
+                setNewConstraint({ ...newConstraint, constraint_type: e.target.value, value: '' })
+              }
             >
               <option value="time_before">No exams before (time)</option>
               <option value="time_after">No exams after (time)</option>
@@ -935,7 +1014,8 @@ function ConstraintModal({ student, onClose }) {
                 <option value="odd">Odd weeks</option>
                 <option value="even">Even weeks</option>
               </select>
-            ) : (newConstraint.constraint_type === 'time_before' || newConstraint.constraint_type === 'time_after') ? (
+            ) : newConstraint.constraint_type === 'time_before' ||
+              newConstraint.constraint_type === 'time_after' ? (
               <input
                 type="time"
                 className="form-input"
@@ -976,10 +1056,12 @@ function ConstraintModal({ student, onClose }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {constraints.map(constraint => (
+                  {constraints.map((constraint) => (
                     <tr key={constraint.id}>
                       <td>{constraint.constraint_type.replace(/_/g, ' ')}</td>
-                      <td><code>{constraint.constraint_value}</code></td>
+                      <td>
+                        <code>{constraint.constraint_value}</code>
+                      </td>
                       <td>
                         <button
                           onClick={() => deleteConstraint(constraint.id)}
@@ -1032,7 +1114,7 @@ function HistoryModal({ student, onClose }) {
 
     try {
       await api.post(`/admin/students/${student.id}/revert_schedule`, {
-        history_id: historyId
+        history_id: historyId,
       });
       alert('Schedule reverted successfully');
       loadHistory();
@@ -1056,15 +1138,15 @@ function HistoryModal({ student, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
-      }}>
+        zIndex: 1000,
+      }}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '800px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Schedule History
-        </h3>
+        style={{ maxWidth: '800px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}
+      >
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Schedule History</h3>
         <p style={{ marginBottom: '1rem' }}>
           <strong>{student.full_name}</strong> ({student.email})
         </p>
@@ -1111,14 +1193,14 @@ function HistoryModal({ student, onClose }) {
                         <td>{item.date || 'N/A'}</td>
                         <td>Week {item.week_number}</td>
                         <td>
-                          {item.start_time && item.end_time ? (
-                            `${item.start_time} - ${item.end_time}`
-                          ) : (
-                            'N/A'
-                          )}
+                          {item.start_time && item.end_time
+                            ? `${item.start_time} - ${item.end_time}`
+                            : 'N/A'}
                         </td>
                         <td>
-                          <span className={`badge ${item.is_scheduled ? 'badge-success' : 'badge-warning'}`}>
+                          <span
+                            className={`badge ${item.is_scheduled ? 'badge-success' : 'badge-warning'}`}
+                          >
                             {item.is_scheduled ? 'Scheduled' : 'Unscheduled'}
                           </span>
                           {idx === 0 && (
@@ -1153,9 +1235,7 @@ function HistoryModal({ student, onClose }) {
                 </table>
               </div>
             ) : (
-              <p style={{ color: 'var(--text-light)' }}>
-                No history for Oral Exam {selectedExam}
-              </p>
+              <p style={{ color: 'var(--text-light)' }}>No history for Oral Exam {selectedExam}</p>
             )}
           </>
         )}
