@@ -218,6 +218,10 @@ jobs:
 
           rm -f certificate.p12
 
+      - name: Verify signing identities
+        run: |
+          security find-identity -v -p codesigning
+
       - name: Install provisioning profile
         env:
           MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
