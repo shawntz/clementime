@@ -283,10 +283,12 @@ Both the Mac app and Web app are released together using automated GitHub Action
 
 Each release automatically:
 - 🐳 Builds and publishes Docker image for web app
-- 💻 Builds macOS DMG installer
+- 💻 Builds macOS DMG installer (requires code signing setup)
 - 🌐 Builds static web assets
 - 📝 Creates GitHub release with changelog
 - 🔖 Tags release with version number
+
+**For macOS DMG builds**: GitHub Actions requires code signing credentials. See [macOS Code Signing Guide](./docs/MACOS_CODE_SIGNING.md) for setup instructions.
 
 See [RELEASE.md](./RELEASE.md) for detailed documentation.
 
