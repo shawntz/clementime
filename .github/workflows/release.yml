@@ -209,27 +209,29 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
           # Import certificate
-          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
-          security import certificate.p12 -k $KEYCHAIN_PATH -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$CERT_PATH"
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          rm "$CERT_PATH"
 
           # Add to search list
-          security list-keychain -d user -s $KEYCHAIN_PATH
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
 
-          rm -f certificate.p12
+          # Allow codesign to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-      - name: Verify signing identities
+      - name: List signing identities
+        if: env.MACOS_CERTIFICATE != ''
         run: |
-          security find-identity -v -p codesigning
+          echo "Available signing identities:"
+          security find-identity -v -p basic
+          echo ""
+          echo "Looking for Developer ID Application..."
+          security find-identity -v -p basic | grep "Developer ID Application" || echo "Not found"
+          echo ""
+          echo "Looking for Developer ID Installer..."
+          security find-identity -v -p basic | grep "Developer ID Installer" || echo "Not found"
 
-      - name: Install provisioning profile
-        env:
-          MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
-        run: |
-          PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILE_PATH"
-          echo "$MACOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_PATH/Clementime.mobileprovision"
-      
       - name: Update version in Info.plist
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
@@ -249,38 +251,45 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSHumanReadableCopyright string 'ClemenTime $VERSION_NO_V ($BUILD_NUMBER) - $TAG_MESSAGE'" \
             clementime-mac/Clementime/Clementime/Info.plist
 
-      - name: Build macOS app
-        env:
-          CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+      - name: Build macOS app (unsigned)
         run: |
           cd clementime-mac/Clementime
 
-          # Build with signing if certificate is available
-          if [ -n "$CODE_SIGN_IDENTITY" ]; then
-            echo "Building with automatic code signing: $CODE_SIGN_IDENTITY"
-            xcodebuild \
-              -project Clementime.xcodeproj \
-              -scheme Clementime \
-              -configuration Release \
-              ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
-              ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES \
-              ASSETCATALOG_COMPILER_OPTIMIZATION=space \
-              -derivedDataPath build \
-              CODE_SIGN_STYLE=Automatic \
-              CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
-              DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
-              CODE_SIGNING_REQUIRED=YES \
-              CODE_SIGNING_ALLOWED=YES
-          else
-            echo "Building without code signing (unsigned)"
-            xcodebuild -project Clementime.xcodeproj \
-              -scheme Clementime \
-              -configuration Release \
-              -derivedDataPath build \
-              CODE_SIGN_IDENTITY="-" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO
+          echo "Building unsigned app bundle..."
+          xcodebuild \
+            -project Clementime.xcodeproj \
+            -scheme Clementime \
+            -configuration Release \
+            ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
+            ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES \
+            ASSETCATALOG_COMPILER_OPTIMIZATION=space \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Sign app bundle
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: |
+          if [ -z "$MACOS_CERTIFICATE" ]; then
+            echo "Skipping app signing - MACOS_CERTIFICATE not configured"
+            exit 0
           fi
+
+          APP_PATH="clementime-mac/Clementime/build/Build/Products/Release/Clementime.app"
+
+          echo "Signing app bundle with identity: $MACOS_SIGNING_IDENTITY"
+          codesign --force --options runtime \
+            --sign "$MACOS_SIGNING_IDENTITY" \
+            --entitlements clementime-mac/Clementime/Clementime/Clementime.entitlements \
+            --deep "$APP_PATH"
+
+          # Verify signature
+          echo "Verifying signature..."
+          codesign --verify --verbose "$APP_PATH"
+          codesign -dv "$APP_PATH"
 
       - name: Notarize app
         env:
