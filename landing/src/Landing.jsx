@@ -366,7 +366,7 @@ export default function Landing() {
               <span>Download for macOS</span>
               <span className="group-hover:translate-x-2 transition-transform">→</span>
             </a>
-            <p className="text-sm text-gray-500 mt-4">macOS 15.0 or later • Free & Open Source</p>
+            <p className="text-sm text-gray-500 mt-4">macOS 15.0+ • Free & Open Source</p>
           </div>
         </div>
       </div>

@@ -182,7 +182,7 @@ export default function LandingStatic() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
             </span>
-            <span className="text-sm font-medium">Now available for macOS 14+</span>
+            <span className="text-sm font-medium">Now available for macOS 15.0+</span>
           </div>
 
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6 leading-tight">
@@ -361,7 +361,7 @@ export default function LandingStatic() {
               <span>Download for macOS</span>
               <span className="group-hover:translate-x-2 transition-transform">→</span>
             </a>
-            <p className="text-sm text-gray-500 mt-4">macOS 14+ • Free & Open Source</p>
+            <p className="text-sm text-gray-500 mt-4">macOS 15.0+ • Free & Open Source</p>
           </div>
         </div>
       </div>
