@@ -110,8 +110,6 @@ jobs:
 
             Automatically formatted code to meet Prettier standards.
 
-            🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
             Co-Authored-By: GitHub Actions <github-actions[bot]@users.noreply.github.com>"
             git push origin "$BRANCH_NAME"
             gh pr create --title "Auto-fix: Format web client code with Prettier" --body "$(cat <<'EOF'
@@ -121,8 +119,6 @@ jobs:
 
           ## Changes
           This PR was automatically created by the CI workflow when formatting issues were detected.
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
           EOF
           )" --base main --head "$BRANCH_NAME"
           fi
