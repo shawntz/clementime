@@ -6,6 +6,7 @@
 
 ### 🍊 Multi-platform Oral Exam Scheduler for Universities
 
+[![Version](https://img.shields.io/github/v/release/shawntz/clementime?style=flat&color=orange)](https://github.com/shawntz/clementime/releases)
 [![Website](https://img.shields.io/badge/Website-clementime.app-orange?style=flat&logo=safari)](https://clementime.app)
 [![macOS](https://img.shields.io/badge/macOS-15.0+-blue.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)](https://swift.org)
