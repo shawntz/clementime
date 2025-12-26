@@ -12,7 +12,7 @@ export default function AudioRecorder({ slot, onClose }) {
     try {
       // Create recording entry first
       const response = await api.post('/ta/recordings', {
-        exam_slot_id: slot.id
+        exam_slot_id: slot.id,
       });
       setRecordingId(response.data.recording.id);
 
@@ -38,7 +38,7 @@ export default function AudioRecorder({ slot, onClose }) {
   const stopRecording = () => {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
       setRecording(false);
 
       mediaRecorderRef.current.onstop = async () => {
@@ -70,7 +70,7 @@ export default function AudioRecorder({ slot, onClose }) {
 
         try {
           await api.post(`/ta/recordings/${recordingId}/upload`, {
-            audio_data: base64Audio
+            audio_data: base64Audio,
           });
 
           alert('Recording saved locally and uploaded successfully!');
@@ -78,11 +78,15 @@ export default function AudioRecorder({ slot, onClose }) {
         } catch (uploadErr) {
           console.error('Upload error:', uploadErr);
           const errorMsg = uploadErr.response?.data?.errors
-            ? (Array.isArray(uploadErr.response.data.errors)
-                ? uploadErr.response.data.errors.join(', ')
-                : uploadErr.response.data.errors)
+            ? Array.isArray(uploadErr.response.data.errors)
+              ? uploadErr.response.data.errors.join(', ')
+              : uploadErr.response.data.errors
             : uploadErr.message;
-          alert('Recording saved locally but upload failed: ' + errorMsg + '\n\nYou can manually upload the downloaded file later.');
+          alert(
+            'Recording saved locally but upload failed: ' +
+              errorMsg +
+              '\n\nYou can manually upload the downloaded file later.'
+          );
           onClose();
         }
       };
@@ -93,27 +97,33 @@ export default function AudioRecorder({ slot, onClose }) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+    >
       <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
-        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
-          Record Oral Exam
-        </h3>
+        <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Record Oral Exam</h3>
 
         <div style={{ marginBottom: '1rem' }}>
-          <p><strong>Student:</strong> {slot.student.full_name}</p>
-          <p><strong>Exam:</strong> #{slot.exam_number}</p>
-          <p><strong>Time:</strong> {slot.formatted_time}</p>
+          <p>
+            <strong>Student:</strong> {slot.student.full_name}
+          </p>
+          <p>
+            <strong>Exam:</strong> #{slot.exam_number}
+          </p>
+          <p>
+            <strong>Time:</strong> {slot.formatted_time}
+          </p>
         </div>
 
         {!recording && !uploading && (
@@ -129,15 +139,17 @@ export default function AudioRecorder({ slot, onClose }) {
 
         {recording && (
           <div>
-            <div style={{
-              padding: '2rem',
-              backgroundColor: 'var(--error)',
-              color: 'white',
-              borderRadius: '0.5rem',
-              textAlign: 'center',
-              marginBottom: '1rem',
-              animation: 'pulse 2s infinite'
-            }}>
+            <div
+              style={{
+                padding: '2rem',
+                backgroundColor: 'var(--error)',
+                color: 'white',
+                borderRadius: '0.5rem',
+                textAlign: 'center',
+                marginBottom: '1rem',
+                animation: 'pulse 2s infinite',
+              }}
+            >
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔴</div>
               <div>Recording in progress...</div>
             </div>

@@ -13,7 +13,9 @@ export default function StudentHistoryModal({ student, onClose }) {
   const loadHistory = async (examNumber) => {
     setLoading(true);
     try {
-      const response = await api.get(`/admin/students/${student.id}/exam_slots/${examNumber}/histories`);
+      const response = await api.get(
+        `/admin/students/${student.id}/exam_slots/${examNumber}/histories`
+      );
       setHistory(response.data);
     } catch (err) {
       console.error('Failed to load history', err);
@@ -26,7 +28,9 @@ export default function StudentHistoryModal({ student, onClose }) {
     if (!confirm('Revert to this previous schedule?')) return;
 
     try {
-      await api.post(`/admin/students/${student.id}/exam_slots/${selectedExam}/histories/${historyId}/revert`);
+      await api.post(
+        `/admin/students/${student.id}/exam_slots/${selectedExam}/histories/${historyId}/revert`
+      );
       loadHistory(selectedExam);
       alert('Schedule reverted successfully');
     } catch (err) {
@@ -52,12 +56,14 @@ export default function StudentHistoryModal({ student, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
-      }}>
+        zIndex: 1000,
+      }}
+    >
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '900px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
+        style={{ maxWidth: '900px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}
+      >
         <h3 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
           Schedule History: {student.full_name}
         </h3>
@@ -84,8 +90,13 @@ export default function StudentHistoryModal({ student, onClose }) {
             <div style={{ marginBottom: '2rem' }}>
               <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Current Schedule</h4>
               {history?.current ? (
-                <div className="card" style={{ backgroundColor: 'var(--background)', padding: '1rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem' }}>
+                <div
+                  className="card"
+                  style={{ backgroundColor: 'var(--background)', padding: '1rem' }}
+                >
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem' }}
+                  >
                     <strong>Week:</strong>
                     <span>{history.current.week_number}</span>
                     <strong>Date:</strong>
@@ -95,7 +106,9 @@ export default function StudentHistoryModal({ student, onClose }) {
                     <strong>Section:</strong>
                     <span>{history.current.section?.name}</span>
                     <strong>Status:</strong>
-                    <span className={`badge ${history.current.is_scheduled ? 'badge-success' : 'badge-warning'}`}>
+                    <span
+                      className={`badge ${history.current.is_scheduled ? 'badge-success' : 'badge-warning'}`}
+                    >
                       {history.current.is_scheduled ? 'Scheduled' : 'Unscheduled'}
                     </span>
                   </div>
@@ -120,7 +133,14 @@ export default function StudentHistoryModal({ student, onClose }) {
                       className="card"
                       style={{ backgroundColor: 'var(--background)', padding: '1rem' }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'start',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
                           Changed: {formatDateTime(hist.changed_at)}
                         </div>
@@ -132,7 +152,13 @@ export default function StudentHistoryModal({ student, onClose }) {
                           Revert to This
                         </button>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem' }}>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'auto 1fr',
+                          gap: '0.5rem 1rem',
+                        }}
+                      >
                         <strong>Week:</strong>
                         <span>{hist.week_number}</span>
                         <strong>Date:</strong>
@@ -146,7 +172,9 @@ export default function StudentHistoryModal({ student, onClose }) {
                         <strong>Section:</strong>
                         <span>{hist.section?.name}</span>
                         <strong>Status:</strong>
-                        <span className={`badge ${hist.is_scheduled ? 'badge-success' : 'badge-warning'}`}>
+                        <span
+                          className={`badge ${hist.is_scheduled ? 'badge-success' : 'badge-warning'}`}
+                        >
                           {hist.is_scheduled ? 'Scheduled' : 'Unscheduled'}
                         </span>
                       </div>

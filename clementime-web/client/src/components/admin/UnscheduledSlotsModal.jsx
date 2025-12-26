@@ -8,7 +8,7 @@ export default function UnscheduledSlotsModal({ examNumber, weekType, onClose, o
   const [scheduleData, setScheduleData] = useState({
     date: '',
     start_time: '',
-    end_time: ''
+    end_time: '',
   });
 
   useEffect(() => {
@@ -21,12 +21,13 @@ export default function UnscheduledSlotsModal({ examNumber, weekType, onClose, o
       const response = await api.get('/admin/schedules/overview');
 
       // Filter unscheduled slots for this exam and week type
-      const allSlots = response.data.sections?.flatMap(section =>
-        section.unscheduled_slots?.filter(slot =>
-          slot.exam_number === examNumber &&
-          slot.week_type === weekType
-        ) || []
-      ) || [];
+      const allSlots =
+        response.data.sections?.flatMap(
+          (section) =>
+            section.unscheduled_slots?.filter(
+              (slot) => slot.exam_number === examNumber && slot.week_type === weekType
+            ) || []
+        ) || [];
 
       setSlots(allSlots);
     } catch (err) {
@@ -85,7 +86,7 @@ export default function UnscheduledSlotsModal({ examNumber, weekType, onClose, o
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
+        zIndex: 1000,
       }}
     >
       <div
@@ -105,9 +106,17 @@ export default function UnscheduledSlotsModal({ examNumber, weekType, onClose, o
           </p>
         ) : (
           <>
-            <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--bg-light)', borderRadius: '8px' }}>
+            <div
+              style={{
+                marginBottom: '1.5rem',
+                padding: '1rem',
+                backgroundColor: 'var(--bg-light)',
+                borderRadius: '8px',
+              }}
+            >
               <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-light)' }}>
-                <strong>{slots.length}</strong> student{slots.length !== 1 ? 's' : ''} need{slots.length === 1 ? 's' : ''} to be scheduled
+                <strong>{slots.length}</strong> student{slots.length !== 1 ? 's' : ''} need
+                {slots.length === 1 ? 's' : ''} to be scheduled
               </p>
             </div>
 
@@ -164,18 +173,25 @@ export default function UnscheduledSlotsModal({ examNumber, weekType, onClose, o
 
         {/* Manual Scheduling Form */}
         {selectedSlot && (
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-            borderRadius: '8px',
-            border: '2px solid var(--primary)'
-          }}>
-            <h4 style={{ marginBottom: '1rem' }}>
-              Schedule: {selectedSlot.student.full_name}
-            </h4>
+          <div
+            style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              borderRadius: '8px',
+              border: '2px solid var(--primary)',
+            }}
+          >
+            <h4 style={{ marginBottom: '1rem' }}>Schedule: {selectedSlot.student.full_name}</h4>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1rem',
+                marginBottom: '1rem',
+              }}
+            >
               <div>
                 <label className="form-label">Date</label>
                 <input
@@ -206,16 +222,10 @@ export default function UnscheduledSlotsModal({ examNumber, weekType, onClose, o
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={handleManualSchedule}
-                className="btn btn-primary"
-              >
+              <button onClick={handleManualSchedule} className="btn btn-primary">
                 ✅ Confirm Schedule
               </button>
-              <button
-                onClick={() => setSelectedSlot(null)}
-                className="btn btn-outline"
-              >
+              <button onClick={() => setSelectedSlot(null)} className="btn btn-outline">
                 Cancel
               </button>
             </div>

@@ -29,15 +29,17 @@ export default function RosterView() {
 
       const [studentsRes, sectionsRes] = await Promise.all([
         api.get('/ta/students', { params }),
-        api.get('/ta/sections')
+        api.get('/ta/sections'),
       ]);
 
       setStudents(studentsRes.data.students);
       setAvailableConstraintTypes(studentsRes.data.constraint_types || []);
-      setSections(sectionsRes.data.sections.filter(s => {
-        const parts = s.code.split('-');
-        return parts.length >= 4 && parseInt(parts[3]) !== 1;
-      }));
+      setSections(
+        sectionsRes.data.sections.filter((s) => {
+          const parts = s.code.split('-');
+          return parts.length >= 4 && parseInt(parts[3]) !== 1;
+        })
+      );
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {
@@ -45,10 +47,12 @@ export default function RosterView() {
     }
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSection = selectedSection === 'all' || student.section?.id === parseInt(selectedSection);
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch =
+      student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSection =
+      selectedSection === 'all' || student.section?.id === parseInt(selectedSection);
     const matchesCohort = selectedCohort === 'all' || student.cohort === selectedCohort;
     return matchesSearch && matchesSection && matchesCohort;
   });
@@ -56,7 +60,7 @@ export default function RosterView() {
   const downloadRosterBySection = async () => {
     try {
       const response = await api.get('/ta/students/export_by_section', {
-        responseType: 'blob'
+        responseType: 'blob',
       });
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
@@ -92,7 +96,14 @@ export default function RosterView() {
   return (
     <div>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '0.5rem',
+          }}
+        >
           <div>
             <h3 style={{ color: 'var(--primary)', margin: 0, marginBottom: '0.5rem' }}>
               Student Roster (Read-Only)
@@ -110,7 +121,15 @@ export default function RosterView() {
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '1rem',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <div style={{ flex: '1 1 300px' }}>
             <input
               type="text"
@@ -129,7 +148,7 @@ export default function RosterView() {
               style={{ width: '100%' }}
             >
               <option value="all">All Sections</option>
-              {sections.map(section => (
+              {sections.map((section) => (
                 <option key={section.id} value={section.id}>
                   {section.name}
                 </option>
@@ -174,7 +193,7 @@ export default function RosterView() {
                 style={{ width: '100%' }}
               >
                 <option value="all">All Constraint Types</option>
-                {availableConstraintTypes.map(type => (
+                {availableConstraintTypes.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label} ({type.count})
                   </option>
@@ -215,7 +234,9 @@ export default function RosterView() {
                   )}
                 </td>
                 <td>
-                  <span className={`badge ${student.cohort === 'odd' ? 'badge-info' : 'badge-secondary'}`}>
+                  <span
+                    className={`badge ${student.cohort === 'odd' ? 'badge-info' : 'badge-secondary'}`}
+                  >
                     {student.cohort === 'odd' ? 'Group A' : 'Group B'}
                   </span>
                 </td>
@@ -223,17 +244,29 @@ export default function RosterView() {
                   {student.constraints_count > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                       <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>
-                        {student.constraints_count} constraint{student.constraints_count !== 1 ? 's' : ''}
+                        {student.constraints_count} constraint
+                        {student.constraints_count !== 1 ? 's' : ''}
                       </span>
                       {student.constraint_types && student.constraint_types.length > 0 && (
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-light)', display: 'flex', flexWrap: 'wrap', gap: '0.15rem' }}>
+                        <div
+                          style={{
+                            fontSize: '0.65rem',
+                            color: 'var(--text-light)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.15rem',
+                          }}
+                        >
                           {student.constraint_types.map((type, idx) => (
-                            <span key={idx} style={{
-                              backgroundColor: 'var(--warning-light)',
-                              padding: '0.1rem 0.3rem',
-                              borderRadius: '0.2rem',
-                              whiteSpace: 'nowrap'
-                            }}>
+                            <span
+                              key={idx}
+                              style={{
+                                backgroundColor: 'var(--warning-light)',
+                                padding: '0.1rem 0.3rem',
+                                borderRadius: '0.2rem',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
                               {type}
                             </span>
                           ))}
@@ -246,16 +279,30 @@ export default function RosterView() {
                 </td>
                 <td>
                   {student.slack_matched ? (
-                    <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>✓ Matched</span>
+                    <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
+                      ✓ Matched
+                    </span>
                   ) : (
-                    <span className="badge" style={{ backgroundColor: '#6c757d', fontSize: '0.7rem' }}>Not matched</span>
+                    <span
+                      className="badge"
+                      style={{ backgroundColor: '#6c757d', fontSize: '0.7rem' }}
+                    >
+                      Not matched
+                    </span>
                   )}
                 </td>
                 <td>
                   {student.is_active ? (
-                    <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>Active</span>
+                    <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
+                      Active
+                    </span>
                   ) : (
-                    <span className="badge" style={{ backgroundColor: '#6c757d', fontSize: '0.7rem' }}>Inactive</span>
+                    <span
+                      className="badge"
+                      style={{ backgroundColor: '#6c757d', fontSize: '0.7rem' }}
+                    >
+                      Inactive
+                    </span>
                   )}
                 </td>
               </tr>

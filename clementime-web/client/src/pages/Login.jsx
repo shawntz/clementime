@@ -43,7 +43,7 @@ export default function Login() {
 
     try {
       const response = await api.post('/auth/forgot_password', {
-        email: forgotPasswordEmail
+        email: forgotPasswordEmail,
       });
       setForgotPasswordMessage(response.data.message);
       setForgotPasswordEmail('');
@@ -64,9 +64,7 @@ export default function Login() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 mb-4 shadow-lg">
               <span className="text-4xl">🍊</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Clementime
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Clementime</h1>
             <p className="text-gray-600">Oral Exam Scheduler</p>
           </div>
 
@@ -79,9 +77,7 @@ export default function Login() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
               <input
                 type="text"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
@@ -94,9 +90,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <input
                 type="password"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
@@ -124,9 +118,25 @@ export default function Login() {
             >
               {loading ? (
                 <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Logging in...
                 </span>
@@ -138,10 +148,7 @@ export default function Login() {
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <Link
-              to="/"
-              className="text-sm text-gray-600 hover:text-orange-600 transition-colors"
-            >
+            <Link to="/" className="text-sm text-gray-600 hover:text-orange-600 transition-colors">
               ← Back to Home
             </Link>
           </div>
@@ -149,9 +156,7 @@ export default function Login() {
 
         {/* Bottom Text */}
         <div className="mt-6 text-center">
-          <p className="text-white text-sm">
-            Powered by Clementime
-          </p>
+          <p className="text-white text-sm">Powered by Clementime</p>
         </div>
       </div>
 
