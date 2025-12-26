@@ -1,18 +1,30 @@
 # Quick Release Guide
 
-## TL;DR
+> **⚠️ DEPRECATED**: This release process has been replaced.
+>
+> Please use the unified release process at the repository root.
+> See [../../RELEASE.md](../../RELEASE.md) for the new workflow.
 
-**Default (Patch):** Just push to main → automatic v1.0.0 → v1.0.1
+## New Release Process (Tag-Based)
+
+**Patch Release:**
+```bash
+./scripts/release.sh patch  # or just ./scripts/release.sh
+```
 
 **Minor Release:**
 ```bash
-echo "minor" > .version-bump && git add .version-bump && git commit -m "feat: add new feature" && git push
+./scripts/release.sh minor
 ```
 
 **Major Release:**
 ```bash
-echo "major" > .version-bump && git add .version-bump && git commit -m "feat!: breaking change" && git push
+./scripts/release.sh major
 ```
+
+---
+
+## OLD PROCESS (No Longer Used)
 
 ---
 
