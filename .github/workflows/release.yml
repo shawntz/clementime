@@ -214,16 +214,16 @@ jobs:
           TAG_MESSAGE="${{ needs.create-release.outputs.tag_message }}"
 
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NO_V" \
-            clementime-mac/Clementime/Info.plist
+            clementime-mac/Clementime/Clementime/Info.plist
 
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" \
-            clementime-mac/Clementime/Info.plist
+            clementime-mac/Clementime/Clementime/Info.plist
 
           # Add build message as NSHumanReadableCopyright if desired
           /usr/libexec/PlistBuddy -c "Set :NSHumanReadableCopyright 'ClemenTime $VERSION_NO_V ($BUILD_NUMBER) - $TAG_MESSAGE'" \
-            clementime-mac/Clementime/Info.plist || \
+            clementime-mac/Clementime/Clementime/Info.plist || \
           /usr/libexec/PlistBuddy -c "Add :NSHumanReadableCopyright string 'ClemenTime $VERSION_NO_V ($BUILD_NUMBER) - $TAG_MESSAGE'" \
-            clementime-mac/Clementime/Info.plist
+            clementime-mac/Clementime/Clementime/Info.plist
 
       - name: Build macOS app
         env:
@@ -287,7 +287,7 @@ jobs:
           # Create DMG
           create-dmg \
             --volname "Clementime" \
-            --volicon "clementime-mac/Clementime/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
+            --volicon "clementime-mac/Clementime/Clementime/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --icon-size 100 \
