@@ -178,7 +178,7 @@ jobs:
   build-mac:
     name: Build macOS App
     needs: create-release
-    runs-on: macos-latest
+    runs-on: macos-14
     permissions:
       contents: write
 
@@ -189,7 +189,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '15.4'
 
       - name: Import signing certificate
         env:
@@ -260,6 +260,7 @@ jobs:
             -project Clementime.xcodeproj \
             -scheme Clementime \
             -configuration Release \
+            ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon \
             ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
             ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES \
             ASSETCATALOG_COMPILER_OPTIMIZATION=space \
