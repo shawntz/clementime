@@ -401,6 +401,11 @@ docker-compose -f docker-compose.production.yml up -d
 ./scripts/release.sh        # Creates DMG in GitHub release
 ```
 
+**Code Signing Setup**: For automated builds via GitHub Actions, you need to configure code signing credentials. See the [macOS Code Signing Guide](/docs/MACOS_CODE_SIGNING.md) for detailed instructions on obtaining:
+- Developer ID certificates
+- Notarization credentials
+- GitHub Actions secrets
+
 ## Project Status
 
 **Web App**: Production-ready, maintenance mode
