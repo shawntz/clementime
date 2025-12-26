@@ -5,13 +5,16 @@ Hi <%= @user.first_name %>,
 
 Your account has been created for the Clementime Oral Exam Management system.
 
-Your Login Credentials
------------------------
+Your Account Information
+-------------------------
 Username: <%= @user.username %>
-Temporary Password: <%= @temporary_password %>
 
-⚠️  IMPORTANT: You will be required to change your password on first login.
+Next Step: Set Your Password
+-----------------------------
+Click the link below to set your password:
 
-Login at: <%= @login_url %>
+<%= @reset_url %>
+
+⚠️  IMPORTANT: This link will expire in 2 hours. You must set your password before the link expires.
 
 If you have any questions, please contact your system administrator.

@@ -1,17 +1,17 @@
 class UserMailer < ApplicationMailer
-  def welcome_email(user, temporary_password)
+  def welcome_email(user, reset_token)
     @user = user
-    @temporary_password = temporary_password
-    login_base = ENV["APP_HOST"] || "http://localhost:5173"
-    login_base = "https://#{login_base}" unless login_base.start_with?("http")
-    @login_url = "#{login_base}/login?username=#{CGI.escape(user.username)}"
+    app_base = ENV["APP_HOST"] || "http://localhost:5173"
+    app_base = "https://#{app_base}" unless app_base.start_with?("http")
+    @reset_url = "#{app_base}/reset-password?token=#{reset_token}"
+    @login_url = "#{app_base}/login?username=#{CGI.escape(user.username)}"
 
     # Get super admin email for CC
     super_admin_email = SystemConfig.get("super_admin_email", "")
 
     mail_options = {
       to: user.email,
-      subject: "Welcome to Clementime - Your Account Details"
+      subject: "Welcome to Clementime - Set Your Password"
     }
 
     # Add CC if super admin email is configured
