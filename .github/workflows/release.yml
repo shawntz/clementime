@@ -218,6 +218,14 @@ jobs:
 
           rm -f certificate.p12
 
+      - name: Install provisioning profile
+        env:
+          MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
+        run: |
+          PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_PATH"
+          echo "$MACOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_PATH/Clementime.mobileprovision"
+      
       - name: Update version in Info.plist
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
@@ -246,17 +254,17 @@ jobs:
           # Build with signing if certificate is available
           if [ -n "$CODE_SIGN_IDENTITY" ]; then
             echo "Building with manual code signing: $CODE_SIGN_IDENTITY"
-            xcodebuild -project Clementime.xcodeproj \
+            xcodebuild \
+              -project Clementime.xcodeproj \
               -scheme Clementime \
               -configuration Release \
               -derivedDataPath build \
               CODE_SIGN_STYLE=Manual \
               CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
-              PROVISIONING_PROFILE_SPECIFIER="" \
               DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+              PROVISIONING_PROFILE_SPECIFIER="Clementime Dist" \
               CODE_SIGNING_REQUIRED=YES \
-              CODE_SIGNING_ALLOWED=YES \
-              -allowProvisioningUpdates
+              CODE_SIGNING_ALLOWED=YES
           else
             echo "Building without code signing (unsigned)"
             xcodebuild -project Clementime.xcodeproj \
