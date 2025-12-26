@@ -374,7 +374,7 @@ export default function LandingStatic() {
               Choose Your Platform
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Two independent implementations, both featuring the same powerful scheduling algorithm
+              Two independent implementations, both featuring the same powerful scheduling platform
             </p>
           </div>
 
