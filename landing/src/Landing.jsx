@@ -88,23 +88,33 @@ export default function Landing() {
 
   const screenshots = [
     {
+      title: 'Comprehensive Toolkit',
+      description: 'Built-in audio recording with automatic cloud sync',
+      image: '/mac-welcome.png',
+      color: 'from-green-500/20 to-teal-500/20'
+    },
+    {
       title: 'Smart Scheduling',
       description: 'Automatically generate optimal exam schedules with student constraints',
+      image: '/mac-sections.png',
       color: 'from-orange-500/20 to-pink-500/20'
     },
     {
       title: 'Course Management',
       description: 'Manage multiple courses, sections, and cohorts in one place',
+      image: '/mac-roster.png',
       color: 'from-blue-500/20 to-purple-500/20'
     },
     {
       title: 'Student Dashboard',
       description: 'Track student availability and exam sessions effortlessly',
+      image: '/mac-pdf-export.png',
       color: 'from-purple-500/20 to-pink-500/20'
     },
     {
-      title: 'Recording Tools',
-      description: 'Built-in audio recording with automatic cloud sync',
+      title: 'PDF Schedule Exports',
+      description: 'Generate easy-to-distribute exam schedule PDFs',
+      image: '/mac-pdf-export-pdf.png',
       color: 'from-green-500/20 to-teal-500/20'
     }
   ];
@@ -281,17 +291,11 @@ export default function Landing() {
                       : 'opacity-0 scale-95 pointer-events-none'
                       }`}
                   >
-                    <div className={`w-full h-full bg-gradient-to-br ${screenshot.color} rounded-2xl flex flex-col items-center justify-center p-12 border border-white/20`}>
-                      <div className="text-center">
-                        <div className="text-6xl md:text-8xl mb-6 opacity-30">
-                          {idx === 0 ? '📅' : idx === 1 ? '📚' : idx === 2 ? '👥' : '🎙️'}
-                        </div>
-                        <h3 className="text-3xl md:text-4xl font-bold mb-4">{screenshot.title}</h3>
-                        <p className="text-xl text-gray-300 max-w-xl mx-auto">{screenshot.description}</p>
-                        <div className="mt-8 text-sm text-gray-500">
-                        </div>
-                      </div>
-                    </div>
+                    <img
+                      src={screenshot.image}
+                      alt={screenshot.title}
+                      className="w-full h-full object-contain rounded-2xl"
+                    />
                   </div>
                 ))}
               </div>
@@ -324,7 +328,7 @@ export default function Landing() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
-                      {idx === 0 ? '📅' : idx === 1 ? '📚' : idx === 2 ? '👥' : '🎙️'}
+                      {idx === 0 ? '📅' : idx === 1 ? '📚' : idx === 2 ? '👥' : idx === 3 ? '🎙️' : '📂'}
                     </span>
                     <span className="text-sm font-medium">{screenshot.title}</span>
                   </div>
