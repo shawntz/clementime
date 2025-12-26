@@ -18,6 +18,7 @@ struct Student: Identifiable, Codable, Hashable {
     var slackUserId: String?
     var slackUsername: String?
     var isActive: Bool
+    var unmatchedSectionCode: String? // Section code from CSV that couldn't be matched
 
     // Related entities (loaded separately)
     var constraints: [Constraint] = []
@@ -33,7 +34,8 @@ struct Student: Identifiable, Codable, Hashable {
         cohortId: UUID,
         slackUserId: String? = nil,
         slackUsername: String? = nil,
-        isActive: Bool = true
+        isActive: Bool = true,
+        unmatchedSectionCode: String? = nil
     ) {
         self.id = id
         self.courseId = courseId
@@ -45,6 +47,7 @@ struct Student: Identifiable, Codable, Hashable {
         self.slackUserId = slackUserId
         self.slackUsername = slackUsername
         self.isActive = isActive
+        self.unmatchedSectionCode = unmatchedSectionCode
     }
 
     // Computed properties
@@ -64,10 +67,40 @@ struct Student: Identifiable, Codable, Hashable {
         slackUserId != nil
     }
 
+    // Computed property
+    var hasUnmatchedSection: Bool {
+        unmatchedSectionCode != nil
+    }
+
+    // Sort value for status (used for table sorting)
+    var statusSortValue: String {
+        isActive ? "A_Active" : "Z_Inactive"
+    }
+
+    // Check if student belongs to a specific cohort
+    // All students implicitly belong to the "All Students" (default) cohort
+    func belongsToCohort(_ cohort: Cohort) -> Bool {
+        // All students belong to the default "All Students" cohort
+        if cohort.isDefault {
+            return true
+        }
+        // Otherwise check if it matches their assigned cohort
+        return cohort.id == cohortId
+    }
+
+    func belongsToCohortId(_ cohortId: UUID, allCohorts: [Cohort]) -> Bool {
+        // Check if this is the "All Students" cohort
+        if let cohort = allCohorts.first(where: { $0.id == cohortId }), cohort.isDefault {
+            return true
+        }
+        // Otherwise check if it matches their assigned cohort
+        return self.cohortId == cohortId
+    }
+
     // Coding keys for Codable conformance (exclude non-persisted fields)
     enum CodingKeys: String, CodingKey {
         case id, courseId, sectionId, sisUserId, email, fullName
-        case cohortId, slackUserId, slackUsername, isActive
+        case cohortId, slackUserId, slackUsername, isActive, unmatchedSectionCode
     }
 }
 

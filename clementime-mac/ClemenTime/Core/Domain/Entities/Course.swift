@@ -12,7 +12,7 @@ struct Course: Identifiable, Codable, Hashable {
     var name: String
     var term: String
     var quarterStartDate: Date
-    var examDay: DayOfWeek
+    var quarterEndDate: Date
     var totalExams: Int
     var isActive: Bool
     var createdBy: UUID // User ID of creator
@@ -24,7 +24,7 @@ struct Course: Identifiable, Codable, Hashable {
         name: String,
         term: String,
         quarterStartDate: Date,
-        examDay: DayOfWeek = .friday,
+        quarterEndDate: Date,
         totalExams: Int = 5,
         isActive: Bool = true,
         createdBy: UUID,
@@ -35,7 +35,7 @@ struct Course: Identifiable, Codable, Hashable {
         self.name = name
         self.term = term
         self.quarterStartDate = quarterStartDate
-        self.examDay = examDay
+        self.quarterEndDate = quarterEndDate
         self.totalExams = totalExams
         self.isActive = isActive
         self.createdBy = createdBy
@@ -47,27 +47,15 @@ struct Course: Identifiable, Codable, Hashable {
 // MARK: - Course Settings
 
 struct CourseSettings: Codable, Hashable {
-    var examStartTime: TimeComponents
-    var examEndTime: TimeComponents
-    var examDurationMinutes: Int
-    var examBufferMinutes: Int
     var balancedTAScheduling: Bool
     var ignoredSectionCodes: [String]
     var navbarTitle: String?
 
     init(
-        examStartTime: TimeComponents = TimeComponents(hour: 13, minute: 30),
-        examEndTime: TimeComponents = TimeComponents(hour: 14, minute: 50),
-        examDurationMinutes: Int = 7,
-        examBufferMinutes: Int = 1,
         balancedTAScheduling: Bool = false,
         ignoredSectionCodes: [String] = [],
         navbarTitle: String? = nil
     ) {
-        self.examStartTime = examStartTime
-        self.examEndTime = examEndTime
-        self.examDurationMinutes = examDurationMinutes
-        self.examBufferMinutes = examBufferMinutes
         self.balancedTAScheduling = balancedTAScheduling
         self.ignoredSectionCodes = ignoredSectionCodes
         self.navbarTitle = navbarTitle
