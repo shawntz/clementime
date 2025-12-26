@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
 export default function Landing() {
-  const [activeFeature, setActiveFeature] = useState(0);
   const [activePlatform, setActivePlatform] = useState('mac');
   const [scrollY, setScrollY] = useState(0);
   const [activeScreenshot, setActiveScreenshot] = useState(0);
@@ -467,7 +466,6 @@ export default function Landing() {
               <div
                 key={idx}
                 className="group relative p-8 backdrop-blur-xl bg-white/5 rounded-3xl border border-white/10 transition-all duration-500 cursor-pointer hover:scale-105 hover:bg-white/10 hover:border-white/20"
-                onMouseEnter={() => setActiveFeature(idx)}
               >
                 <div className="text-6xl mb-6 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
                   {feature.icon}
@@ -546,7 +544,7 @@ export default function Landing() {
               {/* Text Content */}
               <div className="text-lg text-gray-300 leading-relaxed space-y-4">
                 <p>
-                  Hi, I'm{' '}
+                  Hi, I&apos;m{' '}
                   <a
                     href="https://shawnschwartz.com"
                     target="_blank"
@@ -558,7 +556,7 @@ export default function Landing() {
                   , a cognitive neuroscience PhD candidate at Stanford University. I built Clementime to solve a real problem I encountered as a teaching assistant: managing oral exams for hundreds of students while respecting their scheduling constraints and balancing workloads across TAs.
                 </p>
                 <p>
-                  What started as a simple Rails app has since evolved into two full platforms—a web application and a native macOS app—both implementing the same smart scheduling mechanism. I've released this project as open source and free forever because I believe educational tools should be accessible to all instructors and institutions, regardless of budget.
+                  What started as a simple Rails app has since evolved into two full platforms—a web application and a native macOS app—both implementing the same smart scheduling mechanism. I&apos;ve released this project as open source and free forever because I believe educational tools should be accessible to all instructors and institutions, regardless of budget.
                 </p>
                 <p className="text-gray-400 text-base italic">
                   If Clementime helps your teaching workflow, consider{' '}
