@@ -80,9 +80,9 @@ export default function LandingStatic() {
   ];
 
   const stats = [
-    { number: '200+', label: 'Students Scheduled' },
+    { number: '500+', label: 'Students Scheduled' },
     { number: '2', label: 'Platforms' },
-    { number: '1000+', label: 'Exams Recorded' },
+    { number: '2000+', label: 'Exams Recorded' },
     { number: '100%', label: 'Open Source' }
   ];
 
