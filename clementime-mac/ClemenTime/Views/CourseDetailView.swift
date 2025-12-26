@@ -9,20 +9,20 @@ import SwiftUI
 
 struct CourseDetailView: View {
     let course: Course
-    @State private var selectedTab: CourseTab = .structure
+    @State private var selectedTab: CourseTab = .sections
 
     enum CourseTab: String, CaseIterable, Identifiable {
-        case structure = "Structure"
-        case schedule = "Schedule"
+        case sections = "Sections"
         case students = "Students"
-        case sessions = "Sessions"
+        case sessions = "Exam Sessions"
+        case schedule = "Schedule"
         case settings = "Settings"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
-            case .structure: return "flowchart"
+            case .sections: return "square.grid.2x2"
             case .schedule: return "calendar"
             case .students: return "person.3"
             case .sessions: return "clock"
@@ -60,7 +60,6 @@ struct CourseDetailView: View {
 
                     HStack(spacing: 12) {
                         Label(course.term, systemImage: "calendar")
-                        Label(course.examDay.rawValue.capitalized, systemImage: "clock")
                         Label("\(course.totalExams) Exams", systemImage: "doc.text")
                     }
                     .font(.caption)
@@ -97,17 +96,17 @@ struct CourseDetailView: View {
 
             // Tab Content
             TabView(selection: $selectedTab) {
-                ExamStructureCanvasView(course: course)
-                    .tag(CourseTab.structure)
-
-                ScheduleView(course: course)
-                    .tag(CourseTab.schedule)
+                SectionsView(course: course)
+                    .tag(CourseTab.sections)
 
                 StudentsView(course: course)
                     .tag(CourseTab.students)
 
                 ExamSessionsView(course: course)
                     .tag(CourseTab.sessions)
+
+                ScheduleView(course: course)
+                    .tag(CourseTab.schedule)
 
                 CourseSettingsView(course: course)
                     .tag(CourseTab.settings)
@@ -125,7 +124,7 @@ struct CourseDetailView: View {
             name: "PSYCH 10 / STATS 60",
             term: "Fall 2025",
             quarterStartDate: Date(),
-            examDay: .friday,
+            quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
             totalExams: 5,
             isActive: true,
             createdBy: UUID(),
