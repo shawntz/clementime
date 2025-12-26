@@ -1,0 +1,383 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+      tag_message: ${{ steps.get_version.outputs.tag_message }}
+      build_number: ${{ steps.get_version.outputs.build_number }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+          # Get tag message to use as build number/description
+          TAG_MESSAGE=$(git tag -l --format='%(contents)' $VERSION | head -n 1)
+          if [ -z "$TAG_MESSAGE" ]; then
+            TAG_MESSAGE="Release $VERSION"
+          fi
+          echo "tag_message=$TAG_MESSAGE" >> $GITHUB_OUTPUT
+          echo "Tag message: $TAG_MESSAGE"
+
+          # Create a numeric build number from timestamp
+          BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Build number: $BUILD_NUMBER"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^ 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG="Initial release"
+          else
+            CHANGELOG=$(git log ${PREV_TAG}..${GITHUB_REF} --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save to file to handle multiline output
+          echo "$CHANGELOG" > changelog.txt
+          cat changelog.txt
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-docker-web:
+    name: Build and Push Docker Image (Web)
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION_NO_V=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_no_v=$VERSION_NO_V" >> $GITHUB_OUTPUT
+
+      - name: Create VERSION file with build info
+        run: |
+          echo "${{ needs.create-release.outputs.version }}" > clementime-web/VERSION
+          echo "BUILD_NUMBER=${{ needs.create-release.outputs.build_number }}" >> clementime-web/.env.production
+          echo "BUILD_MESSAGE=${{ needs.create-release.outputs.tag_message }}" >> clementime-web/.env.production
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./clementime-web
+          file: ./clementime-web/Dockerfile
+          push: true
+          tags: |
+            shawnschwartz/clementime:${{ steps.version.outputs.version_no_v }}
+            shawnschwartz/clementime:latest
+          cache-from: type=registry,ref=shawnschwartz/clementime:latest
+          cache-to: type=inline
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ needs.create-release.outputs.version }}
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: shawnschwartz/clementime
+          short-description: "🍊 Clementime - Oral Exam Scheduling and Management System"
+
+  build-web-static:
+    name: Build Web Static Assets
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: clementime-web/client/yarn.lock
+
+      - name: Install dependencies
+        working-directory: clementime-web/client
+        run: yarn install --frozen-lockfile
+
+      - name: Build static version
+        working-directory: clementime-web/client
+        run: yarn build:static
+
+      - name: Create web archive
+        run: |
+          cd clementime-web/client/dist
+          zip -r ../../../clementime-web-${{ needs.create-release.outputs.version }}.zip .
+
+      - name: Upload web assets to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.version }}
+          files: clementime-web-${{ needs.create-release.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-mac:
+    name: Build macOS App
+    needs: create-release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Import signing certificate
+        if: ${{ secrets.MACOS_CERTIFICATE != '' }}
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k $KEYCHAIN_PATH -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Add to search list
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          rm -f certificate.p12
+
+      - name: Update version in Info.plist
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION_NO_V=${VERSION#v}
+          BUILD_NUMBER="${{ needs.create-release.outputs.build_number }}"
+          TAG_MESSAGE="${{ needs.create-release.outputs.tag_message }}"
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NO_V" \
+            clementime-mac/Clementime/Info.plist
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" \
+            clementime-mac/Clementime/Info.plist
+
+          # Add build message as NSHumanReadableCopyright if desired
+          /usr/libexec/PlistBuddy -c "Set :NSHumanReadableCopyright 'ClemenTime $VERSION_NO_V ($BUILD_NUMBER) - $TAG_MESSAGE'" \
+            clementime-mac/Clementime/Info.plist || \
+          /usr/libexec/PlistBuddy -c "Add :NSHumanReadableCopyright string 'ClemenTime $VERSION_NO_V ($BUILD_NUMBER) - $TAG_MESSAGE'" \
+            clementime-mac/Clementime/Info.plist
+
+      - name: Build macOS app
+        env:
+          CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: |
+          cd clementime-mac/Clementime
+
+          # Build with signing if credentials are available
+          if [ -n "$CODE_SIGN_IDENTITY" ]; then
+            echo "Building with code signing enabled"
+            xcodebuild -project Clementime.xcodeproj \
+              -scheme Clementime \
+              -configuration Release \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
+              CODE_SIGN_STYLE=Manual \
+              DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}"
+          else
+            echo "Building without code signing (unsigned)"
+            xcodebuild -project Clementime.xcodeproj \
+              -scheme Clementime \
+              -configuration Release \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+          fi
+
+      - name: Notarize app
+        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID != '' }}
+        env:
+          APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Create a zip for notarization
+          cd clementime-mac/Clementime/build/Build/Products/Release
+          ditto -c -k --keepParent Clementime.app Clementime.zip
+
+          # Submit for notarization
+          xcrun notarytool submit Clementime.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          # Staple the notarization ticket
+          xcrun stapler staple Clementime.app
+
+          rm Clementime.zip
+
+      - name: Create DMG
+        run: |
+          # Install create-dmg if needed
+          brew install create-dmg || true
+
+          # Create a temporary directory for DMG contents
+          mkdir -p dmg-contents
+          cp -R clementime-mac/Clementime/build/Build/Products/Release/Clementime.app dmg-contents/
+
+          # Create DMG
+          create-dmg \
+            --volname "Clementime" \
+            --volicon "clementime-mac/Clementime/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "Clementime.app" 200 190 \
+            --hide-extension "Clementime.app" \
+            --app-drop-link 600 185 \
+            "Clementime-${{ needs.create-release.outputs.version }}-macOS.dmg" \
+            "dmg-contents/" || {
+              echo "create-dmg failed, trying hdiutil..."
+              hdiutil create -volname "Clementime" -srcfolder dmg-contents -ov -format UDZO \
+                "Clementime-${{ needs.create-release.outputs.version }}-macOS.dmg"
+            }
+
+      - name: Sign and notarize DMG
+        if: ${{ secrets.MACOS_SIGNING_IDENTITY != '' }}
+        env:
+          CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Sign the DMG
+          codesign --sign "$CODE_SIGN_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "Clementime-${{ needs.create-release.outputs.version }}-macOS.dmg"
+
+          # Notarize the DMG if credentials are available
+          if [ -n "$APPLE_ID" ]; then
+            xcrun notarytool submit "Clementime-${{ needs.create-release.outputs.version }}-macOS.dmg" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+
+            xcrun stapler staple "Clementime-${{ needs.create-release.outputs.version }}-macOS.dmg"
+          fi
+
+      - name: Create PKG installer
+        run: |
+          # Create package structure
+          mkdir -p pkg-root/Applications
+          cp -R clementime-mac/Clementime/build/Build/Products/Release/Clementime.app pkg-root/Applications/
+
+          # Build the package
+          pkgbuild --root pkg-root \
+            --identifier com.shawnschwartz.clementime \
+            --version "${{ needs.create-release.outputs.version }}" \
+            --install-location / \
+            "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
+
+      - name: Sign PKG
+        if: ${{ secrets.MACOS_INSTALLER_IDENTITY != '' }}
+        env:
+          INSTALLER_SIGN_IDENTITY: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
+        run: |
+          # Sign the PKG with installer certificate
+          productsign --sign "$INSTALLER_SIGN_IDENTITY" \
+            "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg" \
+            "Clementime-${{ needs.create-release.outputs.version }}-macOS-signed.pkg"
+
+          mv "Clementime-${{ needs.create-release.outputs.version }}-macOS-signed.pkg" \
+             "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
+
+      - name: Notarize PKG
+        if: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID != '' }}
+        env:
+          APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          xcrun stapler staple "Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg"
+
+      - name: Create fallback ZIP
+        run: |
+          # Always create a ZIP as a fallback download option
+          cd clementime-mac/Clementime/build/Build/Products/Release
+          zip -r "../../../../../Clementime-${{ needs.create-release.outputs.version }}-macOS.zip" Clementime.app
+
+      - name: Upload Mac app to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.version }}
+          files: |
+            Clementime-${{ needs.create-release.outputs.version }}-macOS.dmg
+            Clementime-${{ needs.create-release.outputs.version }}-macOS.pkg
+            Clementime-${{ needs.create-release.outputs.version }}-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
