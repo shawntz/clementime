@@ -153,10 +153,21 @@ jobs:
 
       - name: Build static version
         working-directory: clementime-web/client
-        run: yarn build:static
+        run: |
+          # Use regular build if build:static config doesn't exist
+          if [ -f "vite.config.static.js" ]; then
+            yarn build:static
+          else
+            yarn build
+          fi
 
       - name: Create web archive
         run: |
+          if [ ! -d "clementime-web/client/dist" ]; then
+            echo "Error: dist directory not found"
+            ls -la clementime-web/client/
+            exit 1
+          fi
           cd clementime-web/client/dist
           zip -r ../../../clementime-web-${{ needs.create-release.outputs.version }}.zip .
 
@@ -233,26 +244,28 @@ jobs:
       - name: Build macOS app
         env:
           CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           cd clementime-mac/Clementime
 
           # Build with signing if credentials are available
-          if [ -n "$CODE_SIGN_IDENTITY" ]; then
-            echo "Building with code signing enabled"
+          if [ -n "$CODE_SIGN_IDENTITY" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            echo "Building with automatic code signing"
             xcodebuild -project Clementime.xcodeproj \
               -scheme Clementime \
               -configuration Release \
               -derivedDataPath build \
               CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
-              CODE_SIGN_STYLE=Manual \
-              DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}"
+              CODE_SIGN_STYLE=Automatic \
+              DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+              -allowProvisioningUpdates
           else
             echo "Building without code signing (unsigned)"
             xcodebuild -project Clementime.xcodeproj \
               -scheme Clementime \
               -configuration Release \
               -derivedDataPath build \
-              CODE_SIGN_IDENTITY="" \
+              CODE_SIGN_IDENTITY="-" \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGNING_ALLOWED=NO
           fi
