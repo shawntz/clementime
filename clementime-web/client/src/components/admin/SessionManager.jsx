@@ -34,9 +34,7 @@ export default function SessionManager() {
       </div>
 
       {/* Content */}
-      <div>
-        {activeTab === 'generator' ? <ScheduleGenerator /> : <TimeSlotManager />}
-      </div>
+      <div>{activeTab === 'generator' ? <ScheduleGenerator /> : <TimeSlotManager />}</div>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export default function CanvasUpload() {
 
     try {
       const response = await api.post('/admin/canvas/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       setResult(response.data);
 
@@ -40,7 +40,7 @@ export default function CanvasUpload() {
         uploadDate: new Date().toISOString(),
         studentsCount: response.data.success_count,
         sections: response.data.sections_created,
-        fileData: await file.text() // Store CSV content
+        fileData: await file.text(), // Store CSV content
       };
       localStorage.setItem('canvas_last_upload', JSON.stringify(uploadInfo));
       setLastUpload(uploadInfo);
@@ -67,7 +67,11 @@ export default function CanvasUpload() {
   };
 
   const handleClearRoster = async () => {
-    if (!confirm('⚠️ WARNING: This will permanently delete ALL students from the database. This action cannot be undone. Are you sure you want to continue?')) {
+    if (
+      !confirm(
+        '⚠️ WARNING: This will permanently delete ALL students from the database. This action cannot be undone. Are you sure you want to continue?'
+      )
+    ) {
       return;
     }
 
@@ -162,11 +166,23 @@ export default function CanvasUpload() {
                 className="flex items-center justify-center w-full px-6 py-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 transition-colors cursor-pointer bg-gray-50 hover:bg-orange-50"
               >
                 <div className="text-center">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    stroke="currentColor"
+                    fill="none"
+                    viewBox="0 0 48 48"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   <p className="mt-2 text-sm text-gray-600">
-                    <span className="font-semibold text-orange-600">Click to upload</span> or drag and drop
+                    <span className="font-semibold text-orange-600">Click to upload</span> or drag
+                    and drop
                   </p>
                   <p className="text-xs text-gray-500">CSV files only</p>
                 </div>
@@ -174,8 +190,18 @@ export default function CanvasUpload() {
             </div>
             {file && (
               <div className="mt-3 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="h-5 w-5 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span className="text-sm text-green-800 font-medium">{file.name}</span>
               </div>
