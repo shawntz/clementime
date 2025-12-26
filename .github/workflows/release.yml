@@ -151,15 +151,11 @@ jobs:
         working-directory: clementime-web/client
         run: yarn install --frozen-lockfile
 
-      - name: Build static version
+      - name: Build production version
         working-directory: clementime-web/client
         run: |
-          # Use regular build if build:static config doesn't exist
-          if [ -f "vite.config.static.js" ]; then
-            yarn build:static
-          else
-            yarn build
-          fi
+          # Use regular production build (outputs to dist/)
+          yarn build
 
       - name: Create web archive
         run: |
@@ -243,19 +239,17 @@ jobs:
 
       - name: Build macOS app
         env:
-          CODE_SIGN_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           cd clementime-mac/Clementime
 
           # Build with signing if credentials are available
-          if [ -n "$CODE_SIGN_IDENTITY" ] && [ -n "$APPLE_TEAM_ID" ]; then
+          if [ -n "$APPLE_TEAM_ID" ]; then
             echo "Building with automatic code signing"
             xcodebuild -project Clementime.xcodeproj \
               -scheme Clementime \
               -configuration Release \
               -derivedDataPath build \
-              CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
               CODE_SIGN_STYLE=Automatic \
               DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
               -allowProvisioningUpdates
