@@ -36,4 +36,12 @@
 /client/dist-static
 /client/.env
 /client/.env.local
+
+# Ignore landing page build artifacts
+/landing/dist
+/landing/node_modules
+
+# Ignore client node_modules
+/client/node_modules
+
 .DS_Store
