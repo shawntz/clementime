@@ -1,9 +1,16 @@
-name: Release and Publish
+name: Release and Publish (DEPRECATED)
+
+# DEPRECATED: This workflow has been replaced by the root-level workflow
+# at .github/workflows/release.yml which handles both Mac and Web releases.
+# This workflow is kept for reference but will not run.
+#
+# To create a release, use: ./scripts/release.sh
+# See RELEASE.md in the root directory for details.
 
 on:
   push:
     branches:
-      - main
+      - deprecated-never-run
 
 jobs:
   release:
