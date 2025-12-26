@@ -184,7 +184,7 @@ struct ExamRule: Identifiable, Codable, Hashable {
     init(id: UUID = UUID(), ruleType: ExamRuleType, value: String) {
         self.id = id
         self.ruleType = ruleType
-               self.value = value
+        self.value = value
     }
 }
 
