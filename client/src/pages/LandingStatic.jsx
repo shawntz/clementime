@@ -245,12 +245,12 @@ export default function LandingStatic() {
             <div className="inline-block mb-8 transform hover:scale-105 transition-transform duration-500">
               <img
                 src="/macos-app-logo.png"
-                alt="ClemenTime macOS App"
+                alt="Clementime macOS App"
                 className="w-40 h-40 md:w-48 md:h-48 drop-shadow-2xl"
               />
             </div>
             <h2 className="text-5xl md:text-6xl font-extrabold mb-4 tracking-tight">
-              ClemenTime for Mac
+              Clementime for Mac
             </h2>
             <p className="text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
               Beautiful. Fast. Native.
