@@ -37,6 +37,8 @@
 		CD26DC0F2EFBA95A00175298 /* PDFGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC072EFBA95A00175298 /* PDFGenerator.swift */; };
 		CD26DC2D2EFD164300175298 /* CSVParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC2C2EFD164300175298 /* CSVParser.swift */; };
 		CD26DC302EFD230C00175298 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26DC2F2EFD230C00175298 /* BuildInfo.swift */; };
+		CD52BCEA2EFE9A6B004E9BAA /* Clementime App.icon in Resources */ = {isa = PBXBuildFile; fileRef = CD52BCE92EFE9A6B004E9BAA /* Clementime App.icon */; };
+		CD52BD042EFE9CB0004E9BAA /* clementime-app-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = CD52BD032EFE9CB0004E9BAA /* clementime-app-logo.png */; };
 		CD78236E2EF66C8A0083A25A /* ScheduleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD78236A2EF66C8A0083A25A /* ScheduleRepository.swift */; };
 		CD78236F2EF66C8A0083A25A /* RecordingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823692EF66C8A0083A25A /* RecordingRepository.swift */; };
 		CD7823702EF66C8A0083A25A /* CohortRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7823652EF66C8A0083A25A /* CohortRepository.swift */; };
@@ -147,6 +149,8 @@
 		CD26DC072EFBA95A00175298 /* PDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFGenerator.swift; sourceTree = "<group>"; };
 		CD26DC2C2EFD164300175298 /* CSVParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParser.swift; sourceTree = "<group>"; };
 		CD26DC2F2EFD230C00175298 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
+		CD52BCE92EFE9A6B004E9BAA /* Clementime App.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Clementime App.icon"; sourceTree = "<group>"; };
+		CD52BD032EFE9CB0004E9BAA /* clementime-app-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "clementime-app-logo.png"; sourceTree = "<group>"; };
 		CD7823652EF66C8A0083A25A /* CohortRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CohortRepository.swift; sourceTree = "<group>"; };
 		CD7823662EF66C8A0083A25A /* ConstraintRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstraintRepository.swift; sourceTree = "<group>"; };
 		CD7823672EF66C8A0083A25A /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
@@ -213,11 +217,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CDCFA65A2EF6594B00F7BBD1 /* Clementime */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Clementime;
-			sourceTree = "<group>";
-		};
 		CDCFA66D2EF6594C00F7BBD1 /* ClementimeTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ClementimeTests;
@@ -434,19 +433,12 @@
 		CDCFA64F2EF6594B00F7BBD1 = {
 			isa = PBXGroup;
 			children = (
-				CDCFA65A2EF6594B00F7BBD1 /* Clementime */,
-				CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */,
+				CDCFA6AA2EF6598B00F7BBD1 /* Clementime */,
 				CDCFA66D2EF6594C00F7BBD1 /* ClementimeTests */,
 				CDCFA6772EF6594C00F7BBD1 /* ClementimeUITests */,
-				CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */,
-				CDCFA6992EF6598B00F7BBD1 /* Core */,
-				CDCFA69E2EF6598B00F7BBD1 /* Data */,
-				CDCFA69F2EF6598B00F7BBD1 /* Info.plist */,
 				CDCFA6592EF6594B00F7BBD1 /* Products */,
-				CDCFA6A12EF6598B00F7BBD1 /* Resources */,
-				CDCFA6A22EF6598B00F7BBD1 /* Services */,
-				CDCFA6A32EF6598B00F7BBD1 /* ViewModels */,
-				CD7823C42EF674000083A25A /* Views */,
+				CD52BCE92EFE9A6B004E9BAA /* Clementime App.icon */,
+				CD52BD032EFE9CB0004E9BAA /* clementime-app-logo.png */,
 			);
 			sourceTree = "<group>";
 		};
@@ -576,14 +568,6 @@
 			path = Data;
 			sourceTree = "<group>";
 		};
-		CDCFA6A12EF6598B00F7BBD1 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */,
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
 		CDCFA6A22EF6598B00F7BBD1 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -605,6 +589,22 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
+		CDCFA6AA2EF6598B00F7BBD1 /* Clementime */ = {
+			isa = PBXGroup;
+			children = (
+				CDCFA6A02EF6598B00F7BBD1 /* Assets.xcassets */,
+				CDCFA6872EF6598B00F7BBD1 /* ClementimeApp.swift */,
+				CDCFA6882EF6598B00F7BBD1 /* ContentView.swift */,
+				CDCFA6992EF6598B00F7BBD1 /* Core */,
+				CDCFA69E2EF6598B00F7BBD1 /* Data */,
+				CDCFA69F2EF6598B00F7BBD1 /* Info.plist */,
+				CDCFA6A22EF6598B00F7BBD1 /* Services */,
+				CDCFA6A32EF6598B00F7BBD1 /* ViewModels */,
+				CD7823C42EF674000083A25A /* Views */,
+			);
+			path = Clementime;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -620,9 +620,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				CDCFA65A2EF6594B00F7BBD1 /* Clementime */,
 			);
 			name = Clementime;
 			packageProductDependencies = (
@@ -726,6 +723,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD52BCEA2EFE9A6B004E9BAA /* Clementime App.icon in Resources */,
+				CD52BD042EFE9CB0004E9BAA /* clementime-app-logo.png in Resources */,
 				CDCFA6AB2EF6598B00F7BBD1 /* Info.plist in Resources */,
 				CDCFA6AC2EF6598B00F7BBD1 /* Assets.xcassets in Resources */,
 			);
@@ -762,7 +761,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(SRCROOT)/Core/BuildInfo.swift",
+				"$(SRCROOT)/Clementime/Core/BuildInfo.swift",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1027,7 +1026,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = ZL4K35VM2L;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1046,6 +1045,7 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Clementime;
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1070,6 +1070,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
@@ -1084,7 +1085,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = ZL4K35VM2L;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1103,6 +1104,7 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Clementime;
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1127,6 +1129,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
@@ -1135,7 +1138,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = ZL4K35VM2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
@@ -1156,7 +1159,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = ZL4K35VM2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
@@ -1176,7 +1179,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = ZL4K35VM2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -1195,7 +1198,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = ZL4K35VM2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;

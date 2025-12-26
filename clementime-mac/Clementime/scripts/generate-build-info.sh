@@ -7,7 +7,7 @@
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Path to the generated file
-OUTPUT_FILE="${SRCROOT}/Core/BuildInfo.swift"
+OUTPUT_FILE="${SRCROOT}/Clementime/Core/BuildInfo.swift"
 
 # Generate the Swift file
 cat > "$OUTPUT_FILE" << EOF
