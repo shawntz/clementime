@@ -17,7 +17,7 @@ This repository contains two versions of ClemenTime:
 - Audio recording with iCloud storage
 - **Status**: Active development
 
-**Requirements**: macOS 14.0+
+**Requirements**: macOS 15.0+
 
 [Read Mac App Documentation →](./clementime-mac/README.md)
 
