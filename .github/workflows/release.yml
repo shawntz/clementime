@@ -172,6 +172,8 @@ jobs:
     name: Build macOS App
     needs: create-release
     runs-on: macos-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
