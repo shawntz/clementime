@@ -308,12 +308,12 @@ xcodebuild test -scheme Clementime -only-testing:ClementimeTests/ScheduleGenerat
 
 ## CSV Roster Import Format
 
-Both platforms support CSV roster imports with this exact format:
+### Mac App Format
 
 ```csv
 sis_user_id,email,full_name,section_code
-student001,alice@stanford.edu,Alice Johnson,F25-PSYCH-10-01
-student002,bob@stanford.edu,Bob Smith,F25-PSYCH-10-02
+student001,alice@fakeuni.edu,Alice Johnson,F25-PSYCH-10-01
+student002,bob@fakeuni.edu,Bob Smith,F25-PSYCH-10-02
 ```
 
 **Required columns**:
@@ -322,7 +322,44 @@ student002,bob@stanford.edu,Bob Smith,F25-PSYCH-10-02
 - `full_name`: Student's full name
 - `section_code`: Section identifier matching your course
 
-Example files: `/docs/examples/roster-mac-example.csv`, `/docs/examples/roster-web-example.csv`
+Example file: `/docs/examples/roster-mac-example.csv`
+
+### Web App Format (Canvas Export)
+
+```csv
+Student,SIS User ID,SIS Login ID,Section
+"Johnson, Alice Marie",student001,alice.johnson@fakeuni.edu,F25-PSYCH-10-01
+"Smith, Bob Thomas",student002,bob.smith@fakeuni.edu,F25-PSYCH-10-02
+```
+
+**Required columns**:
+- `Student`: Full name in "Last, First Middle" format
+- `SIS User ID`: Student's unique ID from SIS
+- `SIS Login ID`: Student's email address (login)
+- `Section`: Section identifier matching your course
+
+**Note**: The web app accepts Canvas LMS gradebook export format. To obtain this file, go to your Canvas course → Grades → Export → Export Entire Gradebook. Upload the downloaded CSV directly - extra columns will be ignored. When combined with Slack member export, the system will merge student data with Slack profiles for notifications.
+
+Example file: `/docs/examples/roster-web-example.csv`
+
+### Slack Members Export (Web App Only)
+
+For Slack integration, export workspace members from Slack admin panel:
+
+**Export from Slack**:
+1. Slack workspace → Settings & administration → Workspace settings
+2. Import/Export Data → Export member list
+3. Download CSV
+
+**Format**:
+```csv
+username,email,status,has-2fa,has-sso,userid,fullname,displayname,expiration-timestamp
+alice_j,alice.johnson@fakeuni.edu,Member,0,1,UFAKE001ABC,"Alice Johnson",Alice,
+```
+
+**Merge logic**: Students are matched with Slack members by email address. Matched students get Slack user IDs stored for direct message notifications about schedule changes.
+
+Example file: `/docs/examples/slack-members-example.csv`
 
 ## Deployment
 

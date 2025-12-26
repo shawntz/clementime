@@ -178,33 +178,48 @@ Ready to deploy ClemenTime at your institution?
 
 ## Student Roster Import
 
-Both platforms support CSV roster imports. The CSV file must contain the following columns:
+Both platforms support CSV roster imports, but use different formats:
 
-### Required CSV Format
+### Mac App Format
 
 ```csv
 sis_user_id,email,full_name,section_code
-student001,alice@stanford.edu,Alice Johnson,F25-PSYCH-10-01
-student002,bob@stanford.edu,Bob Smith,F25-PSYCH-10-02
-student003,carol@stanford.edu,Carol Williams,F25-PSYCH-10-01
-student004,david@stanford.edu,David Brown,F25-PSYCH-10-02
+student001,alice@fakeuni.edu,Alice Johnson,F25-PSYCH-10-01
+student002,bob@fakeuni.edu,Bob Smith,F25-PSYCH-10-02
+student003,carol@fakeuni.edu,Carol Williams,F25-PSYCH-10-01
+student004,david@fakeuni.edu,David Brown,F25-PSYCH-10-02
 ```
 
-### Column Descriptions
+**[Download Mac App Example CSV](./docs/examples/roster-mac-example.csv)**
 
-| Column | Required | Description | Example |
-|--------|----------|-------------|---------|
-| `sis_user_id` | ✅ Yes | Student's unique ID from your SIS | `student001` |
-| `email` | ✅ Yes | Student's email address | `alice@stanford.edu` |
-| `full_name` | ✅ Yes | Student's full name | `Alice Johnson` |
-| `section_code` | ✅ Yes | Section identifier matching your course | `F25-PSYCH-10-01` |
+### Web App Format (Canvas Export Compatible)
 
-### Example CSV Files
+```csv
+Student,SIS User ID,SIS Login ID,Section
+"Johnson, Alice Marie",student001,alice.johnson@fakeuni.edu,F25-PSYCH-10-01
+"Smith, Bob Thomas",student002,bob.smith@fakeuni.edu,F25-PSYCH-10-02
+"Williams, Carol Ann",student003,carol.williams@fakeuni.edu,F25-PSYCH-10-01
+"Brown, David Lee",student004,david.brown@fakeuni.edu,F25-PSYCH-10-02
+```
 
-- **[Download Mac App Example CSV](./docs/examples/roster-mac-example.csv)**
-- **[Download Web App Example CSV](./docs/examples/roster-web-example.csv)**
+**[Download Web App Example CSV](./docs/examples/roster-web-example.csv)**
 
-> **Note**: The Mac app will validate the CSV format and provide helpful error messages if columns are missing or incorrectly formatted.
+> **Note**: The web app format matches Canvas LMS gradebook export format.
+>
+> **To export from Canvas**: Go to your Canvas course → **Grades** → **Export** → **Export Entire Gradebook**. Upload the downloaded CSV directly to Clementime - extra columns will be ignored. The app will also merge with Slack member data if Slack integration is enabled.
+
+### Slack Integration (Web App Only)
+
+To enable Slack notifications, export your workspace members and import them into Clementime:
+
+**How to export Slack members**:
+1. Slack workspace → Settings & administration → Workspace settings
+2. Import/Export Data → Export member list
+3. Download and import into Clementime
+
+**[Download Slack Members Example CSV](./docs/examples/slack-members-example.csv)**
+
+Students are matched with Slack members by email address, enabling automated direct message notifications for schedule changes.
 
 ## Features Comparison
 
