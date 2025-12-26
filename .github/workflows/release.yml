@@ -133,6 +133,8 @@ jobs:
     name: Build Web Static Assets
     needs: create-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
