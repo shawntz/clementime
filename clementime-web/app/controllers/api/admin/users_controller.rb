@@ -97,6 +97,7 @@ module Api
           additional_user_ids = params[:include_user_ids] || []
 
           begin
+            # Send the actual temporary password so the user can log in.
             result = SlackNotifier.send_credentials(@user, temp_password, additional_user_ids)
 
             if result[:success]
