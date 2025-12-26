@@ -1,8 +1,16 @@
 # Versioning and Release Process
 
+> **⚠️ DEPRECATED**: This documentation is outdated.
+>
+> Please refer to [../../RELEASE.md](../../RELEASE.md) for the current release process.
+
+---
+
+## OLD DOCUMENTATION (Archived)
+
 This repository uses automated semantic versioning with GitHub Actions.
 
-## How It Works
+## How It Works (OLD - No Longer Used)
 
 Every push to the `main` branch automatically:
 1. Creates a new GitHub release with an incremented version number

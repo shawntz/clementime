@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function LandingStatic() {
+export default function Landing() {
   const [activeFeature, setActiveFeature] = useState(0);
   const [activePlatform, setActivePlatform] = useState('mac');
   const [scrollY, setScrollY] = useState(0);
@@ -130,11 +130,10 @@ export default function LandingStatic() {
       <nav className="sticky top-0 z-50 pt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div
-            className={`flex justify-between items-center py-6 transition-all duration-300 border ${
-              scrollY > 50
-                ? 'backdrop-blur-xl bg-gray-900/90 rounded-2xl px-6 border-white/10 shadow-lg'
-                : 'border-transparent'
-            }`}
+            className={`flex justify-between items-center py-6 transition-all duration-300 border ${scrollY > 50
+              ? 'backdrop-blur-xl bg-gray-900/90 rounded-2xl px-6 border-white/10 shadow-lg'
+              : 'border-transparent'
+              }`}
           >
             <div className="flex items-center space-x-3">
               <span className="text-5xl">🍊</span>
@@ -143,6 +142,15 @@ export default function LandingStatic() {
               </h1>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const aboutSection = document.getElementById('about');
+                  aboutSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:bg-white/10 text-gray-300 hover:text-white"
+              >
+                About
+              </button>
               <a
                 href="https://buymeacoffee.com/shawntz"
                 target="_blank"
@@ -186,7 +194,7 @@ export default function LandingStatic() {
           </div>
 
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6 leading-tight">
-            Oral Exam Scheduling,
+            Exam Scheduling,
             <br />
             <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">
               Reimagined
@@ -268,11 +276,10 @@ export default function LandingStatic() {
                 {screenshots.map((screenshot, idx) => (
                   <div
                     key={idx}
-                    className={`absolute inset-0 transition-all duration-700 ${
-                      activeScreenshot === idx
-                        ? 'opacity-100 scale-100'
-                        : 'opacity-0 scale-95 pointer-events-none'
-                    }`}
+                    className={`absolute inset-0 transition-all duration-700 ${activeScreenshot === idx
+                      ? 'opacity-100 scale-100'
+                      : 'opacity-0 scale-95 pointer-events-none'
+                      }`}
                   >
                     <div className={`w-full h-full bg-gradient-to-br ${screenshot.color} rounded-2xl flex flex-col items-center justify-center p-12 border border-white/20`}>
                       <div className="text-center">
@@ -282,7 +289,6 @@ export default function LandingStatic() {
                         <h3 className="text-3xl md:text-4xl font-bold mb-4">{screenshot.title}</h3>
                         <p className="text-xl text-gray-300 max-w-xl mx-auto">{screenshot.description}</p>
                         <div className="mt-8 text-sm text-gray-500">
-                          Screenshot placeholder - Add your app screenshots to public folder
                         </div>
                       </div>
                     </div>
@@ -311,11 +317,10 @@ export default function LandingStatic() {
                 <button
                   key={idx}
                   onClick={() => setActiveScreenshot(idx)}
-                  className={`group relative px-6 py-3 rounded-xl transition-all duration-300 ${
-                    activeScreenshot === idx
-                      ? 'bg-white/10 border border-white/20 scale-105'
-                      : 'bg-white/5 border border-white/10 hover:bg-white/10'
-                  }`}
+                  className={`group relative px-6 py-3 rounded-xl transition-all duration-300 ${activeScreenshot === idx
+                    ? 'bg-white/10 border border-white/20 scale-105'
+                    : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
@@ -383,21 +388,19 @@ export default function LandingStatic() {
             <div className="inline-flex backdrop-blur-xl bg-white/5 rounded-2xl p-2 border border-white/10">
               <button
                 onClick={() => setActivePlatform('mac')}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activePlatform === 'mac'
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${activePlatform === 'mac'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 🍎 macOS App
               </button>
               <button
                 onClick={() => setActivePlatform('web')}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activePlatform === 'web'
-                    ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${activePlatform === 'web'
+                  ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 🌐 Web App
               </button>
@@ -409,11 +412,10 @@ export default function LandingStatic() {
             {Object.entries(platforms).map(([key, platform]) => (
               <div
                 key={key}
-                className={`p-8 backdrop-blur-xl rounded-3xl border transition-all duration-500 ${
-                  activePlatform === key
-                    ? 'bg-white/10 border-white/20 scale-105 shadow-2xl'
-                    : 'bg-white/5 border-white/10 opacity-50'
-                }`}
+                className={`p-8 backdrop-blur-xl rounded-3xl border transition-all duration-500 ${activePlatform === key
+                  ? 'bg-white/10 border-white/20 scale-105 shadow-2xl'
+                  : 'bg-white/5 border-white/10 opacity-50'
+                  }`}
               >
                 <h3 className="text-3xl font-bold mb-2">{platform.title}</h3>
                 <p className="text-gray-400 mb-6">{platform.tagline}</p>
@@ -431,11 +433,10 @@ export default function LandingStatic() {
                   href={platform.ctaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`block w-full py-3 text-center font-semibold rounded-xl transition-all duration-300 ${
-                    activePlatform === key
-                      ? `bg-gradient-to-r ${platform.gradient} hover:scale-105 shadow-lg`
-                      : 'bg-white/10 hover:bg-white/20'
-                  }`}
+                  className={`block w-full py-3 text-center font-semibold rounded-xl transition-all duration-300 ${activePlatform === key
+                    ? `bg-gradient-to-r ${platform.gradient} hover:scale-105 shadow-lg`
+                    : 'bg-white/10 hover:bg-white/20'
+                    }`}
                 >
                   {platform.cta}
                 </a>
@@ -481,24 +482,103 @@ export default function LandingStatic() {
 
       {/* Currently Used At */}
       <div className="relative z-10 py-24 bg-gradient-to-r from-orange-500/10 to-pink-500/10 backdrop-blur-xl border-y border-white/10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
             Trusted at Stanford University
           </h2>
-          <div className="backdrop-blur-xl bg-white/5 p-8 rounded-3xl border border-white/10 hover:scale-105 transition-transform duration-300">
-            <a
-              href="https://psych10.github.io/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-xl hover:text-orange-400 transition-colors font-medium"
-            >
-              <span>🎓</span>
-              <span>Psych 10: Introduction to Statistical Methods</span>
-              <span className="text-sm">↗</span>
-            </a>
-            <p className="text-gray-400 mt-4 text-lg">
-              Managing oral exams for 200+ students per quarter
-            </p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="backdrop-blur-xl bg-white/5 p-8 rounded-3xl border border-white/10 hover:scale-105 transition-transform duration-300">
+              <a
+                href="https://psych10.github.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xl hover:text-orange-400 transition-colors font-medium"
+              >
+                <span>🎓</span>
+                <span>Psych 10: Introduction to Statistical Methods</span>
+                <span className="text-sm">↗</span>
+              </a>
+            </div>
+            <div className="backdrop-blur-xl bg-white/5 p-8 rounded-3xl border border-white/10 hover:scale-105 transition-transform duration-300">
+              <a
+                href="https://gru.stanford.edu/doku.php/shared/teaching"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xl hover:text-orange-400 transition-colors font-medium"
+              >
+                <span>🧠</span>
+                <span>Psych 50: Introduction to Cognitive Neuroscience</span>
+                <span className="text-sm">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div id="about" className="relative z-10 py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="backdrop-blur-xl bg-white/5 p-12 rounded-3xl border border-white/10">
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <span className="text-4xl">👨‍💻</span>
+              <h2 className="text-4xl font-extrabold">About</h2>
+            </div>
+            <div className="grid md:grid-cols-[300px_1fr] gap-12 items-start">
+              {/* Profile Image */}
+              <div className="mx-auto md:mx-0">
+                <div className="w-64 h-64 md:w-full md:h-auto md:aspect-square rounded-2xl bg-gradient-to-br from-orange-500/20 to-purple-500/20 border border-white/10 overflow-hidden backdrop-blur-xl flex items-center justify-center">
+                  <img
+                    src="/profile.jpg"
+                    alt="Shawn Schwartz"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerHTML = '<div class="text-6xl">👨‍🔬</div>';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Text Content */}
+              <div className="text-lg text-gray-300 leading-relaxed space-y-4">
+                <p>
+                  Hi, I'm{' '}
+                  <a
+                    href="https://shawnschwartz.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 hover:text-orange-300 transition-colors font-semibold"
+                  >
+                    Shawn Schwartz
+                  </a>
+                  , a cognitive neuroscience PhD candidate at Stanford University. I built Clementime to solve a real problem I encountered as a teaching assistant: managing oral exams for hundreds of students while respecting their scheduling constraints and balancing workloads across TAs.
+                </p>
+                <p>
+                  What started as a simple Rails app has since evolved into two full platforms—a web application and a native macOS app—both implementing the same smart scheduling mechanism. I've released this project as open source and free forever because I believe educational tools should be accessible to all instructors and institutions, regardless of budget.
+                </p>
+                <p className="text-gray-400 text-base italic">
+                  If Clementime helps your teaching workflow, consider{' '}
+                  <a
+                    href="https://github.com/shawntz/clementime"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 hover:text-orange-300 transition-colors"
+                  >
+                    starring the project on GitHub
+                  </a>
+                  ,{' '}
+                  <a
+                    href="https://buymeacoffee.com/shawntz"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 hover:text-orange-300 transition-colors"
+                  >
+                    buying me a coffee
+                  </a>
+                  , and/or sharing it with colleagues who might find it useful.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -561,19 +641,28 @@ export default function LandingStatic() {
                   Swift + SwiftUI
                 </div>
                 <div className="px-3 py-1.5 backdrop-blur-xl bg-white/5 rounded-lg border border-white/10 text-sm">
+                  CloudKit
+                </div>
+                <div className="px-3 py-1.5 backdrop-blur-xl bg-white/5 rounded-lg border border-white/10 text-sm">
                   Ruby on Rails
                 </div>
                 <div className="px-3 py-1.5 backdrop-blur-xl bg-white/5 rounded-lg border border-white/10 text-sm">
                   React
                 </div>
-                <div className="px-3 py-1.5 backdrop-blur-xl bg-white/5 rounded-lg border border-white/10 text-sm">
-                  CloudKit
-                </div>
               </div>
             </div>
 
             <p className="text-sm text-gray-500 pt-2">
-              © 2025 Shawn Schwartz • MIT License • Made with 🍊 for educators
+              © 2025{' '}
+              <a
+                href="https://shawnschwartz.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-orange-400 transition-colors"
+              >
+                Shawn Schwartz
+              </a>
+              {' '}• MIT License • Made with 🍊 for educators
             </p>
           </div>
         </div>

@@ -39,9 +39,9 @@ export default function Landing() {
   ];
 
   const stats = [
-    { number: '200+', label: 'Students Scheduled' },
+    { number: '500+', label: 'Students Scheduled' },
     { number: '15+', label: 'TAs Supported' },
-    { number: '1000+', label: 'Exams Recorded' },
+    { number: '2000+', label: 'Exams Recorded' },
     { number: '100%', label: 'Open Source' }
   ];
 
