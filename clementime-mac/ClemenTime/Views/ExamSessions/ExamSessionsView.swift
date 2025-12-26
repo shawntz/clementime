@@ -12,6 +12,11 @@ struct ExamSessionsView: View {
     @State private var examSessions: [ExamSession] = []
     @State private var isLoading = false
     @State private var showAddSession = false
+    @State private var cohorts: [Cohort] = []
+    @State private var editingSession: ExamSession?
+
+    private let examSessionRepository = PersistenceController.shared.examSessionRepository
+    private let cohortRepository = PersistenceController.shared.cohortRepository
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,6 +37,20 @@ struct ExamSessionsView: View {
         }
         .task {
             await loadSessions()
+        }
+        .sheet(isPresented: $showAddSession) {
+            ExamSessionEditorView(course: course) { newSession in
+                Task {
+                    await saveExamSession(newSession)
+                }
+            }
+        }
+        .sheet(item: $editingSession) { session in
+            ExamSessionEditorView(course: course, existingSession: session) { updatedSession in
+                Task {
+                    await updateExamSession(updatedSession)
+                }
+            }
         }
     }
 
@@ -57,14 +76,43 @@ struct ExamSessionsView: View {
     // MARK: - Sessions List
 
     private var sessionsList: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                ForEach(examSessions) { session in
-                    ExamSessionCard(session: session, course: course)
-                }
+        List {
+            ForEach(examSessions) { session in
+                ExamSessionCard(
+                    session: session,
+                    course: course,
+                    cohortName: cohortName(for: session.assignedCohortId),
+                    onEdit: {
+                        editingSession = session
+                    },
+                    onDelete: {
+                        Task {
+                            await deleteExamSession(session)
+                        }
+                    }
+                )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                    .listRowSeparator(.hidden)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                await deleteExamSession(session)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        Button {
+                            editingSession = session
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        .tint(.blue)
+                    }
             }
-            .padding()
         }
+        .listStyle(.plain)
     }
 
     // MARK: - Empty State
@@ -101,9 +149,45 @@ struct ExamSessionsView: View {
 
     private func loadSessions() async {
         isLoading = true
-        // TODO: Load sessions from repository
-        // For now, use placeholder data
+        do {
+            examSessions = try await examSessionRepository.fetchExamSessions(courseId: course.id)
+            cohorts = try await cohortRepository.fetchCohorts(courseId: course.id)
+        } catch {
+            print("Failed to load exam sessions: \(error)")
+        }
         isLoading = false
+    }
+
+    private func cohortName(for cohortId: UUID?) -> String {
+        guard let cohortId = cohortId else { return "All Students" }
+        return cohorts.first(where: { $0.id == cohortId })?.name ?? "Unknown Cohort"
+    }
+
+    private func saveExamSession(_ session: ExamSession) async {
+        do {
+            _ = try await examSessionRepository.createExamSession(session)
+            await loadSessions()
+        } catch {
+            print("Failed to save exam session: \(error)")
+        }
+    }
+
+    private func updateExamSession(_ session: ExamSession) async {
+        do {
+            try await examSessionRepository.updateExamSession(session)
+            await loadSessions()
+        } catch {
+            print("Failed to update exam session: \(error)")
+        }
+    }
+
+    private func deleteExamSession(_ session: ExamSession) async {
+        do {
+            try await examSessionRepository.deleteExamSession(id: session.id)
+            await loadSessions()
+        } catch {
+            print("Failed to delete exam session: \(error)")
+        }
     }
 }
 
@@ -112,6 +196,9 @@ struct ExamSessionsView: View {
 struct ExamSessionCard: View {
     let session: ExamSession
     let course: Course
+    let cohortName: String
+    let onEdit: () -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -133,12 +220,12 @@ struct ExamSessionCard: View {
 
                 Menu {
                     Button {
-                        // TODO: Edit session
+                        onEdit()
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
                     Button(role: .destructive) {
-                        // TODO: Delete session
+                        onDelete()
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
@@ -151,29 +238,27 @@ struct ExamSessionCard: View {
 
             Divider()
 
-            // Dates for each cohort
+            // Week start date
             VStack(alignment: .leading, spacing: 8) {
                 DateRow(
-                    label: "Odd Week",
-                    date: session.oddWeekDate,
+                    label: "Week Starting",
+                    date: session.weekStartDate,
                     color: .blue
                 )
 
-                DateRow(
-                    label: "Even Week",
-                    date: session.evenWeekDate,
-                    color: .green
-                )
+                Text(cohortName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             Divider()
 
-            // Time details
+            // Exam duration details
             HStack(spacing: 24) {
                 InfoItem(
                     icon: "clock",
-                    label: "Time",
-                    value: "\(session.startTime) - \(session.endTime)"
+                    label: "Duration",
+                    value: "\(session.durationMinutes) min"
                 )
 
                 InfoItem(
@@ -250,7 +335,7 @@ struct InfoItem: View {
         name: "PSYCH 10",
         term: "Fall 2025",
         quarterStartDate: Date(),
-        examDay: .friday,
+        quarterEndDate: Calendar.current.date(byAdding: .day, value: 70, to: Date()) ?? Date(),
         totalExams: 5,
         isActive: true,
         createdBy: UUID(),
