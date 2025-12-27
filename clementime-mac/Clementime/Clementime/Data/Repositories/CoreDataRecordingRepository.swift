@@ -11,11 +11,13 @@ import CloudKit
 
 class CoreDataRecordingRepository: RecordingRepository {
     private let persistentContainer: NSPersistentCloudKitContainer
-    private let cloudKitContainer: CKContainer
+    private let cloudKitContainer: CKContainer?
+    private let cloudKitEnabled: Bool
 
-    init(persistentContainer: NSPersistentCloudKitContainer) {
+    init(persistentContainer: NSPersistentCloudKitContainer, cloudKitEnabled: Bool) {
         self.persistentContainer = persistentContainer
-        self.cloudKitContainer = CKContainer(identifier: "iCloud.com.shawnschwartz.clementime")
+        self.cloudKitEnabled = cloudKitEnabled
+        self.cloudKitContainer = cloudKitEnabled ? CKContainer(identifier: "iCloud.com.shawnschwartz.clementime") : nil
     }
 
     func fetchRecordings(courseId: UUID) async throws -> [Recording] {
@@ -153,6 +155,9 @@ class CoreDataRecordingRepository: RecordingRepository {
     }
 
     func uploadToiCloud(_ recordingId: UUID) async throws {
+        guard cloudKitEnabled, let cloudKitContainer else {
+            throw RecordingError.cloudKitUnavailable
+        }
         // Fetch the recording from Core Data
         guard let recording = try await fetchRecording(id: recordingId) else {
             throw RepositoryError.notFound
@@ -195,6 +200,9 @@ class CoreDataRecordingRepository: RecordingRepository {
     }
 
     func downloadFromiCloud(_ recordingId: UUID) async throws -> URL {
+        guard cloudKitEnabled, let cloudKitContainer else {
+            throw RecordingError.cloudKitUnavailable
+        }
         // Fetch the recording metadata from Core Data
         guard let recording = try await fetchRecording(id: recordingId) else {
             throw RepositoryError.notFound
@@ -250,6 +258,7 @@ enum RecordingError: LocalizedError {
     case fileNotFound
     case notUploadedToiCloud
     case assetNotFound
+    case cloudKitUnavailable
 
     var errorDescription: String? {
         switch self {
@@ -261,6 +270,8 @@ enum RecordingError: LocalizedError {
             return "Recording has not been uploaded to iCloud"
         case .assetNotFound:
             return "iCloud asset not found in CloudKit record"
+        case .cloudKitUnavailable:
+            return "iCloud features are not available in this build"
         }
     }
 }

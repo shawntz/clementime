@@ -288,6 +288,12 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" \
             clementime-mac/Clementime/Clementime/Info.plist
 
+          # Disable CloudKit for Developer ID builds (no provisioning profile)
+          /usr/libexec/PlistBuddy -c "Set :ClementimeCloudKitEnabled false" \
+            clementime-mac/Clementime/Clementime/Info.plist || \
+          /usr/libexec/PlistBuddy -c "Add :ClementimeCloudKitEnabled bool false" \
+            clementime-mac/Clementime/Clementime/Info.plist
+
           # Add build message as NSHumanReadableCopyright if desired
           /usr/libexec/PlistBuddy -c "Set :NSHumanReadableCopyright 'ClemenTime $VERSION_NO_V ($BUILD_NUMBER) - $TAG_MESSAGE'" \
             clementime-mac/Clementime/Clementime/Info.plist || \

@@ -13,10 +13,14 @@ class PersistenceController: ObservableObject {
     static let shared = PersistenceController()
 
     let container: NSPersistentCloudKitContainer
+    private let cloudKitEnabled: Bool
 
     // MARK: - Cloud Kit Share Manager
 
     lazy var shareManager: CloudKitShareManager? = {
+        guard cloudKitEnabled else {
+            return nil
+        }
         return CloudKitShareManager(persistentContainer: container)
     }()
 
@@ -51,7 +55,7 @@ class PersistenceController: ObservableObject {
     }()
 
     lazy var recordingRepository: RecordingRepository = {
-        CoreDataRecordingRepository(persistentContainer: container)
+        CoreDataRecordingRepository(persistentContainer: container, cloudKitEnabled: cloudKitEnabled)
     }()
 
     lazy var taUserRepository: TAUserRepository = {
@@ -59,6 +63,7 @@ class PersistenceController: ObservableObject {
     }()
 
     init(inMemory: Bool = false) {
+        cloudKitEnabled = Self.isCloudKitEnabled()
         container = NSPersistentCloudKitContainer(name: "Clementime")
 
         if inMemory {
@@ -83,13 +88,15 @@ class PersistenceController: ObservableObject {
 
             print("Core Data store location: \(storeURL.path)")
 
-            // Enable CloudKit sync
-            let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.shawnschwartz.clementime")
-            description.cloudKitContainerOptions = cloudKitOptions
+            if cloudKitEnabled {
+                // Enable CloudKit sync
+                let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.shawnschwartz.clementime")
+                description.cloudKitContainerOptions = cloudKitOptions
 
-            // Enable history tracking for CloudKit sync
-            description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-            description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+                // Enable history tracking for CloudKit sync
+                description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+                description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+            }
 
             container.persistentStoreDescriptions = [description]
         }
@@ -104,13 +111,27 @@ class PersistenceController: ObservableObject {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
-        // Observe remote changes from CloudKit
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleRemoteChange(_:)),
-            name: .NSPersistentStoreRemoteChange,
-            object: container.persistentStoreCoordinator
-        )
+        if cloudKitEnabled {
+            // Observe remote changes from CloudKit
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleRemoteChange(_:)),
+                name: .NSPersistentStoreRemoteChange,
+                object: container.persistentStoreCoordinator
+            )
+        }
+    }
+
+    private static func isCloudKitEnabled() -> Bool {
+        if let value = Bundle.main.object(forInfoDictionaryKey: "ClementimeCloudKitEnabled") as? Bool {
+            return value
+        }
+        if let value = Bundle.main.object(forInfoDictionaryKey: "ClementimeCloudKitEnabled") as? String {
+            return value.caseInsensitiveCompare("true") == .orderedSame ||
+                value.caseInsensitiveCompare("yes") == .orderedSame ||
+                value == "1"
+        }
+        return false
     }
 
     @objc
