@@ -307,6 +307,8 @@ jobs:
             ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
             ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES \
             ASSETCATALOG_COMPILER_OPTIMIZATION=space \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
@@ -344,7 +346,7 @@ jobs:
           echo "Signing main app bundle with identity: $MACOS_SIGNING_IDENTITY"
           codesign --force --options runtime --timestamp \
             --sign "$MACOS_SIGNING_IDENTITY" \
-            --entitlements clementime-mac/Clementime/Clementime/Clementime.entitlements \
+            --entitlements clementime-mac/Clementime/Clementime/Clementime.release.entitlements \
             "$APP_PATH"
 
           # Verify signature
