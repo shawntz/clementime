@@ -282,15 +282,15 @@ jobs:
           APP_PATH="clementime-mac/Clementime/build/Build/Products/Release/Clementime.app"
 
           echo "Signing app bundle with identity: $MACOS_SIGNING_IDENTITY"
-          codesign --force --options runtime \
+          codesign --force --options runtime --timestamp \
             --sign "$MACOS_SIGNING_IDENTITY" \
             --entitlements clementime-mac/Clementime/Clementime/Clementime.entitlements \
             --deep "$APP_PATH"
 
           # Verify signature
           echo "Verifying signature..."
-          codesign --verify --verbose "$APP_PATH"
-          codesign -dv "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          codesign -dv --verbose=4 "$APP_PATH"
 
       - name: Notarize app
         env:
@@ -306,12 +306,48 @@ jobs:
           cd clementime-mac/Clementime/build/Build/Products/Release
           ditto -c -k --keepParent Clementime.app Clementime.zip
 
-          # Submit for notarization
-          xcrun notarytool submit Clementime.zip \
+          # Submit for notarization and capture result
+          SUBMIT_JSON=$(xcrun notarytool submit Clementime.zip \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
-            --wait
+            --wait \
+            --output-format json)
+
+          echo "$SUBMIT_JSON" > notary-result.json
+          NOTARY_ID=$(ruby -rjson -e 'puts JSON.parse(File.read("notary-result.json"))["id"]')
+          NOTARY_STATUS=$(ruby -rjson -e 'puts JSON.parse(File.read("notary-result.json"))["status"]')
+          echo "Notarytool submission id: $NOTARY_ID"
+          echo "Notarytool status: $NOTARY_STATUS"
+
+          if [ "$NOTARY_STATUS" != "Accepted" ]; then
+            echo "========================================="
+            echo "NOTARIZATION FAILED!"
+            echo "Status: $NOTARY_STATUS"
+            echo "Submission ID: $NOTARY_ID"
+            echo "========================================="
+            echo ""
+            echo "Fetching detailed notarization log..."
+            xcrun notarytool log "$NOTARY_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              notarization-log.json || true
+
+            if [ -f "notarization-log.json" ]; then
+              echo ""
+              echo "========================================="
+              echo "NOTARIZATION LOG:"
+              echo "========================================="
+              cat notarization-log.json | python3 -m json.tool || cat notarization-log.json
+            fi
+
+            echo ""
+            echo "========================================="
+            echo "Notarization failed. See log above for details."
+            echo "========================================="
+            exit 1
+          fi
 
           # Staple the notarization ticket
           xcrun stapler staple Clementime.app
