@@ -197,40 +197,64 @@ jobs:
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
         run: |
           if [ -z "$MACOS_CERTIFICATE" ]; then
-            echo "Skipping certificate import - MACOS_CERTIFICATE not configured"
-            exit 0
+            echo "ERROR: MACOS_CERTIFICATE not configured - required for notarization"
+            exit 1
           fi
+
+          if [ -z "$MACOS_CERTIFICATE_PASSWORD" ]; then
+            echo "ERROR: MACOS_CERTIFICATE_PASSWORD not configured"
+            exit 1
+          fi
+
           # Create temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
+          echo "Creating temporary keychain..."
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
           # Import certificate
+          echo "Importing certificate..."
           CERT_PATH=$RUNNER_TEMP/certificate.p12
           echo "$MACOS_CERTIFICATE" | base64 --decode > "$CERT_PATH"
-          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+
+          if [ $? -ne 0 ]; then
+            echo "ERROR: Failed to import certificate"
+            rm "$CERT_PATH"
+            exit 1
+          fi
+
           rm "$CERT_PATH"
 
           # Add to search list
+          echo "Adding keychain to search list..."
           security list-keychain -d user -s "$KEYCHAIN_PATH"
 
           # Allow codesign to access keychain
+          echo "Allowing codesign access to keychain..."
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
+          echo "Certificate import completed successfully"
+
       - name: List signing identities
-        if: env.MACOS_CERTIFICATE != ''
         run: |
           echo "Available signing identities:"
-          security find-identity -v -p basic
+          security find-identity -v -p codesigning
+
           echo ""
-          echo "Looking for Developer ID Application..."
-          security find-identity -v -p basic | grep "Developer ID Application" || echo "Not found"
-          echo ""
-          echo "Looking for Developer ID Installer..."
-          security find-identity -v -p basic | grep "Developer ID Installer" || echo "Not found"
+          echo "Checking for Developer ID Application certificate..."
+          if security find-identity -v -p codesigning | grep "Developer ID Application"; then
+            echo "✓ Developer ID Application certificate found"
+          else
+            echo "ERROR: No Developer ID Application certificate found!"
+            echo "Available identities:"
+            security find-identity -v -p codesigning
+            exit 1
+          fi
 
       - name: Update version in Info.plist
         run: |
@@ -275,22 +299,55 @@ jobs:
           MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
         run: |
           if [ -z "$MACOS_CERTIFICATE" ]; then
-            echo "Skipping app signing - MACOS_CERTIFICATE not configured"
-            exit 0
+            echo "ERROR: MACOS_CERTIFICATE not configured - signing is required for notarization"
+            exit 1
+          fi
+
+          if [ -z "$MACOS_SIGNING_IDENTITY" ]; then
+            echo "ERROR: MACOS_SIGNING_IDENTITY not configured"
+            exit 1
           fi
 
           APP_PATH="clementime-mac/Clementime/build/Build/Products/Release/Clementime.app"
 
-          echo "Signing app bundle with identity: $MACOS_SIGNING_IDENTITY"
+          # Verify the signing identity is available
+          echo "Checking for signing identity..."
+          security find-identity -v -p codesigning | grep "$MACOS_SIGNING_IDENTITY" || {
+            echo "ERROR: Signing identity '$MACOS_SIGNING_IDENTITY' not found!"
+            echo "Available identities:"
+            security find-identity -v -p codesigning
+            exit 1
+          }
+
+          # Sign all embedded binaries and frameworks first
+          echo "Signing embedded binaries and frameworks..."
+          find "$APP_PATH/Contents" -type f \( -name "*.dylib" -o -name "*.framework" \) -print0 | while IFS= read -r -d '' file; do
+            echo "Signing: $file"
+            codesign --force --options runtime --timestamp \
+              --sign "$MACOS_SIGNING_IDENTITY" \
+              "$file" || true
+          done
+
+          # Sign the main app bundle
+          echo "Signing main app bundle with identity: $MACOS_SIGNING_IDENTITY"
           codesign --force --options runtime --timestamp \
             --sign "$MACOS_SIGNING_IDENTITY" \
             --entitlements clementime-mac/Clementime/Clementime/Clementime.entitlements \
-            --deep "$APP_PATH"
+            "$APP_PATH"
 
           # Verify signature
           echo "Verifying signature..."
-          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          codesign --verify --strict --verbose=2 "$APP_PATH"
+
+          echo "Signature details:"
           codesign -dv --verbose=4 "$APP_PATH"
+
+          # Check that it's signed with Developer ID
+          echo "Checking certificate type..."
+          codesign -dv "$APP_PATH" 2>&1 | grep "Developer ID Application" || {
+            echo "WARNING: Not signed with Developer ID Application certificate"
+            codesign -dv "$APP_PATH" 2>&1
+          }
 
       - name: Notarize app
         env:
